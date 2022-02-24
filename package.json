@@ -12,6 +12,6 @@
     "vite": "^2.8.0"
   },
   "dependencies": {
-    "lit-html": "^2.2.0"
+    "morphdom": "^2.6.1"
   }
 }

@@ -1,3 +1,4 @@
+import morphdom from 'morphdom'
 import { HTMLResult } from './html-result'
 
 interface HTMLRender {
@@ -5,52 +6,42 @@ interface HTMLRender {
   args: any[]
 }
 
-const hashes = new Map<string, number>()
-
-const generateHash = (str: string) => {
-  var hash = 0,
-    i,
-    chr
-  if (str.length === 0) return hash
-  for (i = 0; i < str.length; i++) {
-    chr = str.charCodeAt(i)
-    hash = (hash << 5) - hash + chr
-    hash |= 0 // Convert to 32bit integer
-  }
-  return hash
-}
-
 const htmlRender = (result: HTMLResult, args: any[] = []): HTMLRender => {
-  const html = result.template
+  let html = result.template
     .map((str, i) => {
       const arg = result.args[i]
       if (i >= result.args.length) {
         return str
       }
-      if (/((on)?:\w+|ref)=\"?$/.test(str)) {
-        const index = args.push(arg) - 1
+      if (/\s((on)?:\w+|ref)=\"?$/.test(str)) {
+        let index = args.indexOf(arg)
+        if (index === -1) {
+          index = args.push(arg) - 1
+        }
         return str + index
       }
       if (arg instanceof HTMLResult || Array.isArray(arg)) {
         const results = Array.isArray(arg) ? arg : [arg]
         return str + results.map(_arg => htmlRender(_arg, args).html).join('')
       }
-      let hashcode = hashes.get(str)
-      if (!hashcode) {
-        hashcode = generateHash(str)
-        hashes.set(str, hashcode)
+      let data = String(arg ?? '')
+      const [match, quotes] = /=(\")?$/.exec(str)?.values() ?? []
+      if (!match) {
+        data = `<!---->${data}<!---->`
+      } else if (!quotes) {
+        data = `"${data}"`
       }
-      return str + `<!--${hashcode}-->` + (arg ?? '')
+      return str + data
     })
     .join('')
-    .trim()
+  html = `<div>${html.trim()}</div>`
   return { html, args }
 }
 
 const getAllElements = (root: Element): Element[] =>
   Array.from(root.children).flatMap(element => [element, ...getAllElements(element)])
 
-const addEventListener = (element: Element, type: string, listener: any) => {
+const addEventListener = (element: Element, type: string, listener: Function) => {
   const hook = (event: Event) => {
     // if (listener instanceof Emitter) {
     //   listener.emit(event)
@@ -63,25 +54,54 @@ const addEventListener = (element: Element, type: string, listener: any) => {
   return () => element.removeEventListener(type, hook)
 }
 
+const ELEMENT_LISTENERS = new Map<Element, (() => void)[]>()
+
 export function render(result: HTMLResult, element: HTMLElement) {
   const { html, args } = htmlRender(result)
-  element.innerHTML = html
 
-  const elements = getAllElements(element)
+  const onNodeUpdate = (node: Node | Element) => {
+    const el = node as Element
 
-  elements.forEach(elem => {
+    const listeners = ELEMENT_LISTENERS.get(el)
+    if (listeners) {
+      listeners.forEach(complete => complete())
+    }
+
     // bing event listeners
-    Array.from(elem.attributes)
+    Array.from(el.attributes ?? [])
       .filter(attr => attr.name.startsWith('on:'))
       .forEach(attr => {
         const argIndex = Number(attr.value)
         const listener = addEventListener(
-          elem,
+          el,
           attr.name.replace('on:', ''),
           args[argIndex]
         )
-        // _listeners.push(listener)
-        elem.attributes.removeNamedItem(attr.name)
+        const listeners = ELEMENT_LISTENERS.get(el) ?? []
+        listeners.push(listener)
+        ELEMENT_LISTENERS.set(el, listeners)
+        el.attributes.removeNamedItem(attr.name)
       })
+
+    return node
+  }
+
+  // patch changes
+  morphdom(element, html, {
+    childrenOnly: true,
+    getNodeKey(node) {
+      const el = node as Element
+      const attr = el.getAttribute?.('key')
+      return attr ?? el.id
+    },
+    onElUpdated: onNodeUpdate,
+    onNodeAdded: onNodeUpdate,
+    onNodeDiscarded(node) {
+      const el = node as Element
+      const listeners = ELEMENT_LISTENERS.get(el)
+      if (listeners) {
+        listeners.forEach(complete => complete())
+      }
+    },
   })
 }
