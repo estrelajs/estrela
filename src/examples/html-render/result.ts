@@ -1,4 +1,4 @@
-import { html } from './revange'
+import { html } from '../../revange'
 
 // Result "component"
 export const Result = ({ result, onRemove }: any) => html`

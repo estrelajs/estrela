@@ -1,4 +1,5 @@
 import morphdom from '../morphdom'
+import { StateSubject } from '../observables/state_subject'
 import { HTMLResult } from './html-result'
 
 interface HTMLRender {
@@ -69,10 +70,17 @@ export function render(result: HTMLResult, element: HTMLElement) {
     onNodeAdded(node) {
       const el = node as Element
       const key = el.getAttribute?.('key')
+      const ref = el.getAttribute?.('ref')
 
       if (key) {
         ELEMENT_KEYS.set(el, key)
         el.removeAttribute('key')
+      }
+
+      if (ref) {
+        const refState: StateSubject<any> = args[Number(ref)]
+        el.removeAttribute('ref')
+        refState.next(node)
       }
 
       // bing event listeners

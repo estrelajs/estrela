@@ -1,6 +1,6 @@
+import { html, render } from '../../revange'
+import { state } from '../../revange/properties/state'
 import { Result } from './result'
-import { html, render } from './revange'
-import { state } from './revange/properties/state'
 
 const GITHUB_API = '//api.github.com/search/repositories'
 const results = state<any[]>([])
