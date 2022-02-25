@@ -1,4 +1,4 @@
-import morphdom from 'morphdom'
+import morphdom from '../morphdom'
 import { HTMLResult } from './html-result'
 
 interface HTMLRender {
@@ -65,12 +65,6 @@ export function render(result: HTMLResult, element: HTMLElement) {
       const attr = el.getAttribute?.('key')
       const key = ELEMENT_KEYS.get(el)
       return attr ?? key ?? el.id
-    },
-    onElUpdated(el) {
-      el.removeAttribute('key')
-      Array.from(el.attributes)
-        .filter(attr => attr.name.startsWith('on:'))
-        .forEach(attr => el.removeAttribute(attr.name))
     },
     onNodeAdded(node) {
       const el = node as Element
