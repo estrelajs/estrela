@@ -1,7 +1,7 @@
 import { html } from './revange'
 
 export const Result = ({ result, onRemove }: any) => html`
-  <div class="result">
+  <div key=${result.id} class="result">
     <div>
       <a href=${result.html_url} target="_blank"> ${result.full_name} </a>
       🌟<strong>${result.stargazers_count}</strong>
@@ -9,7 +9,7 @@ export const Result = ({ result, onRemove }: any) => html`
     <p>${result.description}</p>
     ${Button({
       onClick: () => onRemove(result),
-      children: `Remove ${result.stargazers_count}`,
+      children: `Remove ${Math.round(Math.random() * 1000)}`,
     })}
   </div>
 `

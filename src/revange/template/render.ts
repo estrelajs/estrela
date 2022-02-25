@@ -7,7 +7,7 @@ interface HTMLRender {
 }
 
 const htmlRender = (result: HTMLResult, args: any[] = []): HTMLRender => {
-  let html = result.template
+  const html = result.template
     .map((str, i) => {
       const arg = result.args[i]
       if (i >= result.args.length) {
@@ -34,12 +34,9 @@ const htmlRender = (result: HTMLResult, args: any[] = []): HTMLRender => {
       return str + data
     })
     .join('')
-  html = `<div>${html.trim()}</div>`
+    .trim()
   return { html, args }
 }
-
-const getAllElements = (root: Element): Element[] =>
-  Array.from(root.children).flatMap(element => [element, ...getAllElements(element)])
 
 const addEventListener = (element: Element, type: string, listener: Function) => {
   const hook = (event: Event) => {
@@ -55,53 +52,58 @@ const addEventListener = (element: Element, type: string, listener: Function) =>
 }
 
 const ELEMENT_LISTENERS = new Map<Element, (() => void)[]>()
+const ELEMENT_KEYS = new Map<Element, string>()
 
 export function render(result: HTMLResult, element: HTMLElement) {
   const { html, args } = htmlRender(result)
 
-  const onNodeUpdate = (node: Node | Element) => {
-    const el = node as Element
-
-    const listeners = ELEMENT_LISTENERS.get(el)
-    if (listeners) {
-      listeners.forEach(complete => complete())
-    }
-
-    // bing event listeners
-    Array.from(el.attributes ?? [])
-      .filter(attr => attr.name.startsWith('on:'))
-      .forEach(attr => {
-        const argIndex = Number(attr.value)
-        const listener = addEventListener(
-          el,
-          attr.name.replace('on:', ''),
-          args[argIndex]
-        )
-        const listeners = ELEMENT_LISTENERS.get(el) ?? []
-        listeners.push(listener)
-        ELEMENT_LISTENERS.set(el, listeners)
-        el.attributes.removeNamedItem(attr.name)
-      })
-
-    return node
-  }
-
   // patch changes
-  morphdom(element, html, {
+  morphdom(element, `<div>${html}</div`, {
     childrenOnly: true,
     getNodeKey(node) {
       const el = node as Element
       const attr = el.getAttribute?.('key')
-      return attr ?? el.id
+      const key = ELEMENT_KEYS.get(el)
+      return attr ?? key ?? el.id
     },
-    onElUpdated: onNodeUpdate,
-    onNodeAdded: onNodeUpdate,
+    onElUpdated(el) {
+      el.removeAttribute('key')
+      Array.from(el.attributes)
+        .filter(attr => attr.name.startsWith('on:'))
+        .forEach(attr => el.removeAttribute(attr.name))
+    },
+    onNodeAdded(node) {
+      const el = node as Element
+      const key = el.getAttribute?.('key')
+
+      if (key) {
+        ELEMENT_KEYS.set(el, key)
+        el.removeAttribute('key')
+      }
+
+      // bing event listeners
+      Array.from(el.attributes ?? [])
+        .filter(attr => attr.name.startsWith('on:'))
+        .forEach(attr => {
+          const argIndex = Number(attr.value)
+          const listener = addEventListener(
+            el,
+            attr.name.replace('on:', ''),
+            args[argIndex]
+          )
+          const listeners = ELEMENT_LISTENERS.get(el) ?? []
+          listeners.push(listener)
+          ELEMENT_LISTENERS.set(el, listeners)
+          el.removeAttribute(attr.name)
+        })
+
+      return node
+    },
     onNodeDiscarded(node) {
       const el = node as Element
-      const listeners = ELEMENT_LISTENERS.get(el)
-      if (listeners) {
-        listeners.forEach(complete => complete())
-      }
+      ELEMENT_LISTENERS.get(el)?.forEach(complete => complete())
+      ELEMENT_LISTENERS.delete(el)
+      ELEMENT_LISTENERS.delete(el)
     },
   })
 }
