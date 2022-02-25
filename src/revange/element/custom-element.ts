@@ -8,14 +8,13 @@ export function defineElement(name: string, element: FE) {
   const CustomElement = class extends HTMLElement {
     private _elementRef: {
       properties: ElementProperties
-      render(): HTMLResult
+      render(): HTMLResult | null
     }
     private _requestedRender = false
     private readonly _statesSubscription: Subscription
 
     constructor() {
       super()
-      this.attachShadow({ mode: 'open' })
 
       const render = element(this)
       const properties = REVANGE_PROPERTIES.properties
@@ -24,14 +23,19 @@ export function defineElement(name: string, element: FE) {
         render,
       }
 
-      this._statesSubscription = merge(...(properties.states ?? [])).subscribe(() =>
-        this.requestRender()
+      this._statesSubscription = merge(...(properties.states ?? [])).subscribe(
+        () => {
+          this.requestRender()
+        }
       )
+    }
 
+    connectedCallback(): void {
+      this.attachShadow({ mode: 'open' })
       this.requestRender()
     }
 
-    disconnectedCallback() {
+    disconnectedCallback(): void {
       this._statesSubscription.unsubscribe()
       const subscriptions =
         this._elementRef.properties.subscription instanceof Subscription
@@ -41,7 +45,7 @@ export function defineElement(name: string, element: FE) {
     }
 
     requestRender(): void {
-      if (!this._requestedRender) {
+      if (this.isConnected && !this._requestedRender) {
         this._requestedRender = true
         requestAnimationFrame(() => {
           this._requestedRender = false

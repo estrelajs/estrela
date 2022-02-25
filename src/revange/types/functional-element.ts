@@ -3,6 +3,6 @@ import { RevangeElement } from './revange-element'
 
 export interface FE {
   (elementRef: RevangeElement): {
-    (): HTMLResult
+    (): HTMLResult | null
   }
 }

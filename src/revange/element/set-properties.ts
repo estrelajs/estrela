@@ -2,6 +2,7 @@ import { Subscription } from 'rxjs'
 import { StateSubject } from '../observables/state_subject'
 
 export interface ElementProperties {
+  props?: Record<string, StateSubject<any>>
   states?: StateSubject<any>[]
   subscription?: Subscription | Subscription[]
 }

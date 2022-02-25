@@ -30,7 +30,7 @@ const htmlRender = (result: HTMLResult, args: any[] = []): HTMLRender => {
         const results = Array.isArray(arg) ? arg : [arg]
         return str + results.map(_arg => htmlRender(_arg, args).html).join('')
       }
-      let data = String(arg ?? '')
+      let data = String(arg === false ? '' : arg ?? '')
       const [match, quotes] = /=(\")?$/.exec(str)?.values() ?? []
       if (!match) {
         data = `<!---->${data}<!---->`
@@ -61,9 +61,13 @@ const ELEMENT_LISTENERS = new Map<Element, (() => void)[]>()
 const ELEMENT_KEYS = new Map<Element, string>()
 
 export function render(
-  template: string | HTMLResult,
+  template: string | HTMLResult | null,
   element: HTMLElement | DocumentFragment
 ) {
+  if (template === null) {
+    return
+  }
+
   const { html, args } = htmlRender(getResult(template))
 
   // patch changes
@@ -91,10 +95,9 @@ export function render(
         refState.next(node)
       }
 
-      // bing event listeners
-      Array.from(el.attributes ?? [])
-        .filter(attr => attr.name.startsWith('on:'))
-        .forEach(attr => {
+      Array.from(el.attributes ?? []).forEach(attr => {
+        // bind event listeners
+        if (attr.name.startsWith('on:')) {
           const argIndex = Number(attr.value)
           const listener = addEventListener(
             el,
@@ -105,7 +108,18 @@ export function render(
           listeners.push(listener)
           ELEMENT_LISTENERS.set(el, listeners)
           el.removeAttribute(attr.name)
-        })
+        }
+
+        // bind props
+        if (attr.name.startsWith(':')) {
+          const value = args[Number(attr.value)]
+          const propName = attr.name.slice(1)
+          const prop: StateSubject<any> = (node as any)._elementRef?.properties
+            ?.props?.[propName]
+          prop.next(value)
+          el.removeAttribute(attr.name)
+        }
+      })
 
       return node
     },

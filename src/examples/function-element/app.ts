@@ -1,16 +1,19 @@
-import { defineElement, FE, html, setProperties, state } from '../revange'
-import { Result } from './result'
+import { defineElement, FE, html, setProperties, state } from '../../revange'
 
 const GITHUB_API = '//api.github.com/search/repositories'
 
 const App: FE = () => {
+  let loading = true
   const results = state<any[]>([])
 
   // fetch data and initial render template
   fetch(`${GITHUB_API}?q=akita`)
     .then(r => r.json())
     .then(json => json?.items ?? [])
-    .then(result => results.next(result))
+    .then(result => {
+      loading = false
+      results.next(result)
+    })
 
   // onRemove: update results and render again
   const onRemove = (result: any) => {
@@ -26,11 +29,14 @@ const App: FE = () => {
   })
 
   return () => html`
-    <div>
-      <h1>Example</h1>
-      <div class="list">
-        ${results.$.map(result => Result({ result, onRemove }))}
-      </div>
+    <h1>Example</h1>
+    ${loading
+      ? html`<i>loading...</i>`
+      : html`<div>Items: ${results.$.length}</div>`}
+    <div class="list">
+      ${results.$.map(
+        result => html`<app-result key=${result.id} :result=${result}></app-result>`
+      )}
     </div>
 
     <style>
@@ -38,11 +44,9 @@ const App: FE = () => {
         text-align: center;
       }
 
-      .result {
-        padding: 10px;
-        margin: 10px;
-        background: white;
-        box-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
+      .list {
+        display: flex;
+        flex-flow: column;
       }
     </style>
   `
