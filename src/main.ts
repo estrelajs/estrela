@@ -1,7 +1,5 @@
-import { App } from './app'
+import './app/app'
 import { render } from './revange'
 import './style.css'
 
-// render(App(), document.getElementById('app')!)
-App
-render
+render('<app-root></app-root>', document.getElementById('app')!)

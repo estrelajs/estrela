@@ -1,5 +1,4 @@
-import { html, render } from '../../revange'
-import { state } from '../../revange/properties/state'
+import { html, render, state } from '../../revange'
 import { Result } from './result'
 
 const GITHUB_API = '//api.github.com/search/repositories'

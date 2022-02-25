@@ -1,10 +1,15 @@
 import morphdom from '../morphdom'
 import { StateSubject } from '../observables/state_subject'
+import { html } from '../template/html-directive'
 import { HTMLResult } from './html-result'
 
 interface HTMLRender {
   html: string
   args: any[]
+}
+
+const getResult = (template: string | HTMLResult): HTMLResult => {
+  return typeof template === 'string' ? html`${template}` : template
 }
 
 const htmlRender = (result: HTMLResult, args: any[] = []): HTMLRender => {
@@ -55,8 +60,11 @@ const addEventListener = (element: Element, type: string, listener: Function) =>
 const ELEMENT_LISTENERS = new Map<Element, (() => void)[]>()
 const ELEMENT_KEYS = new Map<Element, string>()
 
-export function render(result: HTMLResult, element: HTMLElement) {
-  const { html, args } = htmlRender(result)
+export function render(
+  template: string | HTMLResult,
+  element: HTMLElement | DocumentFragment
+) {
+  const { html, args } = htmlRender(getResult(template))
 
   // patch changes
   morphdom(element, `<div>${html}</div`, {
