@@ -10,7 +10,7 @@ export const Result = ({ result, onRemove }: any) => html`
     <p>${result.description}</p>
     ${Button({
       onClick: () => onRemove(result),
-      children: `Remove ${Math.round(Math.random() * 1000)}`,
+      children: 'Remove',
     })}
   </div>
 `

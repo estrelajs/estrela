@@ -1,17 +1,10 @@
-import { defineElement, FE, html, state } from '../revange'
+import { defineElement, FE, html, setProperties, state } from '../revange'
 import { Result } from './result'
 
 const GITHUB_API = '//api.github.com/search/repositories'
 
-// App "component"
-export const App: FE = setProperties => {
+const App: FE = () => {
   const results = state<any[]>([])
-
-  setProperties({
-    states: {
-      results,
-    },
-  })
 
   // fetch data and initial render template
   fetch(`${GITHUB_API}?q=akita`)
@@ -23,6 +16,14 @@ export const App: FE = setProperties => {
   const onRemove = (result: any) => {
     results.update(results => results.filter(item => item !== result))
   }
+
+  // will cleanup subscriptions on component discard
+  const cleanup = results.subscribe(results => console.log(results))
+
+  setProperties({
+    states: [results],
+    subscription: cleanup,
+  })
 
   return () => html`
     <div>

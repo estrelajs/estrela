@@ -1,4 +1,5 @@
 export * from './element/custom-element'
+export * from './element/set-properties'
 export * from './properties/ref'
 export * from './properties/state'
 export * from './template/html-directive'
