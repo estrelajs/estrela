@@ -132,8 +132,12 @@ export function render(
                 break
             }
           }
+        } else {
+          // TODO: it means that we don't bind that attr anymore, should remove binding
         }
       })
+
+      // TODO: add new bindings from toEl
 
       return true
     },
@@ -195,15 +199,17 @@ export function render(
     },
     onNodeDiscarded(node) {
       const el = node as Element
-      const elAttrs = ELEMENT_ATTRIBUTES.get(el)
-      elAttrs?.forEach(bind => {
+      ELEMENT_KEYS.delete(el)
+      ELEMENT_ATTRIBUTES.get(el)?.forEach(bind => {
         if (bind.type === 'event') {
           bind.listener()
         }
       })
-      ELEMENT_ATTRIBUTES.delete(el)
-      ELEMENT_KEYS.delete(el)
-      // TODO: remove ELEMENT_ATTRIBUTES children too
+      ELEMENT_ATTRIBUTES.forEach((_, elem) => {
+        if (el.contains(elem) || el.shadowRoot?.contains(elem)) {
+          ELEMENT_ATTRIBUTES.delete(elem)
+        }
+      })
     },
   })
 }
