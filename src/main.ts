@@ -1,6 +1,2 @@
-import './examples/function-element/app'
-import './examples/function-element/result'
-import { render } from './revange'
+import './examples/counter/app'
 import './style.css'
-
-render('<app-root></app-root>', document.getElementById('app')!)

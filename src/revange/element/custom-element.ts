@@ -1,4 +1,5 @@
 import { merge, Subscription } from 'rxjs'
+import { REVANGE_STATES } from '..'
 import { EventEmitter } from '../observables/event_emitter'
 import { HTMLResult } from '../template/html-result'
 import { render } from '../template/render'
@@ -18,8 +19,12 @@ export function defineElement(name: string, element: FE) {
     constructor() {
       super()
 
+      REVANGE_STATES.clear()
       const render = element(this)
-      const properties = REVANGE_PROPERTIES.properties
+      const properties = {
+        state: Array.from(REVANGE_STATES.values()),
+        ...REVANGE_PROPERTIES.properties,
+      }
       this._elementRef = {
         properties,
         render,

@@ -31,14 +31,15 @@ const htmlRender = (result: HTMLResult, args: any[] = []): HTMLRender => {
         const results = Array.isArray(arg) ? arg : [arg]
         return str + results.map(_arg => htmlRender(_arg, args).html).join('')
       }
-      let data = String(arg === false ? '' : arg ?? '')
-      const [match, quotes] = /=(\")?$/.exec(str)?.values() ?? []
-      if (!match) {
-        data = `<!---->${data}<!---->`
-      } else if (!quotes) {
-        data = `"${data}"`
+      let value = arg instanceof StateSubject ? arg.$ : arg
+      value = String(value === false ? '' : value ?? '')
+      const [isAttribute, hasQuotes] = /=(\")?$/.exec(str)?.values() ?? []
+      if (!isAttribute) {
+        value = `<!---->${value}<!---->`
+      } else if (!hasQuotes) {
+        value = `"${value}"`
       }
-      return str + data
+      return str + value
     })
     .join('')
     .trim()
