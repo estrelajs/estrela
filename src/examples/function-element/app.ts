@@ -10,9 +10,9 @@ const App: FE = () => {
   fetch(`${GITHUB_API}?q=akita`)
     .then(r => r.json())
     .then(json => json?.items ?? [])
-    .then(result => {
+    .then(items => {
       loading = false
-      results.next(result)
+      results.next(items)
     })
 
   // onRemove: update results and render again
@@ -35,7 +35,12 @@ const App: FE = () => {
       : html`<div>Items: ${results.$.length}</div>`}
     <div class="list">
       ${results.$.map(
-        result => html`<app-result key=${result.id} :result=${result}></app-result>`
+        result =>
+          html`<app-result
+            key=${result.id}
+            :result=${result}
+            on:remove=${() => onRemove(result)}
+          ></app-result>`
       )}
     </div>
 

@@ -2,13 +2,6 @@ import { PartialObserver, Subject, Subscription } from 'rxjs'
 
 export interface EventEmitter<T> extends Omit<Subject<T>, 'next'> {
   /**
-   * Creates an instance of this class that can
-   * deliver events synchronously or asynchronously.
-   * @param isAsync When true, deliver events asynchronously.
-   */
-  new (isAsync?: boolean): EventEmitter<T>
-
-  /**
    * Emits an event containing a given value.
    * @param value The value to emit.
    */

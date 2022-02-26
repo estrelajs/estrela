@@ -1,6 +1,8 @@
 import morphdom from '../morphdom'
+import { EventEmitter } from '../observables/event_emitter'
 import { StateSubject } from '../observables/state_subject'
 import { html } from '../template/html-directive'
+import { addEventListener } from '../utils/add-event-listener'
 import { HTMLResult } from './html-result'
 
 interface HTMLRender {
@@ -44,19 +46,6 @@ const htmlRender = (result: HTMLResult, args: any[] = []): HTMLRender => {
   return { html, args }
 }
 
-const addEventListener = (element: Element, type: string, listener: Function) => {
-  const hook = (event: Event) => {
-    // if (listener instanceof Emitter) {
-    //   listener.emit(event)
-    // }
-    if (typeof listener === 'function') {
-      listener(event)
-    }
-  }
-  element.addEventListener(type, hook)
-  return () => element.removeEventListener(type, hook)
-}
-
 const ELEMENT_LISTENERS = new Map<Element, (() => void)[]>()
 const ELEMENT_KEYS = new Map<Element, string>()
 
@@ -98,15 +87,24 @@ export function render(
       Array.from(el.attributes ?? []).forEach(attr => {
         // bind event listeners
         if (attr.name.startsWith('on:')) {
-          const argIndex = Number(attr.value)
-          const listener = addEventListener(
-            el,
-            attr.name.replace('on:', ''),
-            args[argIndex]
-          )
-          const listeners = ELEMENT_LISTENERS.get(el) ?? []
-          listeners.push(listener)
-          ELEMENT_LISTENERS.set(el, listeners)
+          let listener: (() => void) | null = null
+          const arg = args[Number(attr.value)]
+          const propName = attr.name.replace('on:', '')
+          const emitter: EventEmitter<any> = (node as any)._elementRef?.properties
+            ?.emitters?.[propName]
+
+          if (emitter) {
+            listener = addEventListener(emitter, arg)
+          } else {
+            listener = addEventListener(el, arg, propName)
+          }
+
+          if (listener) {
+            const listeners = ELEMENT_LISTENERS.get(el) ?? []
+            listeners.push(listener)
+            ELEMENT_LISTENERS.set(el, listeners)
+          }
+
           el.removeAttribute(attr.name)
         }
 
