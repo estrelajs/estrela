@@ -5,7 +5,7 @@ import { StateSubject } from '../observables/state_subject'
 export interface ElementProperties {
   emitters?: Record<string, EventEmitter<any>>
   props?: Record<string, StateSubject<any>>
-  states?: StateSubject<any>[]
+  state?: StateSubject<any> | StateSubject<any>[]
   subscription?: Subscription | Subscription[]
 }
 

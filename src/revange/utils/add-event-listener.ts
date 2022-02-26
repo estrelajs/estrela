@@ -1,32 +1,19 @@
 import { EventEmitter } from '../observables/event_emitter'
 
 export function addEventListener(
-  emitter: EventEmitter<unknown>,
-  listener: Function | EventEmitter<unknown>
-): () => void
-export function addEventListener(
   element: Element,
-  listener: Function | EventEmitter<unknown>,
-  event: string
-): () => void
-export function addEventListener(
-  source: Element | EventEmitter<unknown>,
-  listener: Function | EventEmitter<unknown>,
-  event?: string
+  event: string,
+  listener: Function | EventEmitter<unknown>
 ): () => void {
   const hook = (event: unknown) => {
+    const data = event instanceof CustomEvent ? event.detail : event
     if (listener instanceof EventEmitter) {
-      listener.emit(event)
+      listener.emit(data)
     }
     if (typeof listener === 'function') {
-      listener(event)
+      listener(data)
     }
   }
-  if (source instanceof EventEmitter) {
-    const subscribe = source.subscribe((event: unknown) => hook(event))
-    return () => subscribe.unsubscribe()
-  } else {
-    source.addEventListener(event!, hook)
-    return () => source.removeEventListener(event!, hook)
-  }
+  element.addEventListener(event, hook)
+  return () => element.removeEventListener(event, hook)
 }

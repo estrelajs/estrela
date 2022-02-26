@@ -24,7 +24,7 @@ const App: FE = () => {
   const cleanup = results.subscribe(results => console.log(results))
 
   setProperties({
-    states: [results],
+    state: results,
     subscription: cleanup,
   })
 
@@ -36,11 +36,13 @@ const App: FE = () => {
     <div class="list">
       ${results.$.map(
         result =>
-          html`<app-result
-            key=${result.id}
-            :result=${result}
-            on:remove=${() => onRemove(result)}
-          ></app-result>`
+          html`
+            <app-result
+              key=${result.id}
+              :result=${result}
+              on:remove=${onRemove}
+            ></app-result>
+          `
       )}
     </div>
 

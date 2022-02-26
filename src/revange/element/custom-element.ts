@@ -1,7 +1,9 @@
 import { merge, Subscription } from 'rxjs'
+import { EventEmitter } from '../observables/event_emitter'
 import { HTMLResult } from '../template/html-result'
 import { render } from '../template/render'
 import { FE } from '../types/functional-element'
+import { coerceArray } from '../utils/coerce-array'
 import { ElementProperties, REVANGE_PROPERTIES } from './set-properties'
 
 export function defineElement(name: string, element: FE) {
@@ -11,7 +13,7 @@ export function defineElement(name: string, element: FE) {
       render(): HTMLResult | null
     }
     private _requestedRender = false
-    private readonly _statesSubscription: Subscription
+    private readonly _subscriptions = new Subscription()
 
     constructor() {
       super()
@@ -23,10 +25,26 @@ export function defineElement(name: string, element: FE) {
         render,
       }
 
-      this._statesSubscription = merge(...(properties.states ?? [])).subscribe(
-        () => {
-          this.requestRender()
+      // subscribe emitters
+      Object.keys(properties.emitters ?? {}).forEach(key => {
+        const emitter = properties.emitters?.[key]
+        if (emitter instanceof EventEmitter) {
+          this._subscriptions.add(
+            emitter.subscribe(value =>
+              this.dispatchEvent(new CustomEvent(key, { detail: value }))
+            )
+          )
         }
+      })
+
+      // subscribe states
+      this._subscriptions.add(
+        merge(...coerceArray(properties.state)).subscribe(() => this.requestRender())
+      )
+
+      // subscribe subscriptions
+      coerceArray(properties.subscription).forEach(sub =>
+        this._subscriptions.add(sub)
       )
     }
 
@@ -36,12 +54,7 @@ export function defineElement(name: string, element: FE) {
     }
 
     disconnectedCallback(): void {
-      this._statesSubscription.unsubscribe()
-      const subscriptions =
-        this._elementRef.properties.subscription instanceof Subscription
-          ? [this._elementRef.properties.subscription]
-          : this._elementRef.properties.subscription
-      subscriptions?.forEach(subscription => subscription.unsubscribe())
+      this._subscriptions.unsubscribe()
     }
 
     requestRender(): void {

@@ -1,9 +1,9 @@
 import { defineElement, emitter, FE, html, prop, setProperties } from '../../revange'
 
 // Result "component"
-export const Result: FE = () => {
+const Result: FE = () => {
   const result = prop<any>()
-  const remove = emitter<void>()
+  const remove = emitter<any>()
 
   setProperties({
     emitters: { remove },
@@ -18,7 +18,7 @@ export const Result: FE = () => {
       </div>
       <p>${result.$.description}</p>
       ${Button({
-        onClick: remove,
+        onClick: () => remove.emit(result.$),
         children: 'Remove',
       })}
 
