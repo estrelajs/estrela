@@ -1,13 +1,17 @@
 import { defineElement, emitter, FE, html, prop, setProperties } from '../../revange'
 
 // Result "component"
-const Result: FE = () => {
+const Result: FE = element => {
   const result = prop<any>()
   const remove = emitter<any>()
 
   setProperties({
     emitters: { remove },
     props: { result },
+  })
+
+  element.addEventListener('destroy', function () {
+    console.log('element destroyed', this)
   })
 
   return () => {
