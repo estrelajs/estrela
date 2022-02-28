@@ -8,6 +8,7 @@ interface CustomElementEventMap extends HTMLElementEventMap {
   postrender: Event;
 }
 
+/** Custom HTML Element Reference */
 export interface CustomElement extends HTMLElement {
   /** @internal */
   _elementRef: {

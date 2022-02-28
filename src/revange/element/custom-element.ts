@@ -4,11 +4,11 @@ import { ELEMENT_STATES } from '../properties/state';
 import { HTMLResult } from '../template/html-result';
 import { render } from '../template/render';
 import { CustomElement } from '../types/custom-element';
-import { FE } from '../types/functional-element';
+import { Fel } from '../types/functional-element';
 import { coerceArray } from '../utils/coerce-array';
 import { ElementProperties, ELEMENT_PROPERTIES } from './set-properties';
 
-export function defineElement(name: string, element: FE) {
+export function defineElement(name: string, element: Fel) {
   const CustomElement = class extends HTMLElement implements CustomElement {
     readonly _elementRef: {
       properties: ElementProperties;

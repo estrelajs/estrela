@@ -1,12 +1,12 @@
-import { defineElement, FE, html, setProperties, state } from '../../revange';
+import { defineElement, Fel, html, setProperties, state } from '../../revange';
 
-const Counter: FE = () => {
+const Counter: Fel = () => {
   const count = state<number>();
   setProperties({ props: { count } });
   return () => html`<div>Count is ${count}</div>`;
 };
 
-const App: FE = () => {
+const App: Fel = () => {
   const count = state(0);
 
   // current value

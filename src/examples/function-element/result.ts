@@ -1,14 +1,14 @@
 import {
   defineElement,
   emitter,
-  FE,
+  Fel,
   html,
   setProperties,
   state,
 } from '../../revange';
 
 // Result "component"
-const Result: FE = element => {
+const Result: Fel = element => {
   const result = state<any>();
   const remove = emitter<any>();
 

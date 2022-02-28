@@ -4,6 +4,7 @@ import { StateSubject } from '../observables/state_subject';
 import { html } from '../template/html-directive';
 import { CustomElement } from '../types/custom-element';
 import { addEventListener } from '../utils/add-event-listener';
+import { coerceArray } from '../utils/coerce-array';
 import { HTMLResult } from './html-result';
 
 type AttrBind =
@@ -45,6 +46,7 @@ const getResult = (template: string | HTMLResult): HTMLResult => {
   return typeof template === 'string' ? html`${template}` : template;
 };
 
+// TODO: add custom class and style binding
 const htmlRender = (result: HTMLResult, args: any[] = []): HTMLRender => {
   const html = result.template
     .map((str, i) => {
@@ -52,6 +54,7 @@ const htmlRender = (result: HTMLResult, args: any[] = []): HTMLRender => {
       if (i >= result.args.length) {
         return str;
       }
+
       if (/\s((on)?:\w+|ref)=\"?$/.test(str)) {
         let index = args.indexOf(arg);
         if (index === -1) {
@@ -59,22 +62,29 @@ const htmlRender = (result: HTMLResult, args: any[] = []): HTMLRender => {
         }
         return str + index;
       }
+
       if (arg instanceof HTMLResult || Array.isArray(arg)) {
-        const results = Array.isArray(arg) ? arg : [arg];
-        return str + results.map(_arg => htmlRender(_arg, args).html).join('');
+        const results = coerceArray(arg)
+          .map(_arg => htmlRender(_arg, args).html)
+          .join('');
+        return str + results;
       }
-      let value = typeof arg === 'function' ? arg() : arg;
-      value = String(value === false ? '' : value ?? '');
+
       const [isAttribute, hasQuotes] = /=(\")?$/.exec(str)?.values() ?? [];
+      let value = arg instanceof StateSubject ? arg() : arg;
+      value = String(value === false ? '' : value ?? '');
+
       if (!isAttribute) {
         value = `<!---->${value}<!---->`;
       } else if (!hasQuotes) {
         value = `"${value}"`;
       }
+
       return str + value;
     })
     .join('')
     .trim();
+
   return { html, args };
 };
 
@@ -122,6 +132,7 @@ export function render(
                 break;
               case 'ref':
                 bind.data.next(fromEl);
+
                 break;
               case 'prop':
                 const propName = attr.name.slice(1);
@@ -151,9 +162,15 @@ export function render(
       }
 
       if (ref) {
-        const refState: StateSubject<any> = args[Number(ref)];
+        const arg = args[Number(ref)];
+        if (arg instanceof StateSubject) {
+          arg.next(el);
+        } else if (typeof arg === 'function') {
+          arg(el);
+        } else {
+          console.error('Bind error! Could not bind ref attribute.');
+        }
         el.removeAttribute('ref');
-        refState.next(el);
       }
 
       Array.from(el.attributes ?? []).forEach(attr => {
@@ -174,7 +191,7 @@ export function render(
         // bind props
         if (attr.name.startsWith(':')) {
           const arg = args[Number(attr.value)];
-          const value = typeof arg === 'function' ? arg() : arg;
+          const value = arg instanceof StateSubject ? arg() : arg;
           const propName = attr.name.slice(1);
           bindProp(el, propName, value);
           el.removeAttribute(attr.name);

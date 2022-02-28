@@ -1,8 +1,8 @@
-import { defineElement, FE, html, setProperties, state } from '../../revange';
+import { defineElement, Fel, html, setProperties, state } from '../../revange';
 
 const GITHUB_API = '//api.github.com/search/repositories';
 
-const App: FE = () => {
+const App: Fel = () => {
   let loading = true;
   const results = state<any[]>([]);
 
