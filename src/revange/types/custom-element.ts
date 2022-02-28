@@ -1,7 +1,7 @@
 import { ElementProperties } from '../element/set-properties';
 import { HTMLResult } from '../template/html-result';
 
-interface CustomElementEventMap extends HTMLElementEventMap {
+export interface CustomElementEventMap extends HTMLElementEventMap {
   destroy: Event;
   init: Event;
   prerender: Event;

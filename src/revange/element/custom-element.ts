@@ -1,11 +1,9 @@
 import { merge, Subscription } from 'rxjs';
-import { EventEmitter } from '../observables/event_emitter';
+import { EventEmitter } from '../observables';
 import { ELEMENT_STATES } from '../properties/state';
-import { HTMLResult } from '../template/html-result';
-import { render } from '../template/render';
-import { CustomElement } from '../types/custom-element';
-import { Fel } from '../types/functional-element';
-import { coerceArray } from '../utils/coerce-array';
+import { HTMLResult, render } from '../template';
+import { CustomElement, Fel } from '../types';
+import { coerceArray } from '../utils';
 import { ElementProperties, ELEMENT_PROPERTIES } from './set-properties';
 
 export function defineElement(
@@ -33,6 +31,7 @@ export function defineElement(
       const render = element(this);
 
       // set styles
+      // TODO: use polyfill
       (this.shadowRoot as any).adoptedStyleSheets = coerceArray(styles).map(css => {
         const sheet = new CSSStyleSheet();
         (sheet as any).replaceSync(css);
