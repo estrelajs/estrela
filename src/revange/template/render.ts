@@ -4,7 +4,6 @@ import { StateSubject } from '../observables/state_subject';
 import { html } from '../template/html-directive';
 import { CustomElement } from '../types/custom-element';
 import { addEventListener } from '../utils/add-event-listener';
-import { coerceArray } from '../utils/coerce-array';
 import { HTMLResult } from './html-result';
 
 type AttrBind =
@@ -25,11 +24,6 @@ type AttrBind =
       type: 'ref';
     };
 
-interface HTMLRender {
-  html: string;
-  args: any[];
-}
-
 // TODO: allow prop binding for non Custom Element
 const bindProp = (el: Element, propName: string, value: any) => {
   const prop = (el as CustomElement)._elementRef.properties.props?.[propName];
@@ -46,48 +40,6 @@ const getResult = (template: string | HTMLResult): HTMLResult => {
   return typeof template === 'string' ? html`${template}` : template;
 };
 
-// TODO: add custom class and style binding
-const htmlRender = (result: HTMLResult, args: any[] = []): HTMLRender => {
-  const html = result.template
-    .map((str, i) => {
-      const arg = result.args[i];
-      if (i >= result.args.length) {
-        return str;
-      }
-
-      if (/\s((on)?:\w+|ref)=\"?$/.test(str)) {
-        let index = args.indexOf(arg);
-        if (index === -1) {
-          index = args.push(arg) - 1;
-        }
-        return str + index;
-      }
-
-      if (arg instanceof HTMLResult || Array.isArray(arg)) {
-        const results = coerceArray(arg)
-          .map(_arg => htmlRender(_arg, args).html)
-          .join('');
-        return str + results;
-      }
-
-      const [isAttribute, hasQuotes] = /=(\")?$/.exec(str)?.values() ?? [];
-      let value = arg instanceof StateSubject ? arg() : arg;
-      value = String(value === false ? '' : value ?? '');
-
-      if (!isAttribute) {
-        value = `<!---->${value}<!---->`;
-      } else if (!hasQuotes) {
-        value = `"${value}"`;
-      }
-
-      return str + value;
-    })
-    .join('')
-    .trim();
-
-  return { html, args };
-};
-
 const ELEMENT_ATTRIBUTES = new Map<Element, AttrBind[]>();
 const ELEMENT_KEYS = new Map<Element, string>();
 
@@ -96,7 +48,7 @@ export function render(
   element: HTMLElement | DocumentFragment
 ) {
   if (template === null) return;
-  const { html, args } = htmlRender(getResult(template));
+  const { html, args } = getResult(template).render();
 
   // patch changes
   morphdom(element, `<div>${html}</div`, {

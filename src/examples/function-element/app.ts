@@ -1,4 +1,4 @@
-import { defineElement, Fel, html, setProperties, state } from '../../revange';
+import { css, defineElement, Fel, html, setProperties, state } from '../../revange';
 
 const GITHUB_API = '//api.github.com/search/repositories';
 
@@ -45,18 +45,20 @@ const App: Fel = () => {
           `
       )}
     </div>
-
-    <style>
-      h1 {
-        text-align: center;
-      }
-
-      .list {
-        display: flex;
-        flex-flow: column;
-      }
-    </style>
   `;
 };
 
-defineElement('app-root', App);
+defineElement(
+  'app-root',
+  App,
+  css`
+    h1 {
+      text-align: center;
+    }
+
+    .list {
+      display: flex;
+      flex-flow: column;
+    }
+  `
+);

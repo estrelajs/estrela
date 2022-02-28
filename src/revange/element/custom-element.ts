@@ -8,7 +8,11 @@ import { Fel } from '../types/functional-element';
 import { coerceArray } from '../utils/coerce-array';
 import { ElementProperties, ELEMENT_PROPERTIES } from './set-properties';
 
-export function defineElement(name: string, element: Fel) {
+export function defineElement(
+  name: string,
+  element: Fel,
+  styles?: string | string[]
+) {
   const CustomElement = class extends HTMLElement implements CustomElement {
     readonly _elementRef: {
       properties: ElementProperties;
@@ -23,8 +27,17 @@ export function defineElement(name: string, element: Fel) {
       super();
       ELEMENT_STATES.clear();
 
+      this.attachShadow({ mode: 'open' });
+
       // Element render function
       const render = element(this);
+
+      // set styles
+      (this.shadowRoot as any).adoptedStyleSheets = coerceArray(styles).map(css => {
+        const sheet = new CSSStyleSheet();
+        (sheet as any).replaceSync(css);
+        return sheet;
+      });
 
       // Get element properties
       const { state, ...others } = ELEMENT_PROPERTIES.properties;
@@ -67,7 +80,6 @@ export function defineElement(name: string, element: Fel) {
     }
 
     connectedCallback(): void {
-      this.attachShadow({ mode: 'open' });
       this.requestRender();
     }
 
@@ -77,6 +89,7 @@ export function defineElement(name: string, element: Fel) {
     }
 
     requestRender(): void {
+      // TODO: check if is there a chance to never get rendered because it was called before connect.
       if (this.isConnected && !this._requestedRender) {
         this._requestedRender = true;
         requestAnimationFrame(() => {
