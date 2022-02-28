@@ -9,12 +9,12 @@ export interface ElementProperties {
   subscription?: Subscription | Subscription[];
 }
 
-export const REVANGE_PROPERTIES = {
+export const ELEMENT_PROPERTIES = {
   properties: {},
 } as {
   properties: ElementProperties;
 };
 
 export function setProperties(properties: ElementProperties) {
-  REVANGE_PROPERTIES.properties = { ...properties };
+  ELEMENT_PROPERTIES.properties = { ...properties };
 }

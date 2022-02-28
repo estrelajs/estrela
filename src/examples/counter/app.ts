@@ -18,15 +18,7 @@ const App: FE = () => {
   // value subscription
   count.subscribe(console.log);
 
-  const click = Array.from({ length: 10 }).map(
-    (_, i) => () => console.log(`clicked on n${i}`)
-  );
-
-  return () =>
-    html`
-      <app-counter :count=${count()}></app-counter>
-      <button on:click=${click[count() % 10]}>Click me!</button>
-    `;
+  return () => html`<app-counter :count=${count()}></app-counter>`;
 };
 
 defineElement('app-counter', Counter);

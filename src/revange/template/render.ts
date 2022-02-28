@@ -36,7 +36,7 @@ const bindProp = (el: Element, propName: string, value: any) => {
     prop.next(value);
   } else {
     console.error(
-      `Bind Error! Property "${propName}" on ${el.localName} is not an instance of StateSubject.`
+      `Bind Error! Can't find "${propName}" property as instance of StateSubject on "${el.localName}".`
     );
   }
 };
@@ -98,7 +98,6 @@ export function render(
       return attr ?? key ?? el.id;
     },
     onBeforeElUpdated(fromEl, toEl) {
-      const requestRender = () => (fromEl as CustomElement).requestRender?.();
       const elAttrs = ELEMENT_ATTRIBUTES.get(fromEl);
       if (!elAttrs) {
         return true;
@@ -109,7 +108,7 @@ export function render(
 
         if (attr) {
           const arg = args[Number(attr?.value)];
-          const nextValue = typeof arg === 'function' ? arg() : arg;
+          const nextValue = arg instanceof StateSubject ? arg() : arg;
           const lastValue = bind.data;
 
           if (nextValue !== lastValue) {
@@ -123,12 +122,10 @@ export function render(
                 break;
               case 'ref':
                 bind.data.next(fromEl);
-                requestRender();
                 break;
               case 'prop':
                 const propName = attr.name.slice(1);
                 bindProp(fromEl, propName, nextValue);
-                requestRender();
                 break;
             }
           }
