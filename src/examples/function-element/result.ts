@@ -17,12 +17,12 @@ const Result: FE = element => {
   return () => {
     return html`
       <div>
-        <a href=${result.$.html_url} target="_blank"> ${result.$.full_name} </a>
-        🌟<strong>${result.$.stargazers_count}</strong>
+        <a href=${result().html_url} target="_blank"> ${result().full_name} </a>
+        🌟<strong>${result().stargazers_count}</strong>
       </div>
-      <p>${result.$.description}</p>
+      <p>${result().description}</p>
       ${Button({
-        onClick: () => remove.emit(result.$),
+        onClick: () => remove.emit(result()),
         children: 'Remove',
       })}
 

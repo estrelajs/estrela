@@ -3,13 +3,13 @@ import { REVANGE_STATES } from '..'
 import { EventEmitter } from '../observables/event_emitter'
 import { HTMLResult } from '../template/html-result'
 import { render } from '../template/render'
+import { CustomElement } from '../types/custom-element'
 import { FE } from '../types/functional-element'
-import { RevangeElement } from '../types/revange-element'
 import { coerceArray } from '../utils/coerce-array'
 import { ElementProperties, REVANGE_PROPERTIES } from './set-properties'
 
 export function defineElement(name: string, element: FE) {
-  const CustomElement = class extends HTMLElement implements RevangeElement {
+  const CustomElement = class extends HTMLElement implements CustomElement {
     _elementRef: {
       properties: ElementProperties
       render(): HTMLResult | null
@@ -76,7 +76,9 @@ export function defineElement(name: string, element: FE) {
     }
 
     private _render(): void {
+      this.dispatchEvent(new Event('prerender'))
       render(this._elementRef.render(), this.shadowRoot!)
+      this.dispatchEvent(new Event('postrender'))
     }
   }
 

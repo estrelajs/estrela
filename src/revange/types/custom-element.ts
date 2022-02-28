@@ -1,20 +1,22 @@
 import { ElementProperties } from '../element/set-properties'
 import { HTMLResult } from '../template/html-result'
 
-interface RevangeElementEventMap extends HTMLElementEventMap {
+interface CustomElementEventMap extends HTMLElementEventMap {
   destroy: Event
+  prerender: Event
+  postrender: Event
 }
 
-export interface RevangeElement extends HTMLElement {
+export interface CustomElement extends HTMLElement {
   /** @internal */
   _elementRef: {
     properties: ElementProperties
     render(): HTMLResult | null
   }
 
-  addEventListener<K extends keyof RevangeElementEventMap>(
+  addEventListener<K extends keyof CustomElementEventMap>(
     type: K,
-    listener: (this: RevangeElement, ev: RevangeElementEventMap[K]) => any,
+    listener: (this: CustomElement, ev: CustomElementEventMap[K]) => any,
     options?: boolean | AddEventListenerOptions
   ): void
 

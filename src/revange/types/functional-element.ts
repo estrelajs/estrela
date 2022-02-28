@@ -1,8 +1,8 @@
 import { HTMLResult } from '../template/html-result'
-import { RevangeElement } from './revange-element'
+import { CustomElement } from './custom-element'
 
 export interface FE {
-  (elementRef: RevangeElement): {
+  (elementRef: CustomElement): {
     (): HTMLResult | null
   }
 }

@@ -2,7 +2,7 @@ import morphdom from '../morphdom'
 import { EventEmitter } from '../observables/event_emitter'
 import { StateSubject } from '../observables/state_subject'
 import { html } from '../template/html-directive'
-import { RevangeElement } from '../types/revange-element'
+import { CustomElement } from '../types/custom-element'
 import { addEventListener } from '../utils/add-event-listener'
 import { HTMLResult } from './html-result'
 
@@ -31,7 +31,7 @@ interface HTMLRender {
 
 // TODO: allow prop binding for non Custom Element
 const bindProp = (el: Element, propName: string, value: any) => {
-  const prop = (el as RevangeElement)._elementRef.properties.props?.[propName]
+  const prop = (el as CustomElement)._elementRef.properties.props?.[propName]
   if (prop instanceof StateSubject) {
     prop.next(value)
   } else {
@@ -63,7 +63,7 @@ const htmlRender = (result: HTMLResult, args: any[] = []): HTMLRender => {
         const results = Array.isArray(arg) ? arg : [arg]
         return str + results.map(_arg => htmlRender(_arg, args).html).join('')
       }
-      let value = arg instanceof StateSubject ? arg.$ : arg
+      let value = typeof arg === 'function' ? arg() : arg
       value = String(value === false ? '' : value ?? '')
       const [isAttribute, hasQuotes] = /=(\")?$/.exec(str)?.values() ?? []
       if (!isAttribute) {
@@ -98,7 +98,7 @@ export function render(
       return attr ?? key ?? el.id
     },
     onBeforeElUpdated(fromEl, toEl) {
-      const requestRender = () => (fromEl as RevangeElement).requestRender?.()
+      const requestRender = () => (fromEl as CustomElement).requestRender?.()
       const elAttrs = ELEMENT_ATTRIBUTES.get(fromEl)
       if (!elAttrs) {
         return true
@@ -109,7 +109,7 @@ export function render(
 
         if (attr) {
           const arg = args[Number(attr?.value)]
-          const nextValue = arg instanceof StateSubject ? arg.$ : arg
+          const nextValue = typeof arg === 'function' ? arg() : arg
           const lastValue = bind.data
 
           if (nextValue !== lastValue) {
@@ -177,7 +177,7 @@ export function render(
         // bind props
         if (attr.name.startsWith(':')) {
           const arg = args[Number(attr.value)]
-          const value = arg instanceof StateSubject ? arg.$ : arg
+          const value = typeof arg === 'function' ? arg() : arg
           const propName = attr.name.slice(1)
           bindProp(el, propName, value)
           el.removeAttribute(attr.name)

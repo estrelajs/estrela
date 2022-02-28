@@ -8,7 +8,15 @@ const Counter: FE = () => {
 
 const App: FE = () => {
   const count = state(0)
+
+  // current value
+  console.log(count())
+
+  // value updater
   setInterval(() => count.update(value => ++value), 1000)
+
+  // value subscription
+  count.subscribe(console.log)
 
   const click = Array.from({ length: 10 }).map(
     (_, i) => () => console.log(`clicked on n${i}`)
@@ -16,8 +24,8 @@ const App: FE = () => {
 
   return () =>
     html`
-      <app-counter :count=${count}></app-counter>
-      <button on:click=${click[count.$ % 10]}>Click me!</button>
+      <app-counter :count=${count()}></app-counter>
+      <button on:click=${click[count() % 10]}>Click me!</button>
     `
 }
 

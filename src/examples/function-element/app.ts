@@ -32,9 +32,9 @@ const App: FE = () => {
     <h1>Example</h1>
     ${loading
       ? html`<i>loading...</i>`
-      : html`<div>Items: ${results.$.length}</div>`}
+      : html`<div>Items: ${results().length}</div>`}
     <div class="list">
-      ${results.$.map(
+      ${results().map(
         result =>
           html`
             <app-result
