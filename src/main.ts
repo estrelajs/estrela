@@ -1,2 +1,2 @@
-import './examples/counter/app'
-import './style.css'
+import './examples/counter/app';
+import './style.css';

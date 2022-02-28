@@ -1,31 +1,31 @@
-var range // Create a range object for efficently rendering strings to elements.
-var NS_XHTML = 'http://www.w3.org/1999/xhtml'
+var range; // Create a range object for efficently rendering strings to elements.
+var NS_XHTML = 'http://www.w3.org/1999/xhtml';
 
-export var doc = typeof document === 'undefined' ? undefined : document
-var HAS_TEMPLATE_SUPPORT = !!doc && 'content' in doc.createElement('template')
+export var doc = typeof document === 'undefined' ? undefined : document;
+var HAS_TEMPLATE_SUPPORT = !!doc && 'content' in doc.createElement('template');
 var HAS_RANGE_SUPPORT =
-  !!doc && doc.createRange && 'createContextualFragment' in doc.createRange()
+  !!doc && doc.createRange && 'createContextualFragment' in doc.createRange();
 
 function createFragmentFromTemplate(str) {
-  var template = doc.createElement('template')
-  template.innerHTML = str
-  return template.content.childNodes[0]
+  var template = doc.createElement('template');
+  template.innerHTML = str;
+  return template.content.childNodes[0];
 }
 
 function createFragmentFromRange(str) {
   if (!range) {
-    range = doc.createRange()
-    range.selectNode(doc.body)
+    range = doc.createRange();
+    range.selectNode(doc.body);
   }
 
-  var fragment = range.createContextualFragment(str)
-  return fragment.childNodes[0]
+  var fragment = range.createContextualFragment(str);
+  return fragment.childNodes[0];
 }
 
 function createFragmentFromWrap(str) {
-  var fragment = doc.createElement('body')
-  fragment.innerHTML = str
-  return fragment.childNodes[0]
+  var fragment = doc.createElement('body');
+  fragment.innerHTML = str;
+  return fragment.childNodes[0];
 }
 
 /**
@@ -37,17 +37,17 @@ function createFragmentFromWrap(str) {
  * @param {String} str
  */
 export function toElement(str) {
-  str = str.trim()
+  str = str.trim();
   if (HAS_TEMPLATE_SUPPORT) {
     // avoid restrictions on content for things like `<tr><th>Hi</th></tr>` which
     // createContextualFragment doesn't support
     // <template> support not available in IE
-    return createFragmentFromTemplate(str)
+    return createFragmentFromTemplate(str);
   } else if (HAS_RANGE_SUPPORT) {
-    return createFragmentFromRange(str)
+    return createFragmentFromRange(str);
   }
 
-  return createFragmentFromWrap(str)
+  return createFragmentFromWrap(str);
 }
 
 /**
@@ -61,16 +61,16 @@ export function toElement(str) {
  * @return {boolean}
  */
 export function compareNodeNames(fromEl, toEl) {
-  var fromNodeName = fromEl.nodeName
-  var toNodeName = toEl.nodeName
-  var fromCodeStart, toCodeStart
+  var fromNodeName = fromEl.nodeName;
+  var toNodeName = toEl.nodeName;
+  var fromCodeStart, toCodeStart;
 
   if (fromNodeName === toNodeName) {
-    return true
+    return true;
   }
 
-  fromCodeStart = fromNodeName.charCodeAt(0)
-  toCodeStart = toNodeName.charCodeAt(0)
+  fromCodeStart = fromNodeName.charCodeAt(0);
+  toCodeStart = toNodeName.charCodeAt(0);
 
   // If the target element is a virtual DOM node or SVG node then we may
   // need to normalize the tag name before comparing. Normal HTML elements that are
@@ -78,12 +78,12 @@ export function compareNodeNames(fromEl, toEl) {
   // are converted to upper case
   if (fromCodeStart <= 90 && toCodeStart >= 97) {
     // from is upper and to is lower
-    return fromNodeName === toNodeName.toUpperCase()
+    return fromNodeName === toNodeName.toUpperCase();
   } else if (toCodeStart <= 90 && fromCodeStart >= 97) {
     // to is upper and from is lower
-    return toNodeName === fromNodeName.toUpperCase()
+    return toNodeName === fromNodeName.toUpperCase();
   } else {
-    return false
+    return false;
   }
 }
 
@@ -99,18 +99,18 @@ export function compareNodeNames(fromEl, toEl) {
 export function createElementNS(name, namespaceURI) {
   return !namespaceURI || namespaceURI === NS_XHTML
     ? doc.createElement(name)
-    : doc.createElementNS(namespaceURI, name)
+    : doc.createElementNS(namespaceURI, name);
 }
 
 /**
  * Copies the children of one DOM element to another DOM element
  */
 export function moveChildren(fromEl, toEl) {
-  var curChild = fromEl.firstChild
+  var curChild = fromEl.firstChild;
   while (curChild) {
-    var nextChild = curChild.nextSibling
-    toEl.appendChild(curChild)
-    curChild = nextChild
+    var nextChild = curChild.nextSibling;
+    toEl.appendChild(curChild);
+    curChild = nextChild;
   }
-  return toEl
+  return toEl;
 }

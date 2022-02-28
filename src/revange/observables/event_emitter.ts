@@ -1,11 +1,11 @@
-import { PartialObserver, Subject, Subscription } from 'rxjs'
+import { PartialObserver, Subject, Subscription } from 'rxjs';
 
 export interface EventEmitter<T> extends Omit<Subject<T>, 'next'> {
   /**
    * Emits an event containing a given value.
    * @param value The value to emit.
    */
-  emit(value?: T): void
+  emit(value?: T): void;
 
   /**
    * Registers handlers for events emitted by this instance.
@@ -18,7 +18,7 @@ export interface EventEmitter<T> extends Omit<Subject<T>, 'next'> {
     next?: (value: T) => void,
     error?: (error: any) => void,
     complete?: () => void
-  ): Subscription
+  ): Subscription;
   /**
    * Registers handlers for events emitted by this instance.
    * @param observerOrNext When supplied, a custom handler for emitted events, or an observer
@@ -27,19 +27,19 @@ export interface EventEmitter<T> extends Omit<Subject<T>, 'next'> {
    * @param complete When supplied, a custom handler for a completion notification from this
    *     emitter.
    */
-  subscribe(observerOrNext?: any, error?: any, complete?: any): Subscription
+  subscribe(observerOrNext?: any, error?: any, complete?: any): Subscription;
 }
 
 class EventEmitter_ extends Subject<any> {
-  protected readonly __isAsync: boolean
+  protected readonly __isAsync: boolean;
 
   constructor(isAsync = false) {
-    super()
-    this.__isAsync = isAsync
+    super();
+    this.__isAsync = isAsync;
   }
 
   emit(value?: any) {
-    super.next(value)
+    super.next(value);
   }
 
   override subscribe(
@@ -47,26 +47,26 @@ class EventEmitter_ extends Subject<any> {
     error?: any,
     complete?: any
   ): Subscription {
-    let nextFn = observerOrNext
-    let errorFn = error || (() => null)
-    let completeFn = complete
+    let nextFn = observerOrNext;
+    let errorFn = error || (() => null);
+    let completeFn = complete;
 
     if (observerOrNext && typeof observerOrNext === 'object') {
-      const observer = observerOrNext as PartialObserver<unknown>
-      nextFn = observer.next?.bind(observer)
-      errorFn = observer.error?.bind(observer)
-      completeFn = observer.complete?.bind(observer)
+      const observer = observerOrNext as PartialObserver<unknown>;
+      nextFn = observer.next?.bind(observer);
+      errorFn = observer.error?.bind(observer);
+      completeFn = observer.complete?.bind(observer);
     }
 
     if (this.__isAsync) {
-      errorFn = _wrapInTimeout(errorFn)
+      errorFn = _wrapInTimeout(errorFn);
 
       if (nextFn) {
-        nextFn = _wrapInTimeout(nextFn)
+        nextFn = _wrapInTimeout(nextFn);
       }
 
       if (completeFn) {
-        completeFn = _wrapInTimeout(completeFn)
+        completeFn = _wrapInTimeout(completeFn);
       }
     }
 
@@ -74,24 +74,24 @@ class EventEmitter_ extends Subject<any> {
       next: nextFn,
       error: errorFn,
       complete: completeFn,
-    })
+    });
 
     if (observerOrNext instanceof Subscription) {
-      observerOrNext.add(sink)
+      observerOrNext.add(sink);
     }
 
-    return sink
+    return sink;
   }
 }
 
 function _wrapInTimeout(fn: (value: unknown) => any) {
   return (value: unknown) => {
-    setTimeout(fn, undefined, value)
-  }
+    setTimeout(fn, undefined, value);
+  };
 }
 
 export const EventEmitter: {
-  new (isAsync?: boolean): EventEmitter<any>
-  new <T>(isAsync?: boolean): EventEmitter<T>
-  readonly prototype: EventEmitter<any>
-} = EventEmitter_ as any
+  new (isAsync?: boolean): EventEmitter<any>;
+  new <T>(isAsync?: boolean): EventEmitter<T>;
+  readonly prototype: EventEmitter<any>;
+} = EventEmitter_ as any;

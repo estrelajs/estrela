@@ -1,4 +1,4 @@
-import { html } from '../../revange'
+import { html } from '../../revange';
 
 // Result "component"
 export const Result = ({ result, onRemove }: any) => html`
@@ -13,8 +13,8 @@ export const Result = ({ result, onRemove }: any) => html`
       children: `Remove ${Math.round(Math.random() * 1000)}`,
     })}
   </div>
-`
+`;
 
 const Button = ({ onClick, children }: any) => html`
   <button on:click=${onClick}>${children}</button>
-`
+`;

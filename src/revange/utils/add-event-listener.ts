@@ -1,4 +1,4 @@
-import { Subject } from 'rxjs'
+import { Subject } from 'rxjs';
 
 export function addEventListener(
   element: Element,
@@ -6,14 +6,14 @@ export function addEventListener(
   listener: Function | Subject<unknown>
 ): () => void {
   const hook = (event: unknown) => {
-    const data = event instanceof CustomEvent ? event.detail : event
+    const data = event instanceof CustomEvent ? event.detail : event;
     if ((listener as any).next) {
-      ;(listener as any).next(data)
+      (listener as any).next(data);
     }
     if (typeof listener === 'function') {
-      listener(data)
+      listener(data);
     }
-  }
-  element.addEventListener(event, hook)
-  return () => element.removeEventListener(event, hook)
+  };
+  element.addEventListener(event, hook);
+  return () => element.removeEventListener(event, hook);
 }
