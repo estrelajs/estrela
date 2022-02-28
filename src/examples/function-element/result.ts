@@ -3,13 +3,13 @@ import {
   emitter,
   FE,
   html,
-  prop,
   setProperties,
+  state,
 } from '../../revange';
 
 // Result "component"
 const Result: FE = element => {
-  const result = prop<any>();
+  const result = state<any>();
   const remove = emitter<any>();
 
   setProperties({

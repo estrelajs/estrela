@@ -3,6 +3,7 @@ import { HTMLResult } from '../template/html-result';
 
 interface CustomElementEventMap extends HTMLElementEventMap {
   destroy: Event;
+  init: Event;
   prerender: Event;
   postrender: Event;
 }

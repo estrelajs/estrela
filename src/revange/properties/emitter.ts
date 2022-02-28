@@ -1,3 +1,5 @@
 import { EventEmitter } from '../observables/event_emitter';
 
-export const emitter = <T>(isAsync?: boolean) => new EventEmitter<T>(isAsync);
+export function emitter<T>(isAsync?: boolean) {
+  return new EventEmitter<T>(isAsync);
+}

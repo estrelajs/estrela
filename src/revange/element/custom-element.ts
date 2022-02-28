@@ -1,5 +1,5 @@
 import { merge, Subscription } from 'rxjs';
-import { REVANGE_STATES } from '..';
+import { ELEMENT_STATES } from '..';
 import { EventEmitter } from '../observables/event_emitter';
 import { HTMLResult } from '../template/html-result';
 import { render } from '../template/render';
@@ -15,16 +15,17 @@ export function defineElement(name: string, element: FE) {
       render(): HTMLResult | null;
     };
 
+    private _initiated = false;
     private _requestedRender = false;
     private readonly _subscriptions = new Subscription();
 
     constructor() {
       super();
 
-      REVANGE_STATES.clear();
+      ELEMENT_STATES.clear();
       const render = element(this);
       const properties = {
-        state: Array.from(REVANGE_STATES.values()),
+        state: Array.from(ELEMENT_STATES.values()),
         ...REVANGE_PROPERTIES.properties,
       };
       this._elementRef = {
@@ -61,8 +62,8 @@ export function defineElement(name: string, element: FE) {
     }
 
     disconnectedCallback(): void {
-      this._subscriptions.unsubscribe();
       this.dispatchEvent(new Event('destroy'));
+      this._subscriptions.unsubscribe();
     }
 
     requestRender(): void {
@@ -76,6 +77,10 @@ export function defineElement(name: string, element: FE) {
     }
 
     private _render(): void {
+      if (!this._initiated) {
+        this.dispatchEvent(new Event('init'));
+        this._initiated = true;
+      }
       this.dispatchEvent(new Event('prerender'));
       render(this._elementRef.render(), this.shadowRoot!);
       this.dispatchEvent(new Event('postrender'));

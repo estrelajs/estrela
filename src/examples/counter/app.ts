@@ -1,7 +1,7 @@
-import { defineElement, FE, html, prop, setProperties, state } from '../../revange';
+import { defineElement, FE, html, setProperties, state } from '../../revange';
 
 const Counter: FE = () => {
-  const count = prop<number>();
+  const count = state<number>();
   setProperties({ props: { count } });
   return () => html`<div>Count is ${count}</div>`;
 };
