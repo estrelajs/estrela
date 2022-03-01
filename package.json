@@ -17,7 +17,7 @@
     "dist"
   ],
   "scripts": {
-    "dev": "vite",
+    "dev": "cd examples && vite",
     "build": "rimraf -rf dist && rollup -c rollup.config.js",
     "publish": "cd dist && npm publish",
     "release": "yarn build && yarn publish"
