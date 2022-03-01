@@ -1,7 +1,6 @@
 import morphdom from '../morphdom';
 import { EventEmitter } from '../observables/event_emitter';
 import { StateSubject } from '../observables/state_subject';
-import { html } from '../template/html-directive';
 import { CustomElement } from '../types/custom-element';
 import { addEventListener } from '../utils/add-event-listener';
 import { HTMLResult } from './html-result';
@@ -36,22 +35,28 @@ const bindProp = (el: Element, propName: string, value: any) => {
   }
 };
 
-const getResult = (template: string | HTMLResult): HTMLResult => {
-  return typeof template === 'string' ? html`${template}` : template;
-};
-
 const ELEMENT_ATTRIBUTES = new Map<Element, AttrBind[]>();
 const ELEMENT_KEYS = new Map<Element, string>();
 
 export function render(
   template: string | HTMLResult | null,
   element: HTMLElement | DocumentFragment
-) {
+): void | ((element: HTMLElement | DocumentFragment) => void) {
   if (template === null) return;
-  const { html, args } = getResult(template).render();
+  const { html, args } = HTMLResult.create(template).render();
+  const root = document.createElement('div');
+  root.innerHTML = html;
+
+  // apply virtual logics
+  args.forEach((arg, i) => {
+    if (typeof arg === 'function') {
+      const virtualEl = root.querySelector(`[_virtual-${i}]`);
+      arg(virtualEl);
+    }
+  });
 
   // patch changes
-  morphdom(element, `<div>${html}</div`, {
+  morphdom(element, root, {
     childrenOnly: true,
     getNodeKey(node) {
       const el = node as Element;

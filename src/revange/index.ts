@@ -1,3 +1,4 @@
+export * from './directives';
 export * from './element';
 export * from './properties';
 export * from './template';

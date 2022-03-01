@@ -30,6 +30,9 @@ export class HTMLResult {
                 content = coerceArray<HTMLResult>(arg)
                   .map(result => result.render(args).html)
                   .join('');
+              } else if (typeof arg === 'function') {
+                const index = args.push(arg) - 1;
+                content = `<div _virtual-${index}></div>`;
               } else {
                 const [isAttribute, hasQuotes] = /=(\")?$/.exec(acc)?.values() ?? [];
                 const value = arg instanceof StateSubject ? arg() : arg;
@@ -44,5 +47,11 @@ export class HTMLResult {
             }, this.template[0])
             .trim();
     return { html, args };
+  }
+
+  static create(template: string | HTMLResult): HTMLResult {
+    return typeof template === 'string'
+      ? new HTMLResult([template] as any, [])
+      : template;
   }
 }
