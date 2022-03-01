@@ -34,7 +34,9 @@ export class HTMLResult {
                 const index = args.push(arg) - 1;
                 content = `<div _virtual-${index}></div>`;
               } else {
-                const [isAttribute, hasQuotes] = /=(\")?$/.exec(acc)?.values() ?? [];
+                const [isAttribute, hasQuotes] = Array.from(
+                  /=(\")?$/.exec(acc)?.values() ?? []
+                );
                 const value = arg instanceof StateSubject ? arg() : arg;
                 content = String(value === false ? '' : value ?? '');
                 if (!isAttribute) {

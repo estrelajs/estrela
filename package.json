@@ -1,18 +1,41 @@
 {
   "name": "estrela",
-  "version": "0.0.0",
+  "version": "0.1.1",
   "description": "Yet another js framework inspired by Lit.",
   "author": "Eduardo Rosostolato",
+  "license": "MIT",
+  "repository": {
+    "url": "https://github.com/estrelajs/estrela"
+  },
+  "bugs": {
+    "url": "https://github.com/estrelajs/estrela/issues"
+  },
+  "main": "dist/index.js",
+  "module": "dist/index.es.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "build": "rimraf -rf dist && rollup -c rollup.config.js",
+    "publish": "cd dist && npm publish",
+    "release": "yarn build && yarn publish"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^21.0.2",
+    "@rollup/plugin-node-resolve": "^13.1.3",
+    "rimraf": "^3.0.2",
+    "rollup": "^2.68.0",
+    "rollup-plugin-copy": "^3.4.0",
+    "rollup-plugin-peer-deps-external": "^2.2.4",
+    "rollup-plugin-terser": "^7.0.2",
+    "rollup-plugin-typescript2": "^0.31.2",
+    "rxjs": "^7.5.4",
     "typescript": "^4.5.4",
     "vite": "^2.8.0"
   },
-  "dependencies": {
+  "peerDependencies": {
     "rxjs": "^7.5.4"
   }
 }
