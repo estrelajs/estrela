@@ -1,7 +1,8 @@
 {
-  "name": "revange",
-  "private": true,
+  "name": "estrela",
   "version": "0.0.0",
+  "description": "Yet another js framework inspired by Lit.",
+  "author": "Eduardo Rosostolato",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
