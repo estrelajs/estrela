@@ -6,7 +6,7 @@ import {
   html,
   setProperties,
   state,
-} from '../../revange';
+} from '@estrela';
 
 // Result "component"
 const Result: Fel = element => {

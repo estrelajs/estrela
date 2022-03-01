@@ -1,4 +1,4 @@
-import { defineElement, Fel, html, setProperties, state } from '../../revange';
+import { defineElement, Fel, html, setProperties, state } from '@estrela';
 
 const Counter: Fel = () => {
   const count = state<number>();

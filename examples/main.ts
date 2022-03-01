@@ -1,4 +1,4 @@
-import { hAsync, hIf, html, render } from './revange';
+import { hAsync, hIf, html, render } from '@estrela';
 import './style.css';
 
 const promise = new Promise(r => setTimeout(r, 2000)).then(

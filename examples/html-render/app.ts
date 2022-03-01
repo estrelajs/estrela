@@ -1,4 +1,4 @@
-import { html, render, state } from '../../revange';
+import { html, render, state } from '@estrela';
 import { Result } from './result';
 
 const GITHUB_API = '//api.github.com/search/repositories';

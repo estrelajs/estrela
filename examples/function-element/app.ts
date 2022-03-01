@@ -1,4 +1,4 @@
-import { css, defineElement, Fel, html, setProperties, state } from '../../revange';
+import { css, defineElement, Fel, html, setProperties, state } from '@estrela';
 
 const GITHUB_API = '//api.github.com/search/repositories';
 
