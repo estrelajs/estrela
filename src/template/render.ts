@@ -1,6 +1,7 @@
 import morphdom from '../morphdom';
 import { EventEmitter } from '../observables/event_emitter';
 import { StateSubject } from '../observables/state_subject';
+import { HTMLTemplate } from '../types';
 import { CustomElement } from '../types/custom-element';
 import { addEventListener } from '../utils/add-event-listener';
 import { HTMLResult } from './html-result';
@@ -23,6 +24,9 @@ type AttrBind =
       type: 'ref';
     };
 
+const ELEMENT_ATTRIBUTES = new Map<Element, AttrBind[]>();
+const ELEMENT_KEYS = new Map<Element, string>();
+
 // TODO: allow prop binding for non Custom Element
 const bindProp = (el: Element, propName: string, value: any) => {
   const prop = (el as CustomElement)._elementRef.properties.props?.[propName];
@@ -35,11 +39,8 @@ const bindProp = (el: Element, propName: string, value: any) => {
   }
 };
 
-const ELEMENT_ATTRIBUTES = new Map<Element, AttrBind[]>();
-const ELEMENT_KEYS = new Map<Element, string>();
-
 export function render(
-  template: string | HTMLResult | null,
+  template: HTMLTemplate | null,
   element: HTMLElement | DocumentFragment
 ): void | ((element: HTMLElement | DocumentFragment) => void) {
   if (template === null) return;

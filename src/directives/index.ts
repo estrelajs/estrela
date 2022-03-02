@@ -1,3 +1,3 @@
-export * from './h-async';
-export * from './h-if';
+export * from './async-render';
 export * from './html-directive';
+export * from './when';

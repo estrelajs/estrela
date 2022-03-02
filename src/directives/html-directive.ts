@@ -1,11 +1,11 @@
-import { HTMLResult, render } from '../template';
+import { render } from '../template';
+import { HTMLTemplate } from '../types';
 
-interface DirectiveCallbackParams {
-  clear(): void;
-  render(content: HTMLResult | string): void;
+interface DirectiveCallback {
+  (render: (content: HTMLTemplate) => void, clear: () => void): void;
 }
 
-export function htmlDirective(cb: (params: DirectiveCallbackParams) => void) {
+export function htmlDirective(cb: DirectiveCallback) {
   return (virtualEl: HTMLDivElement) => {
     const div = document.createElement('div');
     const commentStart = document.createComment('');
@@ -21,7 +21,7 @@ export function htmlDirective(cb: (params: DirectiveCallbackParams) => void) {
       }
     };
 
-    const _render = (content: HTMLResult | string) => {
+    const _render = (content: HTMLTemplate) => {
       _clear();
       render(content, div);
       div.childNodes.forEach(node =>
@@ -29,6 +29,6 @@ export function htmlDirective(cb: (params: DirectiveCallbackParams) => void) {
       );
     };
 
-    cb({ clear: _clear, render: _render });
+    cb(_render, _clear);
   };
 }
