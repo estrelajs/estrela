@@ -34,7 +34,10 @@ export class HTMLResult {
                 content = coerceArray<HTMLResult>(arg)
                   .map(result => result.render(args).html)
                   .join('');
-              } else if (typeof arg === 'function') {
+              } else if (
+                !(arg instanceof StateSubject) &&
+                typeof arg === 'function'
+              ) {
                 const index = args.push(arg) - 1;
                 content = `<div _virtual-${index}></div>`;
               } else {

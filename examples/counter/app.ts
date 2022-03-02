@@ -2,6 +2,9 @@ import { defineElement, Fel, html, setProperties, state } from '@estrela';
 
 const Counter: Fel = () => {
   const count = state<number>();
+
+  // value subscription
+  count.subscribe(console.log);
   setProperties({ props: { count } });
   return () => html`<div>Count is ${count}</div>`;
 };
@@ -14,9 +17,6 @@ const App: Fel = () => {
 
   // value updater
   setInterval(() => count.update(value => ++value), 1000);
-
-  // value subscription
-  count.subscribe(console.log);
 
   return () => html`<app-counter :count=${count()}></app-counter>`;
 };
