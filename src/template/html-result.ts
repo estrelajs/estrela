@@ -2,11 +2,6 @@ import { StateSubject } from '../observables/state_subject';
 import { HTMLTemplate } from '../types';
 import { coerceArray } from '../utils/coerce-array';
 
-export interface HTMLRender {
-  html: string;
-  args: any[];
-}
-
 export class HTMLResult {
   constructor(
     public readonly template: TemplateStringsArray,
@@ -14,7 +9,7 @@ export class HTMLResult {
   ) {}
 
   // TODO: add custom class and style binding
-  render(args: any[] = []): HTMLRender {
+  render(args: any[]): string {
     const html =
       this.template.length === 1
         ? this.template[0]
@@ -31,8 +26,8 @@ export class HTMLResult {
               (Array.isArray(arg) && arg[0] instanceof HTMLResult)
             ) {
               content = coerceArray<HTMLResult>(arg)
-                .map(result => result.render(args).html)
-                .join('');
+                .map(result => result.render(args))
+                .join();
             } else if (!(arg instanceof StateSubject) && typeof arg === 'function') {
               const index = args.push(arg) - 1;
               content = `<template id="_${index}"></template>`;
@@ -42,7 +37,7 @@ export class HTMLResult {
               );
               let value = arg instanceof StateSubject ? arg() : arg;
               if (Array.isArray(value)) {
-                value = value.join('');
+                value = value.join();
               }
               if (value === false) {
                 value = '';
@@ -57,7 +52,7 @@ export class HTMLResult {
             }
             return acc + content + this.template[idx + 1];
           }, this.template[0]);
-    return { html, args };
+    return html;
   }
 
   static create(template: HTMLTemplate): HTMLResult {

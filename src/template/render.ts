@@ -3,6 +3,7 @@ import { EventEmitter } from '../observables/event_emitter';
 import { StateSubject } from '../observables/state_subject';
 import { HTMLTemplate } from '../types';
 import { CustomElement } from '../types/custom-element';
+import { coerceArray } from '../utils';
 import { addEventListener } from '../utils/add-event-listener';
 import { HTMLResult } from './html-result';
 
@@ -76,11 +77,13 @@ const getHooks = (element: any) => {
 };
 
 export function render(
-  template: HTMLTemplate | null,
+  template: HTMLTemplate | HTMLTemplate[] | null | undefined,
   element: HTMLElement | DocumentFragment
 ): void | ((element: HTMLElement | DocumentFragment) => void) {
-  if (template === null) return;
-  const { html, args } = HTMLResult.create(template).render();
+  const args: any[] = [];
+  const html = coerceArray(template)
+    .map(item => HTMLResult.create(item).render(args))
+    .join();
   const root = toElement(`<div>${html}</div>`) as HTMLElement;
   const hooks = getHooks(element);
 

@@ -1,9 +1,9 @@
-import { DirectiveCallback } from '../types';
+import { DirectiveCallback, HTMLTemplate } from '../types';
 
-export function when<T>(
+export function when(
   condition: boolean,
-  truthy: T,
-  falsy?: T
-): DirectiveCallback<T> {
+  truthy: HTMLTemplate,
+  falsy?: HTMLTemplate
+): DirectiveCallback {
   return renderContent => renderContent(condition ? truthy : falsy);
 }
