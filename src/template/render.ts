@@ -1,4 +1,4 @@
-import morphdom from '../morphdom';
+import { morphdom, toElement } from '../morphdom';
 import { EventEmitter } from '../observables/event_emitter';
 import { StateSubject } from '../observables/state_subject';
 import { HTMLTemplate } from '../types';
@@ -45,8 +45,7 @@ export function render(
 ): void | ((element: HTMLElement | DocumentFragment) => void) {
   if (template === null) return;
   const { html, args } = HTMLResult.create(template).render();
-  const root = document.createElement('div');
-  root.innerHTML = html;
+  const root = toElement(`<div>${html}</div>`) as HTMLElement;
 
   // apply virtual logics
   args.forEach((arg, i) => {

@@ -1,42 +1,38 @@
-var range; // Create a range object for efficently rendering strings to elements.
-var NS_XHTML = 'http://www.w3.org/1999/xhtml';
+var range: Range; // Create a range object for efficently rendering strings to elements.
+const NS_XHTML = 'http://www.w3.org/1999/xhtml';
 
-export var doc = typeof document === 'undefined' ? undefined : document;
-var HAS_TEMPLATE_SUPPORT = !!doc && 'content' in doc.createElement('template');
-var HAS_RANGE_SUPPORT =
-  !!doc && doc.createRange && 'createContextualFragment' in doc.createRange();
+export const doc = typeof document === 'undefined' ? undefined : document;
+const HAS_TEMPLATE_SUPPORT = !!doc && 'content' in doc.createElement('template');
+const HAS_RANGE_SUPPORT = !!doc && 'createContextualFragment' in doc.createRange?.();
 
-function createFragmentFromTemplate(str) {
-  var template = doc.createElement('template');
+function createFragmentFromTemplate(str: string): ChildNode {
+  var template = document.createElement('template');
   template.innerHTML = str;
   return template.content.childNodes[0];
 }
 
-function createFragmentFromRange(str) {
+function createFragmentFromRange(str: string): ChildNode {
   if (!range) {
-    range = doc.createRange();
-    range.selectNode(doc.body);
+    range = document.createRange();
+    range.selectNode(document.body);
   }
 
   var fragment = range.createContextualFragment(str);
   return fragment.childNodes[0];
 }
 
-function createFragmentFromWrap(str) {
-  var fragment = doc.createElement('body');
+function createFragmentFromWrap(str: string): ChildNode {
+  var fragment = document.createElement('body');
   fragment.innerHTML = str;
   return fragment.childNodes[0];
 }
 
 /**
  * This is about the same
- * var html = new DOMParser().parseFromString(str, 'text/html');
+ * var html = new DOMParser().parseFromString(str: string, 'text/html');
  * return html.body.firstChild;
- *
- * @method toElement
- * @param {String} str
  */
-export function toElement(str) {
+export function toElement(str: string): ChildNode {
   str = str.trim();
   if (HAS_TEMPLATE_SUPPORT) {
     // avoid restrictions on content for things like `<tr><th>Hi</th></tr>` which
@@ -55,12 +51,8 @@ export function toElement(str) {
  *
  * NOTE: We don't bother checking `namespaceURI` because you will never find two HTML elements with the same
  *       nodeName and different namespace URIs.
- *
- * @param {Element} a
- * @param {Element} b The target element
- * @return {boolean}
  */
-export function compareNodeNames(fromEl, toEl) {
+export function compareNodeNames(fromEl: Element, toEl: Element): boolean {
   var fromNodeName = fromEl.nodeName;
   var toNodeName = toEl.nodeName;
   var fromCodeStart, toCodeStart;
@@ -93,19 +85,17 @@ export function compareNodeNames(fromEl, toEl) {
  * @param {string} name the element name, e.g. 'div' or 'svg'
  * @param {string} [namespaceURI] the element's namespace URI, i.e. the value of
  * its `xmlns` attribute or its inferred namespace.
- *
- * @return {Element}
  */
-export function createElementNS(name, namespaceURI) {
+export function createElementNS(name: string, namespaceURI: string): Element {
   return !namespaceURI || namespaceURI === NS_XHTML
-    ? doc.createElement(name)
-    : doc.createElementNS(namespaceURI, name);
+    ? document.createElement(name)
+    : document.createElementNS(namespaceURI, name);
 }
 
 /**
  * Copies the children of one DOM element to another DOM element
  */
-export function moveChildren(fromEl, toEl) {
+export function moveChildren(fromEl: Element, toEl: Element): Element {
   var curChild = fromEl.firstChild;
   while (curChild) {
     var nextChild = curChild.nextSibling;

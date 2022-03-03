@@ -22,19 +22,17 @@ const Result: Fel = element => {
     console.log('element destroyed', this);
   });
 
-  return () => {
-    return html`
-      <div>
-        <a href=${result().html_url} target="_blank"> ${result().full_name} </a>
-        🌟<strong>${result().stargazers_count}</strong>
-      </div>
-      <p>${result().description}</p>
-      ${Button({
-        onClick: () => remove.emit(result()),
-        children: 'Remove',
-      })}
-    `;
-  };
+  return () => html`
+    <div>
+      <a href=${result().html_url} target="_blank"> ${result().full_name} </a>
+      🌟<strong>${result().stargazers_count}</strong>
+    </div>
+    <p>${result().description}</p>
+    ${Button({
+      onClick: () => remove.emit(result()),
+      children: 'Remove',
+    })}
+  `;
 };
 
 const Button = ({ onClick, children }: any) => html`

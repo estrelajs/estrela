@@ -7,7 +7,6 @@ interface DirectiveCallback {
 
 export function htmlDirective(cb: DirectiveCallback) {
   return (virtualEl: HTMLDivElement) => {
-    const div = document.createElement('div');
     const commentStart = document.createComment('');
     const commentEnd = document.createComment('');
     virtualEl.replaceWith(commentStart, commentEnd);
@@ -22,9 +21,10 @@ export function htmlDirective(cb: DirectiveCallback) {
     };
 
     const _render = (content: HTMLTemplate) => {
+      const template = document.createElement('template');
       _clear();
-      render(content, div);
-      div.childNodes.forEach(node =>
+      render(content, template);
+      template.childNodes.forEach(node =>
         commentStart.parentNode?.insertBefore(node, commentEnd)
       );
     };

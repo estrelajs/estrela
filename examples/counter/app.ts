@@ -1,19 +1,25 @@
-import { defineElement, Fel, html, setProperties, state } from '@estrela';
+import {
+  asyncRender,
+  defineElement,
+  Fel,
+  html,
+  setProperties,
+  state,
+} from '@estrela';
+import { map } from 'rxjs';
 
 const Counter: Fel = () => {
   const count = state<number>();
 
-  // value subscription
-  count.subscribe(console.log);
   setProperties({ props: { count } });
-  return () => html`<div>Count is ${count}</div>`;
+
+  const doubleCount$ = count.pipe(map(value => String(2 * (value ?? 0))));
+
+  return () => html`<div>Count is ${asyncRender(doubleCount$)}</div>`;
 };
 
 const App: Fel = () => {
   const count = state(0);
-
-  // current value
-  console.log(count());
 
   // value updater
   setInterval(() => count.update(value => ++value), 1000);

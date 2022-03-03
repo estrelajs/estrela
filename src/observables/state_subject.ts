@@ -21,26 +21,26 @@ class StateSubject_ extends Subject<any> {
   constructor(private _value: any) {
     super();
 
-    const _this: any = function () {
-      const { hasError, thrownError, _value } = _this;
+    const valueGetter: any = function () {
+      const { hasError, thrownError, _value } = valueGetter;
       if (hasError) {
         throw thrownError;
       }
-      _this._throwIfClosed();
+      valueGetter._throwIfClosed();
       return _value;
     };
 
     const proto = Object.getPrototypeOf(this);
     Object.assign(proto, {
-      apply: _this.apply,
-      bind: _this.bind,
-      call: _this.call,
-      toString: _this.toString,
+      apply: valueGetter.apply,
+      bind: valueGetter.bind,
+      call: valueGetter.call,
+      toString: valueGetter.toString,
     });
-    Object.setPrototypeOf(_this, proto);
-    Object.assign(_this, this);
+    Object.setPrototypeOf(valueGetter, proto);
+    Object.assign(valueGetter, this);
 
-    return _this;
+    return valueGetter;
   }
 
   next(value: any): void {
