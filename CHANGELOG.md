@@ -7,8 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.2.0] - Directives - 2022/02/03
 ### Added
 - Experimental template directives.
-- AsyncRender directive.
 - AsyncMap directive.
+- AsyncRender directive.
+- SwitchRender directive.
 - When directive.
 
 ## [0.1.1] - First Release - 2022/02/01
