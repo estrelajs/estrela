@@ -1,34 +1,40 @@
-import { isObservable, Observable } from 'rxjs';
-import { HTMLTemplate } from '../types';
-import { htmlDirective } from './html-directive';
+import { catchError, isObservable, Observable, of } from 'rxjs';
+import { DirectiveCallback } from '../types';
 
-export function asyncRender(
-  defered: Observable<HTMLTemplate>
-): (virtualEl: HTMLDivElement) => void;
-export function asyncRender(
-  defered: Promise<HTMLTemplate>,
-  until?: HTMLTemplate,
-  onerror?: HTMLTemplate
-): (virtualEl: HTMLDivElement) => void;
-export function asyncRender(
-  defered: Promise<HTMLTemplate> | Observable<HTMLTemplate>,
-  until?: HTMLTemplate,
-  onerror?: HTMLTemplate
-): (virtualEl: HTMLDivElement) => void {
-  return htmlDirective(render => {
-    if (isObservable(defered)) {
-      defered.subscribe(result => render(result));
-    } else {
-      if (until) {
-        render(until);
+export function asyncRender<T>(
+  defered: Promise<T> | Observable<T>,
+  until?: T,
+  onerror?: T
+): DirectiveCallback<T> {
+  return (renderContent, { useEffect, useState }) => {
+    const [result, setResult] = useState(until);
+    const next = (content: T | undefined) => {
+      setResult(content);
+      renderContent(content);
+    };
+
+    // render content in state
+    next(result);
+
+    useEffect(() => {
+      // Observable like
+      if (isObservable(defered)) {
+        const subscription = defered
+          .pipe(catchError(() => of(onerror)))
+          .subscribe(next);
+        return () => subscription.unsubscribe();
       }
+
+      // Promise like
+      let canceled = false;
       defered
-        .then(result => render(result))
-        .catch(() => {
-          if (onerror) {
-            render(onerror);
+        .catch(() => onerror)
+        .then(content => {
+          if (!canceled) {
+            next(content);
           }
         });
-    }
-  });
+      return () => (canceled = true);
+    }, [defered]);
+  };
 }

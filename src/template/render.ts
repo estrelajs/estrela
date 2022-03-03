@@ -39,6 +39,42 @@ const bindProp = (el: Element, propName: string, value: any) => {
   }
 };
 
+const getHooks = (element: any) => {
+  const hooks = (element._hooks ??= {});
+  hooks.effect ??= {};
+  hooks.state ??= [];
+  hooks.index = 0;
+
+  const useState = (initialValue: any) => {
+    const cachedIndex = hooks.index;
+    if (!hooks.state[cachedIndex]) {
+      hooks.state[cachedIndex] = initialValue;
+    }
+    const state = hooks.state[cachedIndex];
+    const setter = (newValue: any) => {
+      hooks.state[cachedIndex] = newValue;
+    };
+    hooks.index++;
+    return [state, setter];
+  };
+
+  const useEffect = (callback: () => void | (() => void), dependencies: any[]) => {
+    const cachedIndex = hooks.index;
+    const hasChanged = dependencies.some(
+      (dep, i) => dep !== hooks.state[cachedIndex]?.[i]
+    );
+    if (dependencies === undefined || hasChanged) {
+      hooks.effect[cachedIndex]?.();
+      const effect = callback();
+      hooks.effect[cachedIndex] = effect;
+      hooks.state[cachedIndex] = dependencies;
+    }
+    hooks.index++;
+  };
+
+  return { useState, useEffect };
+};
+
 export function render(
   template: HTMLTemplate | null,
   element: HTMLElement | DocumentFragment
@@ -46,12 +82,41 @@ export function render(
   if (template === null) return;
   const { html, args } = HTMLResult.create(template).render();
   const root = toElement(`<div>${html}</div>`) as HTMLElement;
+  const hooks = getHooks(element);
 
-  // apply virtual logics
+  // directive bind
   args.forEach((arg, i) => {
     if (typeof arg === 'function') {
-      const virtualEl = root.querySelector(`[_virtual-${i}]`);
-      arg(virtualEl);
+      const template = root.querySelector(`template#_${i}`);
+      const startRef = document.createComment('');
+      const endRef = document.createComment('');
+      template?.replaceWith(startRef, endRef);
+
+      const renderContent = (content: any) => {
+        const parent = startRef.parentElement;
+        const template = document.createElement('template');
+        if (content !== null && content !== undefined) {
+          render(content, template);
+        }
+
+        if (parent) {
+          const clone = parent.cloneNode(true);
+          const parentChildren = Array.from(parent.childNodes);
+          const startIndex = parentChildren.indexOf(startRef);
+          const endIndex = parentChildren.indexOf(endRef);
+
+          Array.from(clone.childNodes)
+            .slice(startIndex + 1, endIndex)
+            .forEach(node => node.remove());
+
+          template.childNodes.forEach((node, i) =>
+            clone.insertBefore(node, clone.childNodes.item(startIndex + i + 1))
+          );
+          morphdom(parent, clone, { childrenOnly: true });
+        }
+      };
+
+      arg(renderContent, hooks);
     }
   });
 

@@ -35,7 +35,7 @@ export class HTMLResult {
                 .join('');
             } else if (!(arg instanceof StateSubject) && typeof arg === 'function') {
               const index = args.push(arg) - 1;
-              content = `<div _virtual-${index}></div>`;
+              content = `<template id="_${index}"></template>`;
             } else {
               const [isAttribute, hasQuotes] = Array.from(
                 /=(\")?$/.exec(acc)?.values() ?? []
@@ -61,8 +61,8 @@ export class HTMLResult {
   }
 
   static create(template: HTMLTemplate): HTMLResult {
-    return typeof template === 'string'
-      ? new HTMLResult([template] as any, [])
-      : template;
+    return template instanceof HTMLResult
+      ? template
+      : new HTMLResult([String(template)] as any, []);
   }
 }
