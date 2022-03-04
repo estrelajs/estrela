@@ -10,7 +10,7 @@ For reactivity, Estrela extends RxJs observables to create the state of your com
 
 ### Documentation
 
-Coming soon. For now, checkout the examples below.
+Head over to [https://estrelajs.gitbook.io/estrela/](https://estrelajs.gitbook.io/estrela/).
 
 ### Installation
 
@@ -62,7 +62,7 @@ Estrela takes advantages of web components. To define your custom element, you n
 ```ts
 // app.ts
 
-const App: Fel = () => {
+const App = () => {
   const name = 'World';
   const onclick = () => console.log('clicked');
 
@@ -92,9 +92,9 @@ States are the main concept of Estrela. Every local state, input and output prop
 A `StateSubject` instance is a function that returns the current state value when it's called. Although, it still contains all the RxJs `Subject` methods, so you can still change it by calling `next()` or even the new `update()` method.
 
 ```ts
-import { defineElement, Fel, html, setProperties, state } from 'estrela';
+import { defineElement, html, setProperties, state } from 'estrela';
 
-const App: Fel = () => {
+const App = () => {
   // Count value state. Initial value = 0.
   const count = state(0);
 
@@ -115,7 +115,7 @@ const App: Fel = () => {
   return () => html`<app-counter :count=${count()}></app-counter>`;
 };
 
-const Counter: Fel = () => {
+const Counter = () => {
   // Define a count state. (Initial value is optional)
   const count = state<number>();
 
@@ -133,7 +133,7 @@ defineElement('app-counter', Counter);
 defineElement('app-root', App);
 ```
 
-More examples coming soon...
+Check more examples on [docs](https://estrelajs.gitbook.io/estrela/).
 
 ## Contributing
 
