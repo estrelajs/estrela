@@ -30,7 +30,7 @@ export class HTMLResult {
                 .join();
             } else if (!(arg instanceof StateSubject) && typeof arg === 'function') {
               const index = args.push(arg) - 1;
-              content = `<template id="_${index}"></template>`;
+              content = `<template _stTemplate id="${index}"></template>`;
             } else {
               const [isAttribute, hasQuotes] = Array.from(
                 /=(\")?$/.exec(acc)?.values() ?? []

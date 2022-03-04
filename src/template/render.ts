@@ -80,6 +80,11 @@ export function render(
   template: HTMLTemplate | HTMLTemplate[] | null | undefined,
   element: HTMLElement | DocumentFragment
 ): void | ((element: HTMLElement | DocumentFragment) => void) {
+  if (!element) {
+    console.error('Could not render template! Element is undefined.');
+    return;
+  }
+
   const args: any[] = [];
   const html = coerceArray(template)
     .map(item => HTMLResult.create(item).render(args))
@@ -88,9 +93,9 @@ export function render(
   const hooks = getHooks(element);
 
   // directive bind
-  args.forEach((arg, i) => {
+  Array.from(root.querySelectorAll('template[_stTemplate]')).forEach(template => {
+    const arg = args[Number(template.id)];
     if (typeof arg === 'function') {
-      const template = root.querySelector(`template#_${i}`);
       const startRef = document.createComment('');
       const endRef = document.createComment('');
       template?.replaceWith(startRef, endRef);
