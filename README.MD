@@ -10,89 +10,27 @@ For reactivity, Estrela extends RxJs observables to create the state of your com
 
 ### Documentation
 
-Head over to [https://estrelajs.gitbook.io/estrela/](https://estrelajs.gitbook.io/estrela/).
+Head over to [estrelajs.gitbook.io](https://estrelajs.gitbook.io/estrela/)
 
 ### Installation
 
-To install from npm:
+To install:
 
 ```
-npm i estrela
-```
+# npm
+npm install --save estrela
 
-And from yarn:
-
-```
+# yarn
 yard add estrela
 ```
 
-## Examples
+## Example
 
-### DOM Render
+Estrela takes advantage of web components. To define your custom element, you need to provide a class/function with a render function. Functional Elements will be called just once, so there's no need for hooks. You can just declare your variables and use them.
 
-Just like other frameworks, Estrela provides a `render` function that renders any Html content on any document element.
-
-```ts
-const name = 'World';
-
-render(`<div>Hello ${name}!</div>`, document.getElementById('app')!);
-
-// result:
-// <div>Hello World!</div>
-```
-
-It's fine to use string content, but to take benefit of data binding and all Estrela features, you need to use the html directive.
-
-```ts
-const onclick = () => console.log('clicked');
-
-render(html`<button on:click=${onclick}>Click me!</button>`, document.getElementById('app')!);
-
-// result:
-// <button>Click me!</button>
-//
-// after click, console output:
-// "clicked"
-```
-
-### Web Component
-
-Estrela takes advantages of web components. To define your custom element, you need to provide a class or a function returning a render function.
-
-```ts
-// app.ts
-
-const App = () => {
-  const name = 'World';
-  const onclick = () => console.log('clicked');
-
-  return () => html`
-    <div>Hello ${name}!</div>
-    <button on:click=${onclick}>Click me!</button>
-  `
-}
-
-defineElement('app-root', App);
-
-// index.html
-...
-<body>
-  <app-root></app-root>
-</body>
-
-// result:
-// <div>Hello World!</div>
-// <button>Click me!</button>
-```
-
-### States
-
-States are the main concept of Estrela. Every local state, input and output props are instances of `StateSubject` which inherits `Subject` from RxJs. So that means that you can subscribe to all your states.
-
-A `StateSubject` instance is a function that returns the current state value when it's called. Although, it still contains all the RxJs `Subject` methods, so you can still change it by calling `next()` or even the new `update()` method.
-
-```ts
-import { defineElement, html, setProperties, state } from 'estrela';
+```tsx
+// main.ts
+import { defineElement, html, prop, state } from 'estrela';
 
 const App = () => {
   // Count value state. Initial value = 0.
@@ -101,9 +39,9 @@ const App = () => {
   // To get the current state value, just call it like a normal function.
   console.log(count());
 
-  // Change its state by calling `next` or `update` methods.
-  // `update` receives a callback function with the current value
-  // as parameter and will expect the next value to be returned.
+  // Change its state by calling "next" or "update" methods.
+  // The "update" receives a callback function with the current value
+  // as parameter and expects the next value to be returned.
   setInterval(() => count.update(value => ++value), 1000);
 
   // Subscribe to value changes and do any kind of side effect you want.
@@ -111,18 +49,13 @@ const App = () => {
   count.subscribe(console.log);
 
   // Return the template builder function.
-  // The `:count` syntax is to bind the `count` prop on "app-counter".
-  return () => html`<app-counter :count=${count()}></app-counter>`;
+  // The ":count" syntax is to bind the "count" prop on "app-counter".
+  return () => html`<app-counter :count=${count}></app-counter>`;
 };
 
 const Counter = () => {
-  // Define a count state. (Initial value is optional)
-  const count = state<number>();
-
-  // Call `setProperties` function to tell which states are properties.
-  // Props are key-value object, that means that the "count" key
-  // will be bound with the "count" state.
-  setProperties({ props: { count } });
+  // Define a prop state.
+  const count = prop<number>();
 
   // Return the template builder function.
   // Note: calling the state value getter function is optional.
@@ -131,6 +64,12 @@ const Counter = () => {
 
 defineElement('app-counter', Counter);
 defineElement('app-root', App);
+
+// index.html
+...
+<body>
+  <app-root></app-root>
+</body>
 ```
 
 Check more examples on [docs](https://estrelajs.gitbook.io/estrela/).

@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - Props and Emitters - 2022/02/05
+### Added
+- `prop()` directive
+
+### Changed
+- Prop and emitters key can be bound automatically using `prop` or `emitter` directives.
+- Still need to call `setProperties()` if the final build is going to be minified.
+
 ## [0.2.2] - Hotfix - 2022/02/05
 ### Fixed
 - Missing separator key for Array.join
