@@ -2,7 +2,7 @@ import { html, render, state } from '@estrela';
 import { Result } from './result';
 
 const GITHUB_API = '//api.github.com/search/repositories';
-const results = state<any[]>([]);
+const results = state([] as any[]);
 
 // onRemove: update results and render again
 const onRemove = (result: any) => {
@@ -18,7 +18,7 @@ export const App = (results: any[]) => html`
 `;
 
 // fetch data and initial render template
-fetch(`${GITHUB_API}?q=akita`)
+fetch(`${GITHUB_API}?q=estrela`)
   .then(r => r.json())
   .then(json => json?.items ?? [])
   .then(result => results.next(result));

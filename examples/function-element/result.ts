@@ -1,22 +1,9 @@
-import {
-  css,
-  defineElement,
-  emitter,
-  Fel,
-  html,
-  setProperties,
-  state,
-} from '@estrela';
+import { css, defineElement, emitter, Fel, html, prop } from '@estrela';
 
 // Result "component"
 const Result: Fel = element => {
-  const result = state<any>();
+  const result = prop<any>();
   const remove = emitter<any>();
-
-  setProperties({
-    emitters: { remove },
-    props: { result },
-  });
 
   element.addEventListener('destroy', function () {
     console.log('element destroyed', this);

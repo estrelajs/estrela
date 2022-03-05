@@ -1,4 +1,4 @@
-import { css, defineElement, Fel, html, setProperties, state } from '@estrela';
+import { css, defineElement, Fel, html, state } from '@estrela';
 
 const GITHUB_API = '//api.github.com/search/repositories';
 
@@ -7,7 +7,7 @@ const App: Fel = () => {
   const results = state<any[]>([]);
 
   // fetch data and initial render template
-  fetch(`${GITHUB_API}?q=akita`)
+  fetch(`${GITHUB_API}?q=estrela`)
     .then(r => r.json())
     .then(json => json?.items ?? [])
     .then(items => {
@@ -21,12 +21,7 @@ const App: Fel = () => {
   };
 
   // will cleanup subscriptions on component discard
-  const cleanup = results.subscribe(results => console.log(results));
-
-  setProperties({
-    state: results,
-    subscription: cleanup,
-  });
+  results.subscribe(results => console.log(results));
 
   return () => html`
     <h1>Example</h1>

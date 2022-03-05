@@ -4,23 +4,22 @@ import {
   asyncMap,
   Fel,
   html,
-  setProperties,
   state,
   when,
   switchRender,
   on,
   onDefault,
+  prop,
 } from '@estrela';
 import { defer, map, startWith } from 'rxjs';
 
 const Counter: Fel = () => {
-  const count = state<number>(0);
-  setProperties({ props: { count } });
+  const count = prop<number>();
 
   const doubleCount$ = defer(() =>
     count.pipe(
       startWith(count()),
-      map(value => value * 2)
+      map(value => (value ?? 0) * 2)
     )
   );
 
@@ -30,7 +29,7 @@ const Counter: Fel = () => {
 
   return () => html`
     <div>Count is ${asyncRender(doubleCount$)}</div>
-    <div>${when(count() * 2 < 10, 'Counting until 10...', 'Finished!')}</div>
+    <div>${when((count() ?? 0) * 2 < 10, 'Counting until 10...', 'Finished!')}</div>
     <ul>
       ${asyncMap(data, item => html`<li>${item}</li>`, html`<li>Loading...</li>`)}
     </ul>
