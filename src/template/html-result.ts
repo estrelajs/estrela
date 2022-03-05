@@ -27,7 +27,7 @@ export class HTMLResult {
             ) {
               content = coerceArray<HTMLResult>(arg)
                 .map(result => result.render(args))
-                .join();
+                .join('');
             } else if (!(arg instanceof StateSubject) && typeof arg === 'function') {
               const index = args.push(arg) - 1;
               content = `<template _stTemplate id="${index}"></template>`;
@@ -37,7 +37,7 @@ export class HTMLResult {
               );
               let value = arg instanceof StateSubject ? arg() : arg;
               if (Array.isArray(value)) {
-                value = value.join();
+                value = value.join('');
               }
               if (value === false) {
                 value = '';

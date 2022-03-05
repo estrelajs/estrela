@@ -88,7 +88,7 @@ export function render(
   const args: any[] = [];
   const html = coerceArray(template)
     .map(item => HTMLResult.create(item).render(args))
-    .join();
+    .join('');
   const root = toElement(`<div>${html}</div>`) as HTMLElement;
   const hooks = getHooks(element);
 
