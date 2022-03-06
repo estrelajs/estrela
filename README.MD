@@ -6,7 +6,7 @@ Estrela is a JavaScript library for building reactive web components inspired by
 
 Just like Lit, Estrela is a boilerplate-killing component that provides reactive state, scoped styles, and a declarative template system that's tiny, fast and expressive. However, it allows you to choose either class or function based custom elements just like React.
 
-For reactivity, Estrela extends RxJs observables to create the state of your component, so you will be able to subscribe and extend your local states with RxJs pipes.
+For reactivity, Estrela extends RxJs observables to create the state of your component, so you will be able to subscribe and extend them with RxJs pipes.
 
 ### Documentation
 
