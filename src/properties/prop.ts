@@ -1,8 +1,7 @@
 import { StateSubject } from '../observables';
 import { CURRENT_ELEMENT, ELEMENT_PROPS } from './tokens';
 
-const PROP_REGEX =
-  /([a-zA-Z0-9$_]+)(\s|(\/\*.*\*\/))+?=(\s|(\/\*.*\*\/))+?prop(<.*>)?\(.*\)/g;
+const PROP_REGEX = /([a-zA-Z0-9$_]+)((\s|(\/\*.*\*\/))+)?=.*prop(<.*>)?\(.*\)/g;
 
 export function prop<T>(): StateSubject<T | undefined>;
 export function prop<T>(initialValue: T): StateSubject<T>;

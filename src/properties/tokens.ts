@@ -1,7 +1,10 @@
 import { EventEmitter, StateSubject } from '../observables';
-import { ElementProperties } from '../types';
+import { CustomElement, ElementProperties } from '../types';
 
-export const CURRENT_ELEMENT: { element: Function } = { element: () => {} };
+export const CURRENT_ELEMENT: {
+  context: CustomElement;
+  element: Function;
+} = {} as any;
 export const ELEMENT_EMITTERS = new Map<string, EventEmitter<any>>();
 export const ELEMENT_PROPERTIES: { properties: ElementProperties } = {
   properties: {},

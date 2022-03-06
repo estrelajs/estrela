@@ -1,2 +1,4 @@
-export { defineElement } from './custom-element';
-export { setProperties } from './set-properties';
+export * from './custom-element';
+export * from './on-event';
+export * from './request-render';
+export * from './set-properties';

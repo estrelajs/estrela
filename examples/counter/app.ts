@@ -10,6 +10,7 @@ import {
   on,
   onDefault,
   prop,
+  onEvent,
 } from '@estrela';
 import { defer, map, startWith } from 'rxjs';
 
@@ -26,6 +27,10 @@ const Counter: Fel = () => {
   const data = new Promise<number[]>(resolve =>
     setTimeout(() => resolve(Array.from({ length: 10 }).map((_, i) => i)), 3000)
   );
+
+  onEvent('init').subscribe(() => {
+    console.log('init');
+  });
 
   return () => html`
     <div>Count is ${asyncRender(doubleCount$)}</div>

@@ -2,7 +2,7 @@ import { EventEmitter } from '../observables/event_emitter';
 import { CURRENT_ELEMENT, ELEMENT_EMITTERS } from './tokens';
 
 const EMITTER_REGEX =
-  /([a-zA-Z0-9$_]+)(\s|(\/\*.*\*\/))+?=(\s|(\/\*.*\*\/))+?emitter(<.*>)?\(.*\)/g;
+  /([a-zA-Z0-9$_]+)((\s|(\/\*.*\*\/))+)?=.*emitter(<.*>)?\(.*\)/g;
 
 export function emitter<T>({
   async,

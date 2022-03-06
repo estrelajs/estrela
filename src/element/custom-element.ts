@@ -1,4 +1,4 @@
-import { merge, Subscription } from 'rxjs';
+import { merge, Observable, Subject, Subscription } from 'rxjs';
 import { EventEmitter } from '../observables';
 import {
   ELEMENT_PROPS,
@@ -8,7 +8,12 @@ import {
   ELEMENT_EMITTERS,
 } from '../properties/tokens';
 import { HTMLResult, render } from '../template';
-import { CustomElement, ElementProperties, Fel } from '../types';
+import {
+  CustomElement,
+  CustomElementEventMap,
+  ElementProperties,
+  Fel,
+} from '../types';
 import { coerceArray } from '../utils';
 
 export function defineElement(
@@ -17,6 +22,7 @@ export function defineElement(
   styles?: string | string[]
 ) {
   const CustomElement = class extends HTMLElement implements CustomElement {
+    readonly _completers = new Set<Function>();
     readonly _elementRef: {
       properties: ElementProperties;
       render(): HTMLResult | null;
@@ -38,6 +44,7 @@ export function defineElement(
       });
 
       // clear tokens
+      CURRENT_ELEMENT.context = this;
       CURRENT_ELEMENT.element = element;
       ELEMENT_EMITTERS.clear();
       ELEMENT_PROPS.clear();
@@ -108,6 +115,22 @@ export function defineElement(
     disconnectedCallback(): void {
       this.dispatchEvent(new Event('destroy'));
       this._subscriptions.unsubscribe();
+      this._completers.forEach(complete => complete());
+    }
+
+    on<K extends keyof CustomElementEventMap>(
+      event: K,
+      options?: boolean | AddEventListenerOptions
+    ): Observable<CustomElementEventMap[K]> {
+      const subject = new Subject<CustomElementEventMap[K]>();
+      const listener = (ev: any) => subject.next(ev);
+      const completer = () => {
+        this.removeEventListener(event as any, listener, options);
+        subject.complete();
+      };
+      this.addEventListener(event as any, listener, options);
+      this._completers.add(completer);
+      return subject.asObservable();
     }
 
     requestRender(): void {
