@@ -1,6 +1,6 @@
 {
   "name": "estrela",
-  "version": "0.3.3",
+  "version": "0.3.8",
   "description": "Yet another js framework inspired by Lit.",
   "author": "Eduardo Rosostolato",
   "license": "MIT",
@@ -10,26 +10,26 @@
   "bugs": {
     "url": "https://github.com/estrelajs/estrela/issues"
   },
-  "main": "./dist/csj/index.js",
-  "module": "./dist/esm/index.js",
-  "types": "./dist/types/index.d.ts",
+  "main": "./csj/index.js",
+  "module": "./esm/index.js",
+  "ES2015": "./es2015/index.js",
+  "types": "./types/index.d.ts",
   "exports": {
     ".": {
-      "node": "./dist/csj/index.js",
-      "default": "./dist/esm/index.js",
-      "ES2015": "./dist/es2015/index.js"
+      "node": "./csj/index.js",
+      "default": "./esm/index.js",
+      "ES2015": "./es2015/index.js"
     },
     "./directives": {
-      "node": "./dist/csj/directives.js",
-      "default": "./dist/esm/directives.js",
-      "ES2015": "./dist/es2015/directives.js"
+      "node": "./csj/directives.js",
+      "default": "./esm/directives.js",
+      "ES2015": "./es2015/directives.js"
     }
   },
   "scripts": {
     "dev": "cd examples && vite",
     "build": "rimraf -rf dist && rollup -c rollup.config.js",
-    "publish": "npm publish",
-    "release": "yarn build && npm publish",
+    "release": "yarn build && cd dist && yarn publish",
     "example:build": "cd examples && vite build",
     "example:preview": "cd examples && vite preview"
   },
@@ -40,6 +40,7 @@
     "rimraf": "^3.0.2",
     "rollup": "^2.68.0",
     "rollup-plugin-command": "^1.1.3",
+    "rollup-plugin-copy": "^3.4.0",
     "rollup-plugin-esbuild": "^4.8.2",
     "rxjs": "^7.5.4",
     "typescript": "^4.5.4",

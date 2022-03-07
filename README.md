@@ -18,10 +18,10 @@ To install:
 
 ```
 # npm
-npm install --save estrela
+npm install --save estrela rxjs
 
 # yarn
-yard add estrela
+yarn add estrela rxjs
 ```
 
 ## Example

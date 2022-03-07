@@ -18,8 +18,19 @@
     "noUnusedParameters": true,
     "useDefineForClassFields": true,
     "noImplicitReturns": true,
-    "allowJs": true
+    "allowJs": true,
+    "paths": {
+      "@estrela": [
+        "./src/index.ts"
+      ],
+      "@estrela/directives": [
+        "./src/directives/index.ts"
+      ]
+    }
   },
+  "exclude": [
+    "dist"
+  ],
   "include": [
     "src"
   ]
