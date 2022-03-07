@@ -3,7 +3,9 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "Node",
-    "declarationDir": "./dist/types",
+    "declarationDir": "dist/types",
+    "outDir": "dist",
+    "baseUrl": "./",
     "lib": [
       "ESNext",
       "DOM"
@@ -21,10 +23,10 @@
     "allowJs": true,
     "paths": {
       "@estrela": [
-        "./src/index.ts"
+        "src/index.ts"
       ],
       "@estrela/directives": [
-        "./src/directives/index.ts"
+        "src/directives/index.ts"
       ]
     }
   },

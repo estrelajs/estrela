@@ -11,14 +11,27 @@ const directivesPackage = `{
   "types": "../types/directives/index.d.ts"
 }`;
 
-const getConfig = (target, output, plugins = []) =>
+const getConfig = (target, output) =>
   defineConfig({
     input: {
       index: './src/index.ts',
       directives: './src/directives/index.ts',
     },
     output,
-    plugins: [esbuild({ target: target }), ...plugins],
+    plugins: [
+      esbuild({ target: target }),
+      command('tsc --emitDeclarationOnly'),
+      command(`mkdir -p dist/directives`),
+      command(`echo '${directivesPackage}' > dist/directives/package.json`),
+      copy({
+        targets: [
+          {
+            src: ['package.json', 'LICENSE', 'README.md', 'CHANGELOG.md'],
+            dest: 'dist',
+          },
+        ],
+      }),
+    ],
     external: Object.keys(require('./package.json').devDependencies),
   });
 
@@ -29,32 +42,18 @@ export default [
     format: 'es',
     sourcemap: true,
   }),
-  getConfig('es2018', {
-    dir: './dist/csj',
-    entryFileNames: '[name].js',
-    format: 'cjs',
-    sourcemap: true,
-  }),
-  getConfig(
-    'es2018',
+  getConfig('es2020', [
+    {
+      dir: './dist/csj',
+      entryFileNames: '[name].js',
+      format: 'cjs',
+      sourcemap: true,
+    },
     {
       dir: './dist/esm',
       entryFileNames: '[name].js',
       format: 'esm',
       sourcemap: true,
     },
-    [
-      command('tsc --emitDeclarationOnly'),
-      command(`mkdir dist/directives`),
-      command(`echo '${directivesPackage}' > dist/directives/package.json`),
-      copy({
-        targets: [
-          {
-            src: ['package.json', 'LICENSE', 'README.md', 'CHANGELOG.md'],
-            dest: 'dist',
-          },
-        ],
-      }),
-    ]
-  ),
+  ]),
 ];
