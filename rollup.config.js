@@ -1,55 +1,39 @@
-import peerDepsExternal from 'rollup-plugin-peer-deps-external';
-import resolve from '@rollup/plugin-node-resolve';
-import commonjs from '@rollup/plugin-commonjs';
-import typescript from 'rollup-plugin-typescript2';
-import { terser } from 'rollup-plugin-terser';
-import copy from 'rollup-plugin-copy';
+import { defineConfig } from 'rollup';
+import command from 'rollup-plugin-command';
+import esbuild from 'rollup-plugin-esbuild';
 
-// this override is needed because Module format cjs does not support top-level await
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const packageJson = require('./package.json');
+const getConfig = (target, output) =>
+  defineConfig({
+    input: {
+      index: './src/index.ts',
+      directives: './src/directives/index.ts',
+    },
+    output,
+    plugins: [esbuild({ target: target }), command('tsc --emitDeclarationOnly')],
+    external: Object.keys(require('./package.json').devDependencies),
+  });
 
-const globals = {
-  ...packageJson.devDependencies,
-};
-
-export default {
-  input: 'src/index.ts',
-  output: [
+export default [
+  getConfig('es2018', [
     {
-      file: packageJson.main,
-      format: 'cjs', // commonJS
+      dir: './dist/csj',
+      entryFileNames: '[name].js',
+      format: 'cjs',
       sourcemap: true,
-      plugins: [terser()],
     },
     {
-      file: packageJson.module,
-      format: 'esm', // ES Modules
+      dir: './dist/esm',
+      entryFileNames: '[name].js',
+      format: 'esm',
       sourcemap: true,
-      plugins: [terser()],
     },
-  ],
-  plugins: [
-    peerDepsExternal(),
-    resolve(),
-    commonjs(),
-    typescript({
-      tsconfigOverride: {
-        exclude: ['**/*.stories.*'],
-      },
-    }),
-    commonjs({
-      exclude: 'node_modules',
-      ignoreGlobal: true,
-    }),
-    copy({
-      targets: [{ src: ['package.json', 'LICENSE', 'README.MD'], dest: 'dist' }],
-    }),
-  ],
-  external: Object.keys(globals),
-};
-
-// Other useful plugins you might want to add are:
-// @rollup/plugin-images - import image files into your components
-// @rollup/plugin-json - import JSON files into your components
-// rollup-plugin-terser - minify the Rollup bundle
+  ]),
+  getConfig('es2015', [
+    {
+      dir: './dist/es2015',
+      entryFileNames: '[name].js',
+      format: 'es',
+      sourcemap: true,
+    },
+  ]),
+];

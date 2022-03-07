@@ -8,6 +8,10 @@ export default defineConfig({
   },
   resolve: {
     alias: [
+      {
+        find: '@estrela/directives',
+        replacement: path.resolve(__dirname, '../src/directives/index.ts'),
+      },
       { find: '@estrela', replacement: path.resolve(__dirname, '../src/index.ts') },
     ],
   },

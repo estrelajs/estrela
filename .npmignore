@@ -1,0 +1,11 @@
+# directories
+examples/
+node_modules/
+src/
+
+#files
+.editorconfig
+.prettierrc.yaml
+rollup.config.js
+tsconfig.json
+yarn.lock

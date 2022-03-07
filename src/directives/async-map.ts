@@ -1,4 +1,4 @@
-import { catchError, from, isObservable, map, Observable, of } from 'rxjs';
+import { catchError, from, map, Observable, of } from 'rxjs';
 import { DirectiveCallback, HTMLTemplate } from '../types';
 
 export function asyncMap<T>(
@@ -15,10 +15,7 @@ export function asyncMap<T>(
     };
 
     useEffect(() => {
-      const observable = isObservable(deferredArray)
-        ? deferredArray
-        : from(deferredArray);
-      const subscription = observable
+      const subscription = from(deferredArray)
         .pipe(
           map(data => data.map(callback)),
           catchError(() => of(onError))

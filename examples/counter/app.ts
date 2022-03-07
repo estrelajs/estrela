@@ -1,17 +1,12 @@
+import { defineElement, Fel, html, state, prop, onEvent } from '@estrela';
 import {
   asyncRender,
-  defineElement,
   asyncMap,
-  Fel,
-  html,
-  state,
   when,
   switchRender,
   on,
   onDefault,
-  prop,
-  onEvent,
-} from '@estrela';
+} from '@estrela/directives';
 import { defer, map, startWith } from 'rxjs';
 
 const Counter: Fel = () => {

@@ -1,4 +1,4 @@
-import { catchError, from, isObservable, Observable, of } from 'rxjs';
+import { catchError, from, Observable, of } from 'rxjs';
 import { DirectiveCallback, HTMLTemplate } from '../types';
 
 export function asyncRender<T extends HTMLTemplate>(
@@ -14,8 +14,7 @@ export function asyncRender<T extends HTMLTemplate>(
     };
 
     useEffect(() => {
-      const observable = isObservable(deferred) ? deferred : from(deferred);
-      const subscription = observable
+      const subscription = from(deferred)
         .pipe(catchError(() => of(onError)))
         .subscribe(next);
       return () => subscription.unsubscribe();

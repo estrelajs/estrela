@@ -5,7 +5,7 @@ export interface OnResult<T> {
   result: HTMLTemplate;
 }
 
-export function on<T>(value: T, result: HTMLTemplate): OnResult<T> {
+export function onCase<T>(value: T, result: HTMLTemplate): OnResult<T> {
   return { value, result };
 }
 

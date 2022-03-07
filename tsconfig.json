@@ -1,15 +1,15 @@
 {
   "compilerOptions": {
-    "outDir": "dist",
-    "target": "ES2019",
+    "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "Node",
+    "declarationDir": "./dist/types",
     "lib": [
       "ESNext",
       "DOM"
     ],
     "strict": true,
-    "noEmit": true,
+    "noEmit": false,
     "sourceMap": true,
     "declaration": true,
     "noUnusedLocals": true,
@@ -18,7 +18,7 @@
     "noUnusedParameters": true,
     "useDefineForClassFields": true,
     "noImplicitReturns": true,
-    "allowJs": true,
+    "allowJs": true
   },
   "include": [
     "src"
