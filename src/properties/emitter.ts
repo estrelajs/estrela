@@ -4,10 +4,12 @@ import { CURRENT_ELEMENT, ELEMENT_EMITTERS } from './tokens';
 const EMITTER_REGEX =
   /([a-zA-Z0-9$_]+)((\s|(\/\*.*\*\/))+)?=.*emitter(<.*>)?\(.*\)/g;
 
-export function emitter<T>({
-  async,
-  key,
-}: { async?: boolean; key?: string } = {}): EventEmitter<T> {
+export interface EmitterOptions {
+  async?: boolean;
+  key?: string;
+}
+
+export function emitter<T>({ async, key }: EmitterOptions = {}): EventEmitter<T> {
   const emitter = new EventEmitter<T>(async);
 
   // find key

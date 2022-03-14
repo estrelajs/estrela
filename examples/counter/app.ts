@@ -4,7 +4,7 @@ import {
   asyncMap,
   when,
   switchRender,
-  on,
+  onCase,
   onDefault,
 } from '@estrela/directives';
 import { defer, map, startWith } from 'rxjs';
@@ -36,12 +36,12 @@ const Counter: Fel = () => {
     <div>
       ${switchRender(
         count(),
-        on(0, html`<span>Zero</span>`),
-        on(1, html`<span>One</span>`),
-        on(2, html`<span>Two</span>`),
-        on(3, html`<span>Three</span>`),
-        on(4, html`<span>Four</span>`),
-        on(5, html`<span>Five</span>`),
+        onCase(0, html`<span>Zero</span>`),
+        onCase(1, html`<span>One</span>`),
+        onCase(2, html`<span>Two</span>`),
+        onCase(3, html`<span>Three</span>`),
+        onCase(4, html`<span>Four</span>`),
+        onCase(5, html`<span>Five</span>`),
         onDefault(html`<span>Others</span>`)
       )}
     </div>

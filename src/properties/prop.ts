@@ -3,16 +3,14 @@ import { CURRENT_ELEMENT, ELEMENT_PROPS } from './tokens';
 
 const PROP_REGEX = /([a-zA-Z0-9$_]+)((\s|(\/\*.*\*\/))+)?=.*prop(<.*>)?\(.*\)/g;
 
-export function prop<T>(): StateSubject<T | undefined>;
-export function prop<T>(initialValue: T): StateSubject<T>;
-export function prop<T>(
-  initialValue?: T,
-  options?: { key?: string }
-): StateSubject<T | undefined>;
-export function prop(
-  initialValue?: any,
-  { key }: { key?: string } = {}
-): StateSubject<any> {
+export interface PropOptions<T> {
+  initialValue?: T;
+  key?: string;
+}
+
+export function prop<T>({ initialValue, key }: PropOptions<T> = {}): StateSubject<
+  T | undefined
+> {
   const state = new StateSubject<any>(initialValue);
 
   // find key
