@@ -21,6 +21,9 @@ export class HTMLResult {
                 index = args.push(arg) - 1;
               }
               content = String(index);
+              if (!/\'|\"$/.test(acc)) {
+                content = `"${content}"`;
+              }
             } else if (
               arg instanceof HTMLResult ||
               (Array.isArray(arg) && arg[0] instanceof HTMLResult)

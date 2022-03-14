@@ -1,6 +1,6 @@
 {
   "name": "estrela",
-  "version": "0.4.0",
+  "version": "0.4.3",
   "description": "Yet another js framework inspired by Lit.",
   "author": "Eduardo Rosostolato",
   "license": "MIT",
@@ -30,8 +30,8 @@
     "dev": "cd examples && vite",
     "build": "rimraf -rf dist && rollup -c rollup.config.js",
     "release": "yarn build && cd dist && yarn publish",
-    "example:build": "cd examples && vite build",
-    "example:preview": "cd examples && vite preview"
+    "example:build": "cd ./playground && vite build",
+    "example:preview": "cd ./playground && vite dev"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^21.0.2",
@@ -44,7 +44,8 @@
     "rollup-plugin-esbuild": "^4.8.2",
     "rxjs": "^7.5.4",
     "typescript": "^4.5.4",
-    "vite": "^2.8.6"
+    "vite": "^2.8.6",
+    "vite-plugin-estrela": "1.1.1"
   },
   "peerDependencies": {
     "rxjs": "^7.5.4"
