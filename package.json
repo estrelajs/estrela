@@ -27,11 +27,9 @@
     }
   },
   "scripts": {
-    "dev": "cd examples && vite",
+    "dev": "cd playground && vite",
     "build": "rimraf -rf dist && rollup -c rollup.config.js",
-    "release": "yarn build && cd dist && yarn publish",
-    "example:build": "cd ./playground && vite build",
-    "example:preview": "cd ./playground && vite dev"
+    "release": "yarn build && cd dist && yarn publish"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^21.0.2",

@@ -1,4 +1,4 @@
-import { css, defineElement, emitter, Fel, html, prop } from '@estrela';
+import { css, defineElement, emitter, Fel, html, prop } from 'estrela';
 
 // Result "component"
 const Result: Fel = element => {

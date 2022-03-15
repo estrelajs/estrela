@@ -1,5 +1,5 @@
-import { html, render, state } from '@estrela';
-import { Result } from './result';
+import { html, render, state } from 'estrela';
+import { Result } from './html-result';
 
 const GITHUB_API = '//api.github.com/search/repositories';
 const results = state([] as any[]);

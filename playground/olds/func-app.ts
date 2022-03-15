@@ -1,4 +1,4 @@
-import { css, defineElement, Fel, html, state } from '@estrela';
+import { css, defineElement, Fel, html, state } from 'estrela';
 
 const GITHUB_API = '//api.github.com/search/repositories';
 

@@ -1,4 +1,4 @@
-import { defineElement, Fel, html, state, prop, onEvent } from '@estrela';
+import { defineElement, Fel, html, state, prop, onEvent } from 'estrela';
 import {
   asyncRender,
   asyncMap,
@@ -6,7 +6,7 @@ import {
   switchRender,
   onCase,
   onDefault,
-} from '@estrela/directives';
+} from 'estrela/directives';
 import { defer, map, startWith } from 'rxjs';
 
 const Counter: Fel = () => {
