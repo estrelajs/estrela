@@ -1,37 +1,31 @@
 import { merge, Observable, Subject, Subscription } from 'rxjs';
-import { EventEmitter } from '../observables';
-import {
-  ELEMENT_PROPS,
-  ELEMENT_STATES,
-  CURRENT_ELEMENT,
-  ELEMENT_PROPERTIES,
-  ELEMENT_EMITTERS,
-} from '../properties/tokens';
-import { HTMLResult, render } from '../template';
+import { render } from '../template';
+import { CURRENT_ELEMENT } from './token';
 import {
   CustomElement,
   CustomElementEventMap,
   ElementProperties,
-  Fel,
+  FunctionalElement,
 } from '../types';
-import { coerceArray } from '../utils';
+import { coerceArray, getProperty } from '../utils';
+import { EventEmitter, StateSubject } from '../observables';
 
 export function defineElement(
   name: string,
-  element: Fel,
+  element: FunctionalElement,
   styles?: string | string[]
 ) {
   const CustomElement = class extends HTMLElement implements CustomElement {
-    readonly _completers = new Set<Function>();
-    readonly _elementRef: {
-      properties: ElementProperties;
-      render(): HTMLResult | null;
-    };
-    private _requestedRender = false;
+    private readonly _eventSubscriptions = new Set<Function>();
     private readonly _subscriptions = new Subscription();
+    private _requestedRender = false;
 
     constructor() {
       super();
+
+      // set context reference
+      CURRENT_ELEMENT.context = this;
+      CURRENT_ELEMENT.element = element;
 
       // init shadow DOM
       this.attachShadow({ mode: 'open' });
@@ -43,26 +37,46 @@ export function defineElement(
         return sheet;
       });
 
-      // clear tokens
-      CURRENT_ELEMENT.context = this;
-      CURRENT_ELEMENT.element = element;
-      ELEMENT_EMITTERS.clear();
-      ELEMENT_PROPS.clear();
-      ELEMENT_STATES.clear();
+      // get element template getter
+      const getElementTemplate = element(this);
 
-      // get Element render function
-      const render = element(this);
+      // define element renderer
+      Reflect.defineMetadata(
+        'render',
+        () => {
+          this.dispatchEvent(new Event('prerender'));
+          render(getElementTemplate(), this.shadowRoot!);
+          this.dispatchEvent(new Event('postrender'));
+        },
+        this
+      );
 
-      // Get element properties
-      const elementEmitters = Object.fromEntries(ELEMENT_EMITTERS.entries());
-      const elementProps = Object.fromEntries(ELEMENT_PROPS.entries());
-      const elementStates = Array.from(ELEMENT_STATES.values());
+      // Get element states
+      const elementStates: StateSubject<any>[] =
+        Reflect.getMetadata('states', this) ?? [];
+
+      // Get element props
+      const propKeys: string[] = Reflect.getOwnMetadataKeys(this, 'props');
+      const elementProps = propKeys.reduce((acc, key) => {
+        acc[key] = Reflect.getOwnMetadata(key, this, 'props');
+        return acc;
+      }, {} as Record<string, StateSubject<any>>);
+
+      // Get element emitters
+      const emitterKeys: string[] = Reflect.getOwnMetadataKeys(this, 'emitters');
+      const elementEmitters = emitterKeys.reduce((acc, key) => {
+        acc[key] = Reflect.getOwnMetadata(key, this, 'emitters');
+        return acc;
+      }, {} as Record<string, StateSubject<any>>);
+
+      // construct properties
       const {
         emitters = elementEmitters,
         props = elementProps,
         state = elementStates,
         ...others
-      } = ELEMENT_PROPERTIES.properties;
+      } = (Reflect.getOwnMetadata('properties', this) as ElementProperties) ?? {};
+
       const properties = {
         emitters,
         state,
@@ -70,16 +84,13 @@ export function defineElement(
         ...others,
       };
 
+      // set element ref
+      Reflect.defineMetadata('properties', properties, this);
+
       // add element subscriptions to the local one
       coerceArray(properties.subscription).forEach(sub =>
         this._subscriptions.add(sub)
       );
-
-      // set element ref
-      this._elementRef = {
-        properties,
-        render,
-      };
     }
 
     connectedCallback(): void {
@@ -87,8 +98,9 @@ export function defineElement(
       this.dispatchEvent(new Event('init'));
 
       // subscribe to emitters
-      Object.keys(this._elementRef.properties.emitters ?? {}).forEach(key => {
-        const emitter = this._elementRef.properties.emitters?.[key];
+      const emitters = getProperty(this, 'emitters') ?? {};
+      Object.keys(emitters).forEach(key => {
+        const emitter = emitters[key];
         if (emitter instanceof EventEmitter) {
           const subscription = emitter.subscribe(value => {
             const event = new CustomEvent(key, { detail: value });
@@ -104,9 +116,10 @@ export function defineElement(
 
       // subscribe to states
       const observables = [
-        ...coerceArray(this._elementRef.properties.state),
-        ...Object.values(this._elementRef.properties.props ?? {}),
+        ...coerceArray(getProperty(this, 'state')),
+        ...Object.values(getProperty(this, 'props') ?? {}),
       ];
+
       this._subscriptions.add(
         merge(...observables).subscribe(() => this.requestRender())
       );
@@ -115,7 +128,7 @@ export function defineElement(
     disconnectedCallback(): void {
       this.dispatchEvent(new Event('destroy'));
       this._subscriptions.unsubscribe();
-      this._completers.forEach(complete => complete());
+      this._eventSubscriptions.forEach(complete => complete());
     }
 
     on<K extends keyof CustomElementEventMap>(
@@ -129,7 +142,7 @@ export function defineElement(
         subject.complete();
       };
       this.addEventListener(event as any, listener, options);
-      this._completers.add(completer);
+      this._eventSubscriptions.add(completer);
       return subject.asObservable();
     }
 
@@ -138,15 +151,9 @@ export function defineElement(
         this._requestedRender = true;
         requestAnimationFrame(() => {
           this._requestedRender = false;
-          this._render();
+          Reflect.getMetadata('render', this)();
         });
       }
-    }
-
-    private _render(): void {
-      this.dispatchEvent(new Event('prerender'));
-      render(this._elementRef.render(), this.shadowRoot!);
-      this.dispatchEvent(new Event('postrender'));
     }
   };
 

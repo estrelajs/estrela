@@ -1,4 +1,5 @@
 import { Subject } from 'rxjs';
+import { ElementProperties } from '../types/element-properties';
 
 export function addEventListener(
   element: Element,
@@ -16,4 +17,15 @@ export function addEventListener(
   };
   element.addEventListener(event, hook);
   return () => element.removeEventListener(event, hook);
+}
+
+export function getProperty<K extends keyof ElementProperties>(
+  element: Element,
+  key: K
+): ElementProperties[K] | undefined {
+  const properties: ElementProperties = Reflect.getOwnMetadata(
+    'properties',
+    element
+  );
+  return properties?.[key];
 }

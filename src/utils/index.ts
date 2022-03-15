@@ -1,3 +1,3 @@
-export * from './add-event-listener';
 export * from './coerce-array';
+export * from './elements';
 export * from './observables';

@@ -2,9 +2,7 @@ import { morphdom, toElement } from '../morphdom';
 import { EventEmitter } from '../observables/event_emitter';
 import { StateSubject } from '../observables/state_subject';
 import { HTMLTemplate } from '../types';
-import { CustomElement } from '../types/custom-element';
-import { coerceArray, isObserver } from '../utils';
-import { addEventListener } from '../utils/add-event-listener';
+import { addEventListener, coerceArray, getProperty, isObserver } from '../utils';
 import { HTMLResult } from './html-result';
 
 type AttrBind =
@@ -27,7 +25,7 @@ type AttrBind =
 
 // TODO: use reflect-metadata
 const tryToBindPropValue = (el: Element, propName: string, value: any) => {
-  const prop = (el as CustomElement)?._elementRef?.properties?.props?.[propName];
+  const prop = getProperty(el, 'props')?.[propName];
   if (prop && isObserver(prop)) {
     prop.next(value);
   }

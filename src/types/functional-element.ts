@@ -2,7 +2,7 @@ import { HTMLResult } from '../template/html-result';
 import { CustomElement } from './custom-element';
 
 /** Functional Element */
-export interface Fel {
+export interface FunctionalElement {
   (elementRef: CustomElement): {
     (): HTMLResult | null;
   };
