@@ -28,7 +28,7 @@ type AttrBind =
 // TODO: use reflect-metadata
 const tryToBindPropValue = (el: Element, propName: string, value: any) => {
   const prop = (el as CustomElement)?._elementRef?.properties?.props?.[propName];
-  if (isObserver(prop)) {
+  if (prop && isObserver(prop)) {
     prop.next(value);
   }
 };
