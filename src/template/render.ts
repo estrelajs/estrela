@@ -3,7 +3,7 @@ import { EventEmitter } from '../observables/event_emitter';
 import { StateSubject } from '../observables/state_subject';
 import { HTMLTemplate } from '../types';
 import { CustomElement } from '../types/custom-element';
-import { coerceArray } from '../utils';
+import { coerceArray, isObserver } from '../utils';
 import { addEventListener } from '../utils/add-event-listener';
 import { HTMLResult } from './html-result';
 
@@ -25,61 +25,57 @@ type AttrBind =
       type: 'ref';
     };
 
-const ELEMENT_ATTRIBUTES = new Map<Element, AttrBind[]>();
-const ELEMENT_KEYS = new Map<Element, string>();
-
-// TODO: allow prop binding for non Custom Element
-const bindProp = (el: Element, propName: string, value: any) => {
-  const prop = (el as CustomElement)._elementRef.properties.props?.[propName];
-  if (prop instanceof StateSubject) {
+// TODO: use reflect-metadata
+const tryToBindPropValue = (el: Element, propName: string, value: any) => {
+  const prop = (el as CustomElement)?._elementRef?.properties?.props?.[propName];
+  if (isObserver(prop)) {
     prop.next(value);
-  } else {
-    console.error(
-      `Bind Error! Can't find "${propName}" property as instance of StateSubject on "${el.localName}".`
-    );
   }
 };
 
-const getHooks = (element: any) => {
-  const hooks = (element._hooks ??= {});
-  hooks.effect ??= {};
-  hooks.state ??= [];
-  hooks.index = 0;
+// const getHooks = (element: any) => {
+//   const hooks = (element._hooks ??= {});
+//   hooks.effect ??= {};
+//   hooks.state ??= [];
+//   hooks.index = 0;
 
-  const useState = (initialValue: any) => {
-    const cachedIndex = hooks.index;
-    if (!hooks.state[cachedIndex]) {
-      hooks.state[cachedIndex] = initialValue;
-    }
-    const state = hooks.state[cachedIndex];
-    const setter = (newValue: any) => {
-      hooks.state[cachedIndex] = newValue;
-    };
-    hooks.index++;
-    return [state, setter];
-  };
+//   const useState = (initialValue: any) => {
+//     const cachedIndex = hooks.index;
+//     if (!hooks.state[cachedIndex]) {
+//       hooks.state[cachedIndex] = initialValue;
+//     }
+//     const state = hooks.state[cachedIndex];
+//     const setter = (newValue: any) => {
+//       hooks.state[cachedIndex] = newValue;
+//     };
+//     hooks.index++;
+//     return [state, setter];
+//   };
 
-  const useEffect = (callback: () => void | (() => void), dependencies: any[]) => {
-    const cachedIndex = hooks.index;
-    const hasChanged = dependencies.some(
-      (dep, i) => dep !== hooks.state[cachedIndex]?.[i]
-    );
-    if (dependencies === undefined || hasChanged) {
-      hooks.effect[cachedIndex]?.();
-      const effect = callback();
-      hooks.effect[cachedIndex] = effect;
-      hooks.state[cachedIndex] = dependencies;
-    }
-    hooks.index++;
-  };
+//   const useEffect = (callback: () => void | (() => void), dependencies: any[]) => {
+//     const cachedIndex = hooks.index;
+//     const hasChanged = dependencies.some(
+//       (dep, i) => dep !== hooks.state[cachedIndex]?.[i]
+//     );
+//     if (dependencies === undefined || hasChanged) {
+//       hooks.effect[cachedIndex]?.();
+//       const effect = callback();
+//       hooks.effect[cachedIndex] = effect;
+//       hooks.state[cachedIndex] = dependencies;
+//     }
+//     hooks.index++;
+//   };
 
-  return { useState, useEffect };
-};
+//   return { useState, useEffect };
+// };
+
+const ELEMENT_ATTRIBUTES = new Map<Element, AttrBind[]>();
+const ELEMENT_KEYS = new Map<Element, string>();
 
 export function render(
   template: HTMLTemplate | HTMLTemplate[] | null | undefined,
   element: HTMLElement | DocumentFragment
-): void | ((element: HTMLElement | DocumentFragment) => void) {
+): void {
   if (!element) {
     console.error('Could not render template! Element is undefined.');
     return;
@@ -90,43 +86,43 @@ export function render(
     .map(item => HTMLResult.create(item).render(args))
     .join('');
   const root = toElement(`<div>${html}</div>`) as HTMLElement;
-  const hooks = getHooks(element);
+  // const hooks = getHooks(element);
 
-  // directive bind
-  Array.from(root.querySelectorAll('template[_stTemplate]')).forEach(template => {
-    const arg = args[Number(template.id)];
-    if (typeof arg === 'function') {
-      const startRef = document.createComment('');
-      const endRef = document.createComment('');
-      template?.replaceWith(startRef, endRef);
+  // // directive bind
+  // Array.from(root.querySelectorAll('template[_stTemplate]')).forEach(template => {
+  //   const arg = args[Number(template.id)];
+  //   if (typeof arg === 'function') {
+  //     const startRef = document.createComment('');
+  //     const endRef = document.createComment('');
+  //     template?.replaceWith(startRef, endRef);
 
-      const renderContent = (content: any) => {
-        const parent = startRef.parentElement;
-        const template = document.createElement('template');
-        if (content !== null && content !== undefined) {
-          render(content, template);
-        }
+  //     const renderContent = (content: any) => {
+  //       const parent = startRef.parentElement;
+  //       const template = document.createElement('template');
+  //       if (content !== null && content !== undefined) {
+  //         render(content, template);
+  //       }
 
-        if (parent) {
-          const clone = parent.cloneNode(true);
-          const parentChildren = Array.from(parent.childNodes);
-          const startIndex = parentChildren.indexOf(startRef);
-          const endIndex = parentChildren.indexOf(endRef);
+  //       if (parent) {
+  //         const clone = parent.cloneNode(true);
+  //         const parentChildren = Array.from(parent.childNodes);
+  //         const startIndex = parentChildren.indexOf(startRef);
+  //         const endIndex = parentChildren.indexOf(endRef);
 
-          Array.from(clone.childNodes)
-            .slice(startIndex + 1, endIndex)
-            .forEach(node => node.remove());
+  //         Array.from(clone.childNodes)
+  //           .slice(startIndex + 1, endIndex)
+  //           .forEach(node => node.remove());
 
-          template.childNodes.forEach((node, i) =>
-            clone.insertBefore(node, clone.childNodes.item(startIndex + i + 1))
-          );
-          morphdom(parent, clone, { childrenOnly: true });
-        }
-      };
+  //         template.childNodes.forEach((node, i) =>
+  //           clone.insertBefore(node, clone.childNodes.item(startIndex + i + 1))
+  //         );
+  //         morphdom(parent, clone, { childrenOnly: true });
+  //       }
+  //     };
 
-      arg(renderContent, hooks);
-    }
-  });
+  //     arg(renderContent, hooks);
+  //   }
+  // });
 
   // patch changes
   morphdom(element, root, {
@@ -147,9 +143,19 @@ export function render(
         const attr = toEl.attributes.getNamedItem(bind.attr);
 
         if (attr) {
-          const arg = args[Number(attr?.value)];
-          const nextValue = arg instanceof StateSubject ? arg() : arg;
+          const propName = attr.name.replace('on:', '');
           const lastValue = bind.data;
+          let nextValue: any = undefined;
+
+          // when attr is arg index, we get the bindValue from the args
+          if (/^\$\$\d+$/.test(attr.value)) {
+            const argIndex = Number(attr.value.replace('$$', ''));
+            const arg = args[argIndex];
+            nextValue = arg instanceof StateSubject ? arg() : arg;
+          } else {
+            // else get value from the attribute string
+            nextValue = attr.value;
+          }
 
           if (nextValue !== lastValue) {
             bind.data = nextValue;
@@ -157,16 +163,14 @@ export function render(
             switch (bind.type) {
               case 'event':
                 bind.listener();
-                const eventName = attr.name.replace('on:', '');
-                bind.listener = addEventListener(fromEl, eventName, arg);
+                bind.listener = addEventListener(fromEl, propName, nextValue);
                 break;
               case 'ref':
                 bind.data.next(fromEl);
-
                 break;
               case 'prop':
-                const propName = attr.name.slice(1);
-                bindProp(fromEl, propName, nextValue);
+                tryToBindPropValue(fromEl, propName, nextValue);
+                toEl.setAttribute(propName, String(nextValue));
                 break;
             }
           }
@@ -204,33 +208,41 @@ export function render(
       }
 
       Array.from(el.attributes ?? []).forEach(attr => {
-        // bind event listeners
-        if (attr.name.startsWith('on:')) {
-          const arg = args[Number(attr.value)];
-          const eventName = attr.name.replace('on:', '');
-          const listener = addEventListener(el, eventName, arg);
-          el.removeAttribute(attr.name);
-          binds.push({
-            attr: attr.name,
-            data: arg,
-            listener,
-            type: 'event',
-          });
+        const propName = attr.name.replace('on:', '');
+        let bindValue: any = undefined;
+
+        // when attr is arg index, we get the bindValue from the args
+        if (/^\$\$\d+$/.test(attr.value)) {
+          const argIndex = Number(attr.value.replace('$$', ''));
+          const arg = args[argIndex];
+          bindValue = arg instanceof StateSubject ? arg() : arg;
+
+          // bind event listeners
+          if (attr.name.startsWith('on:')) {
+            const listener = addEventListener(el, propName, arg);
+            el.removeAttribute(attr.name);
+            binds.push({
+              attr: attr.name,
+              data: arg,
+              listener,
+              type: 'event',
+            });
+            return;
+          }
+        } else {
+          // else get value from the attribute string
+          bindValue = attr.value;
         }
 
-        // bind props
-        if (attr.name.startsWith(':')) {
-          const arg = args[Number(attr.value)];
-          const value = arg instanceof StateSubject ? arg() : arg;
-          const propName = attr.name.slice(1);
-          bindProp(el, propName, value);
-          el.removeAttribute(attr.name);
-          binds.push({
-            attr: attr.name,
-            data: value,
-            type: 'prop',
-          });
-        }
+        // try to bind prop value
+        tryToBindPropValue(el, propName, bindValue);
+        el.setAttribute(propName, String(bindValue));
+        //   el.removeAttribute(attr.name);
+        binds.push({
+          attr: attr.name,
+          data: bindValue,
+          type: 'prop',
+        });
       });
 
       if (binds.length > 0) {

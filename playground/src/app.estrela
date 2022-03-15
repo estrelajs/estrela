@@ -1,9 +1,8 @@
 <script tag="app-root">
   import { state } from 'estrela';
-  const name = state('Stranger');
 
-  const test = ({ target }) => name.next(target.value);
+  const name = state('Stranger');
 </script>
 
-<h1>Hello {name}!</h1>
-<input value={name()} on:input={test}/>
+<app-greeter name={name}></app-greeter>
+<input value={name} on:input={({ target }) => name.next(target.value)}/>

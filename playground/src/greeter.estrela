@@ -1,0 +1,7 @@
+<script tag="app-greeter">
+  import { prop } from "estrela";
+
+  const name = prop<string>();
+</script>
+
+<h1>Hello { name }</h1>
