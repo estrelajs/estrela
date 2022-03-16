@@ -1,0 +1,11 @@
+# folders
+.git
+.vscode
+node_modules
+playground
+src
+
+# files
+rollup.config.js
+tsconfig.json
+yarn.lock

@@ -1,0 +1,6 @@
+{
+  "name": "estrela/directives",
+  "main": "../dist/csj/directives.js",
+  "module": "../dist/esm/directives.js",
+  "types": "../dist/types/directives/index.d.ts"
+}
