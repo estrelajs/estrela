@@ -1,0 +1,7 @@
+<script tag="app-counter">
+  import { prop } from 'estrela'
+
+  const count = prop<number>()
+</script>
+
+<div>Count is { count }</div>

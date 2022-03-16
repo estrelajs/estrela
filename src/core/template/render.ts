@@ -104,9 +104,12 @@ export function render(
                 break;
               case 'prop':
                 tryToBindPropValue(fromEl, propName, nextValue);
-                toEl.setAttribute(propName, String(nextValue));
                 break;
             }
+          }
+
+          if (!/^[\w-]+:/.test(attr.name)) {
+            toEl.setAttribute(propName, String(nextValue));
           }
         } else {
           // cleanup and remove from the ELEMENT_ATTRIBUTES map
