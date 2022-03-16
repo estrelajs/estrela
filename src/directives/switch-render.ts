@@ -17,13 +17,14 @@ export function switchRender<T>(
   data: T,
   ...onArgs: OnResult<T>[]
 ): DirectiveCallback {
-  return render => {
+  return () => {
     for (const arg of onArgs) {
       if (!arg.hasOwnProperty('value')) {
-        return render(arg.result);
+        return arg.result;
       } else if (data === arg.value) {
-        return render(arg.result);
+        return arg.result;
       }
     }
+    return undefined;
   };
 }

@@ -1,8 +1,8 @@
 import { morphdom, toElement } from '../morphdom';
-import { EventEmitter } from '../observables/event_emitter';
-import { StateSubject } from '../observables/state_subject';
+import { EventEmitter, StateSubject } from '../observables';
 import { HTMLTemplate } from '../types';
 import { addEventListener, coerceArray, getProperty, isObserver } from '../utils';
+import { getHooks } from './hooks';
 import { HTMLResult } from './html-result';
 
 type AttrBind =
@@ -23,7 +23,6 @@ type AttrBind =
       type: 'ref';
     };
 
-// TODO: use reflect-metadata
 const tryToBindPropValue = (el: Element, propName: string, value: any) => {
   const prop = getProperty(el, 'props')?.[propName];
   if (prop && isObserver(prop)) {
@@ -31,48 +30,12 @@ const tryToBindPropValue = (el: Element, propName: string, value: any) => {
   }
 };
 
-// const getHooks = (element: any) => {
-//   const hooks = (element._hooks ??= {});
-//   hooks.effect ??= {};
-//   hooks.state ??= [];
-//   hooks.index = 0;
-
-//   const useState = (initialValue: any) => {
-//     const cachedIndex = hooks.index;
-//     if (!hooks.state[cachedIndex]) {
-//       hooks.state[cachedIndex] = initialValue;
-//     }
-//     const state = hooks.state[cachedIndex];
-//     const setter = (newValue: any) => {
-//       hooks.state[cachedIndex] = newValue;
-//     };
-//     hooks.index++;
-//     return [state, setter];
-//   };
-
-//   const useEffect = (callback: () => void | (() => void), dependencies: any[]) => {
-//     const cachedIndex = hooks.index;
-//     const hasChanged = dependencies.some(
-//       (dep, i) => dep !== hooks.state[cachedIndex]?.[i]
-//     );
-//     if (dependencies === undefined || hasChanged) {
-//       hooks.effect[cachedIndex]?.();
-//       const effect = callback();
-//       hooks.effect[cachedIndex] = effect;
-//       hooks.state[cachedIndex] = dependencies;
-//     }
-//     hooks.index++;
-//   };
-
-//   return { useState, useEffect };
-// };
-
 const ELEMENT_ATTRIBUTES = new Map<Element, AttrBind[]>();
 const ELEMENT_KEYS = new Map<Element, string>();
 
 export function render(
   template: HTMLTemplate | HTMLTemplate[] | null | undefined,
-  element: HTMLElement | DocumentFragment
+  element: Element | DocumentFragment
 ): void {
   if (!element) {
     console.error('Could not render template! Element is undefined.');
@@ -84,43 +47,23 @@ export function render(
     .map(item => HTMLResult.create(item).render(args))
     .join('');
   const root = toElement(`<div>${html}</div>`) as HTMLElement;
-  // const hooks = getHooks(element);
+  const hooks = getHooks(element);
 
-  // // directive bind
-  // Array.from(root.querySelectorAll('template[_stTemplate]')).forEach(template => {
-  //   const arg = args[Number(template.id)];
-  //   if (typeof arg === 'function') {
-  //     const startRef = document.createComment('');
-  //     const endRef = document.createComment('');
-  //     template?.replaceWith(startRef, endRef);
+  const requestRender = () => {
+    if (!(element as any)._requestedRender) {
+      render(template, element);
+    }
+  };
 
-  //     const renderContent = (content: any) => {
-  //       const parent = startRef.parentElement;
-  //       const template = document.createElement('template');
-  //       if (content !== null && content !== undefined) {
-  //         render(content, template);
-  //       }
-
-  //       if (parent) {
-  //         const clone = parent.cloneNode(true);
-  //         const parentChildren = Array.from(parent.childNodes);
-  //         const startIndex = parentChildren.indexOf(startRef);
-  //         const endIndex = parentChildren.indexOf(endRef);
-
-  //         Array.from(clone.childNodes)
-  //           .slice(startIndex + 1, endIndex)
-  //           .forEach(node => node.remove());
-
-  //         template.childNodes.forEach((node, i) =>
-  //           clone.insertBefore(node, clone.childNodes.item(startIndex + i + 1))
-  //         );
-  //         morphdom(parent, clone, { childrenOnly: true });
-  //       }
-  //     };
-
-  //     arg(renderContent, hooks);
-  //   }
-  // });
+  // directive bind
+  Array.from(root.querySelectorAll('template[_argIndex]')).forEach(template => {
+    const directive = args[Number(template.getAttribute('_argIndex'))];
+    if (typeof directive === 'function') {
+      const htmlTemplate = directive(requestRender, hooks);
+      render(htmlTemplate, template);
+      template.replaceWith(...(template.childNodes as any));
+    }
+  });
 
   // patch changes
   morphdom(element, root, {
@@ -173,7 +116,13 @@ export function render(
             }
           }
         } else {
-          // TODO: it means that we don't bind that attr anymore, should remove binding
+          // cleanup and remove from the ELEMENT_ATTRIBUTES map
+          if (bind.type === 'event') {
+            bind.listener();
+          }
+          const attrs = [...elAttrs];
+          attrs.splice(attrs.indexOf(bind), 1);
+          ELEMENT_ATTRIBUTES.set(fromEl, attrs);
         }
       });
 

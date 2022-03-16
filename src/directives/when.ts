@@ -5,5 +5,5 @@ export function when(
   truthy: HTMLTemplate,
   falsy?: HTMLTemplate
 ): DirectiveCallback {
-  return renderContent => renderContent(condition ? truthy : falsy);
+  return () => (condition ? truthy : falsy);
 }

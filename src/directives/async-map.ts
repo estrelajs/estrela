@@ -7,12 +7,8 @@ export function asyncMap<T>(
   onWaiting?: HTMLTemplate,
   onError?: HTMLTemplate
 ): DirectiveCallback {
-  return (renderContent, { useEffect, useState }) => {
+  return (requestRender, { useEffect, useState }) => {
     const [result, setResult] = useState(onWaiting);
-    const next = (content: any) => {
-      setResult(content);
-      renderContent(content);
-    };
 
     useEffect(() => {
       const subscription = from(deferredArray)
@@ -20,11 +16,13 @@ export function asyncMap<T>(
           map(data => data.map(callback)),
           catchError(() => of(onError))
         )
-        .subscribe(next);
+        .subscribe((content: any) => {
+          setResult(content);
+          requestRender();
+        });
       return () => subscription.unsubscribe();
     }, [deferredArray]);
 
-    // render content in state
-    renderContent(result);
+    return result;
   };
 }

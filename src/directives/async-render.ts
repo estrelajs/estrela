@@ -6,21 +6,19 @@ export function asyncRender<T extends HTMLTemplate>(
   onWaiting?: T,
   onError?: T
 ): DirectiveCallback {
-  return (renderContent, { useEffect, useState }) => {
+  return (requestRender, { useEffect, useState }) => {
     const [result, setResult] = useState(onWaiting);
-    const next = (content: any) => {
-      setResult(content);
-      renderContent(content);
-    };
 
     useEffect(() => {
       const subscription = from(deferred)
         .pipe(catchError(() => of(onError)))
-        .subscribe(next);
+        .subscribe((content: any) => {
+          setResult(content);
+          requestRender();
+        });
       return () => subscription.unsubscribe();
     }, [deferred]);
 
-    // render content in state
-    renderContent(result);
+    return result;
   };
 }

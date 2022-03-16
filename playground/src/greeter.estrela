@@ -1,7 +1,12 @@
 <script tag="app-greeter">
   import { prop } from "estrela";
+  import { asyncRender, when } from "estrela/directives";
 
   const name = prop<string>();
+
+  const greet: any = new Promise(r => {
+    setTimeout(() => r('Welcome'), 3000);
+  });
 </script>
 
-<h1>Hello { name }</h1>
+<h1>{ asyncRender(greet, 'Hello') } { when(name() === 'Eduardo', 'o cara!', name()) }</h1>

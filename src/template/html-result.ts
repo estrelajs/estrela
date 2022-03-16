@@ -33,7 +33,10 @@ export class HTMLResult {
     }
 
     const html = this.args.reduce((html: string, arg, idx) => {
-      const setContent = (content: string) => {
+      const setContent = (content: string, wrapInComments?: boolean) => {
+        if (wrapInComments) {
+          content = `<!---->${content}<!---->`;
+        }
         const nextHtml = this.template[idx + 1];
         return html + content + nextHtml;
       };
@@ -59,7 +62,16 @@ export class HTMLResult {
         return setContent(content);
       }
 
-      // else render right away
+      // when arg is a function (directive)
+      if (typeof arg === 'function') {
+        let index = args.indexOf(arg);
+        if (index === -1) {
+          index = args.push(arg) - 1;
+        }
+        return setContent(`<template _argIndex="${index}"></template>`, true);
+      }
+
+      // else render value right away
       const renderValue = (value: any): string => {
         if (value === null || value === undefined || value === false) {
           return '';
@@ -69,9 +81,9 @@ export class HTMLResult {
         }
         return String(value);
       };
+
       const argValue = arg instanceof StateSubject ? arg() : arg;
-      return setContent(`<!---->${renderValue(argValue)}<!---->`);
-      // wrap content inside comments for better virtual dom diff.
+      return setContent(renderValue(argValue), true);
     }, this.template[0]);
 
     return html;
