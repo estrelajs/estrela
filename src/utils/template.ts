@@ -1,4 +1,4 @@
-import { HTMLResult } from '../element/template';
+import { HTMLResult } from '../core';
 
 /** Type check for HtmlResult object. */
 export function isHtmlResult(x: any): x is HTMLResult {

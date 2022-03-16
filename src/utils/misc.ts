@@ -1,4 +1,4 @@
-import { HTMLResult } from '../element';
+import { HTMLResult } from '../core';
 import { HTMLTemplate } from '../types';
 
 /** Make sure data is an array. */

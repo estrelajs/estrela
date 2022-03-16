@@ -1,4 +1,4 @@
-import { HTMLResult } from '../element';
+import { HTMLResult } from '../core';
 
 export type HTMLTemplate =
   | string

@@ -1,5 +1,5 @@
 import { Subject } from 'rxjs';
-import { PROPERTIES_TOKEN } from '../element/properties/properties';
+import { PROPERTIES_TOKEN } from '../core/properties/properties';
 import { ElementProperties } from '../types/ElementProperties';
 import { isObserver } from './observables';
 

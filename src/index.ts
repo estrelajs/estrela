@@ -1,3 +1,3 @@
 import 'reflect-metadata';
-export * from './element';
+export * from './core';
 export * from './types';
