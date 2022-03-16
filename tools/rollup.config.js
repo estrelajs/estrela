@@ -3,21 +3,21 @@ import { nodeResolve } from '@rollup/plugin-node-resolve';
 import { defineConfig } from 'rollup';
 import esbuild from 'rollup-plugin-esbuild';
 
-const packageJson = require('./package.json');
+const packageJson = require('../package.json');
 
 export default defineConfig({
   input: {
-    index: './src/index.ts',
-    directives: './src/directives/index.ts',
+    index: 'src/index.ts',
+    directives: 'src/directives/index.ts',
   },
   output: [
     {
-      dir: './dist/csj',
+      dir: 'dist/csj',
       entryFileNames: '[name].js',
       format: 'cjs',
     },
     {
-      dir: './dist/esm',
+      dir: 'dist/esm',
       entryFileNames: '[name].js',
       format: 'esm',
     },

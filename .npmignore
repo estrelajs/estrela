@@ -4,6 +4,7 @@
 node_modules
 playground
 src
+tools
 
 # files
 rollup.config.js
