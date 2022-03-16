@@ -10,7 +10,8 @@ import { coerceArray, getElementProperty } from '../utils';
 import { EMITTERS_TOKEN } from './properties/emitter';
 import { PROPS_TOKEN } from './properties/prop';
 import { PROPERTIES_TOKEN } from './properties/properties';
-import { render } from './template';
+import { STATES_TOKEN } from './properties/state';
+import { render } from './template/render';
 import { CURRENT_ELEMENT } from './token';
 
 export function defineElement(
@@ -56,7 +57,7 @@ export function defineElement(
 
       // Get element states
       const elementStates: StateSubject<any>[] =
-        Reflect.getMetadata('states', this) ?? [];
+        Reflect.getMetadata(STATES_TOKEN, this) ?? [];
 
       // Get element props
       const propKeys: string[] = Reflect.getOwnMetadataKeys(this, PROPS_TOKEN);

@@ -1,7 +1,10 @@
 export * from './define-element';
 export * from './event';
-export { emitter, EmitterOptions } from './properties/emitter';
-export { prop, PropOptions } from './properties/prop';
+export { emitter } from './properties/emitter';
+export { prop } from './properties/prop';
 export { setProperties } from './properties/properties';
 export { state } from './properties/state';
-export * from './template';
+export * from './template/css-directive';
+export * from './template/html-directive';
+export * from './template/HTMLResult';
+export * from './template/render';

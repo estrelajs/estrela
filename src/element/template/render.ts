@@ -1,9 +1,8 @@
 import { EventEmitter, StateSubject } from '../../observables';
 import { HTMLTemplate } from '../../types';
-import { addEventListener, coerceArray, tryToBindPropValue } from '../../utils';
+import { addEventListener, coerceTemplate, tryToBindPropValue } from '../../utils';
 import { getHooks } from '../hooks';
 import { morphdom, toElement } from '../morphdom';
-import { HTMLResult } from './HTMLResult';
 
 type AttrBind =
   | {
@@ -28,7 +27,7 @@ const ELEMENT_KEYS = new Map<Element, string>();
 
 /** Render template in element. */
 export function render(
-  template: HTMLTemplate | HTMLTemplate[] | null | undefined,
+  template: HTMLTemplate,
   element: Element | DocumentFragment
 ): void {
   if (!element) {
@@ -37,8 +36,8 @@ export function render(
   }
 
   const args: any[] = [];
-  const html = coerceArray(template)
-    .map(item => HTMLResult.create(item).render(args))
+  const html = coerceTemplate(template)
+    .map(temp => temp.render(args))
     .join('');
   const root = toElement(`<div>${html}</div>`) as HTMLElement;
   const hooks = getHooks(element);

@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs';
-import { HTMLResult } from '../element/template';
+import { HTMLResult } from '../element';
 
 export interface CustomElementEventMap extends HTMLElementEventMap {
   destroy: Event;

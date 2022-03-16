@@ -5,11 +5,11 @@
   const name = prop<string>();
 
   const greet: any = new Promise(r => {
-    setTimeout(() => r('Welcome'), 3000);
+    setTimeout(() => r('Welcome'), 5000);
   });
 </script>
 
 <h1>
   { async(greet, 'Hello') }
-  { when(name() === 'Eduardo', 'o cara!', name()) }
+  { when(name() === 'Eduardo', 'o cara', name()) }!
 </h1>

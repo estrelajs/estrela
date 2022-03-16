@@ -1,7 +1,7 @@
 import { StateSubject } from '../../observables/StateSubject';
 import { HTMLTemplate } from '../../types';
 import { isHtmlResult, isInTag } from '../../utils';
-import { coerceArray } from '../../utils/misc';
+import { coerceArray, isFalsy } from '../../utils/misc';
 
 /** HtmlResult contains the HTML data to be rendered. */
 export class HTMLResult {
@@ -61,7 +61,7 @@ export class HTMLResult {
 
       // else render value right away
       const renderValue = (value: any): string => {
-        if (value === null || value === undefined || value === false) {
+        if (isFalsy(value)) {
           return '';
         }
         if (Array.isArray(value)) {
@@ -75,12 +75,5 @@ export class HTMLResult {
     }, this.template[0]);
 
     return html;
-  }
-
-  /** create HtmlResult from a valid template value. */
-  static create(template: HTMLTemplate): HTMLResult {
-    return template instanceof HTMLResult
-      ? template
-      : new HTMLResult([String(template)] as any, []);
   }
 }

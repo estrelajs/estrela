@@ -7,5 +7,5 @@ export interface DirectiveCallback {
       useEffect: (callback: () => void | (() => void), dependencies: any[]) => void;
       useState: <T>(initialValue: T) => [T, (newValue: T) => void];
     }
-  ): HTMLTemplate | undefined;
+  ): HTMLTemplate;
 }

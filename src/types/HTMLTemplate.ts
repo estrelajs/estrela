@@ -1,3 +1,10 @@
-import { HTMLResult } from '../element/template';
+import { HTMLResult } from '../element';
 
-export type HTMLTemplate = string | number | HTMLResult;
+export type HTMLTemplate =
+  | string
+  | number
+  | false
+  | HTMLResult
+  | (string | number | false | HTMLResult | null | undefined)[]
+  | null
+  | undefined;
