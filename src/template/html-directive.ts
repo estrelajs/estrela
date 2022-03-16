@@ -1,4 +1,4 @@
-import { HTMLResult } from './html-result';
+import { HTMLResult } from './HTMLResult';
 
 export const html = (
   template: TemplateStringsArray,

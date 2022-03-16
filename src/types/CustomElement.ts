@@ -1,4 +1,5 @@
 import { Observable } from 'rxjs';
+import { HTMLResult } from '../template';
 
 export interface CustomElementEventMap extends HTMLElementEventMap {
   destroy: Event;
@@ -14,7 +15,6 @@ export interface CustomElement extends HTMLElement {
     listener: (this: CustomElement, ev: CustomElementEventMap[K]) => any,
     options?: boolean | AddEventListenerOptions
   ): void;
-
   addEventListener(
     type: string,
     listener: EventListenerOrEventListenerObject,
@@ -27,4 +27,11 @@ export interface CustomElement extends HTMLElement {
   ): Observable<CustomElementEventMap[K]>;
 
   requestRender(): void;
+}
+
+/** Functional Estrela Element */
+export interface FunctionalElement {
+  (elementRef: CustomElement): {
+    (): HTMLResult | null;
+  };
 }

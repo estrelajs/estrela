@@ -7,7 +7,7 @@ import {
   ElementProperties,
   FunctionalElement,
 } from '../types';
-import { coerceArray, getProperty } from '../utils';
+import { coerceArray, getElementProperty } from '../utils';
 import { EventEmitter, StateSubject } from '../observables';
 
 export function defineElement(
@@ -98,7 +98,7 @@ export function defineElement(
       this.dispatchEvent(new Event('init'));
 
       // subscribe to emitters
-      const emitters = getProperty(this, 'emitters') ?? {};
+      const emitters = getElementProperty(this, 'emitters') ?? {};
       Object.keys(emitters).forEach(key => {
         const emitter = emitters[key];
         if (emitter instanceof EventEmitter) {
@@ -116,8 +116,8 @@ export function defineElement(
 
       // subscribe to states
       const observables = [
-        ...coerceArray(getProperty(this, 'state')),
-        ...Object.values(getProperty(this, 'props') ?? {}),
+        ...coerceArray(getElementProperty(this, 'state')),
+        ...Object.values(getElementProperty(this, 'props') ?? {}),
       ];
 
       this._subscriptions.add(

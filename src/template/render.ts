@@ -1,9 +1,9 @@
 import { morphdom, toElement } from '../morphdom';
 import { EventEmitter, StateSubject } from '../observables';
 import { HTMLTemplate } from '../types';
-import { addEventListener, coerceArray, getProperty, isObserver } from '../utils';
+import { addEventListener, coerceArray, tryToBindPropValue } from '../utils';
 import { getHooks } from './hooks';
-import { HTMLResult } from './html-result';
+import { HTMLResult } from './HTMLResult';
 
 type AttrBind =
   | {
@@ -23,16 +23,10 @@ type AttrBind =
       type: 'ref';
     };
 
-const tryToBindPropValue = (el: Element, propName: string, value: any) => {
-  const prop = getProperty(el, 'props')?.[propName];
-  if (prop && isObserver(prop)) {
-    prop.next(value);
-  }
-};
-
 const ELEMENT_ATTRIBUTES = new Map<Element, AttrBind[]>();
 const ELEMENT_KEYS = new Map<Element, string>();
 
+/** Render template in element. */
 export function render(
   template: HTMLTemplate | HTMLTemplate[] | null | undefined,
   element: Element | DocumentFragment

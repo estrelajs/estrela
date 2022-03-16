@@ -1,8 +1,8 @@
 import { catchError, from, Observable, of } from 'rxjs';
 import { DirectiveCallback, HTMLTemplate } from '../types';
 
-export function asyncRender<T extends HTMLTemplate>(
-  deferred: Promise<T | T[]> | Observable<T | T[]>,
+export function async<T extends HTMLTemplate>(
+  deferred: Promise<T> | Observable<T>,
   onWaiting?: T,
   onError?: T
 ): DirectiveCallback {

@@ -1,4 +1,4 @@
-import { HTMLTemplate } from './html-template';
+import { HTMLTemplate } from './HTMLTemplate';
 
 export interface DirectiveCallback {
   (
@@ -7,5 +7,5 @@ export interface DirectiveCallback {
       useEffect: (callback: () => void | (() => void), dependencies: any[]) => void;
       useState: <T>(initialValue: T) => [T, (newValue: T) => void];
     }
-  ): HTMLTemplate | HTMLTemplate[] | undefined;
+  ): HTMLTemplate | undefined;
 }

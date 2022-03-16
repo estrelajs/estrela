@@ -1,4 +1,4 @@
+export * from './async';
 export * from './async-map';
-export * from './async-render';
-export * from './switch-render';
+export * from './switch-case';
 export * from './when';

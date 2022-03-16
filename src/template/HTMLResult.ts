@@ -1,19 +1,7 @@
 import { StateSubject } from '../observables/state_subject';
 import { HTMLTemplate } from '../types';
-import { coerceArray } from '../utils/coerce-array';
-
-/** Type check for HtmlResult object. */
-export function isHtmlResult(x: any): x is HTMLResult {
-  return x instanceof HTMLResult;
-}
-
-export function isInTag(html: string): boolean {
-  for (let i = html.length; i > 0; --i) {
-    if (html[i] === '<') return true;
-    if (html[i] === '>') return false;
-  }
-  return false;
-}
+import { isHtmlResult, isInTag } from '../utils';
+import { coerceArray } from '../utils/misc';
 
 /** HtmlResult contains the HTML data to be rendered. */
 export class HTMLResult {

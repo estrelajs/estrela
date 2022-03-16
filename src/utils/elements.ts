@@ -1,6 +1,8 @@
 import { Subject } from 'rxjs';
-import { ElementProperties } from '../types/element-properties';
+import { ElementProperties } from '../types/ElementProperties';
+import { isObserver } from './observables';
 
+/** Add event listener to element and return a remover function. */
 export function addEventListener(
   element: Element,
   event: string,
@@ -19,13 +21,22 @@ export function addEventListener(
   return () => element.removeEventListener(event, hook);
 }
 
-export function getProperty<K extends keyof ElementProperties>(
+/** Get reflected value from element properties. */
+export function getElementProperty<K extends keyof ElementProperties>(
   element: Element,
   key: K
 ): ElementProperties[K] | undefined {
-  const properties: ElementProperties = Reflect.getOwnMetadata(
+  const properties = Reflect.getOwnMetadata(
     'properties',
     element
-  );
+  ) as ElementProperties;
   return properties?.[key];
+}
+
+/** Try to bind element prop value if exists. */
+export function tryToBindPropValue(el: Element, propName: string, value: any) {
+  const prop = getElementProperty(el, 'props')?.[propName];
+  if (prop && isObserver(prop)) {
+    prop.next(value);
+  }
 }
