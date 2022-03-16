@@ -1,6 +1,5 @@
 import { merge, Observable, Subject, Subscription } from 'rxjs';
-import { render } from '../template';
-import { CURRENT_ELEMENT } from './token';
+import { EventEmitter, StateSubject } from '../observables';
 import {
   CustomElement,
   CustomElementEventMap,
@@ -8,7 +7,11 @@ import {
   FunctionalElement,
 } from '../types';
 import { coerceArray, getElementProperty } from '../utils';
-import { EventEmitter, StateSubject } from '../observables';
+import { EMITTERS_TOKEN } from './properties/emitter';
+import { PROPS_TOKEN } from './properties/prop';
+import { PROPERTIES_TOKEN } from './properties/properties';
+import { render } from './template';
+import { CURRENT_ELEMENT } from './token';
 
 export function defineElement(
   name: string,
@@ -56,16 +59,16 @@ export function defineElement(
         Reflect.getMetadata('states', this) ?? [];
 
       // Get element props
-      const propKeys: string[] = Reflect.getOwnMetadataKeys(this, 'props');
+      const propKeys: string[] = Reflect.getOwnMetadataKeys(this, PROPS_TOKEN);
       const elementProps = propKeys.reduce((acc, key) => {
-        acc[key] = Reflect.getOwnMetadata(key, this, 'props');
+        acc[key] = Reflect.getOwnMetadata(key, this, PROPS_TOKEN);
         return acc;
       }, {} as Record<string, StateSubject<any>>);
 
       // Get element emitters
-      const emitterKeys: string[] = Reflect.getOwnMetadataKeys(this, 'emitters');
+      const emitterKeys: string[] = Reflect.getOwnMetadataKeys(this, EMITTERS_TOKEN);
       const elementEmitters = emitterKeys.reduce((acc, key) => {
-        acc[key] = Reflect.getOwnMetadata(key, this, 'emitters');
+        acc[key] = Reflect.getOwnMetadata(key, this, EMITTERS_TOKEN);
         return acc;
       }, {} as Record<string, StateSubject<any>>);
 
@@ -75,7 +78,8 @@ export function defineElement(
         props = elementProps,
         state = elementStates,
         ...others
-      } = (Reflect.getOwnMetadata('properties', this) as ElementProperties) ?? {};
+      } = (Reflect.getOwnMetadata(PROPERTIES_TOKEN, this) as ElementProperties) ??
+      {};
 
       const properties = {
         emitters,
@@ -85,7 +89,7 @@ export function defineElement(
       };
 
       // set element ref
-      Reflect.defineMetadata('properties', properties, this);
+      Reflect.defineMetadata(PROPERTIES_TOKEN, properties, this);
 
       // add element subscriptions to the local one
       coerceArray(properties.subscription).forEach(sub =>
@@ -93,6 +97,7 @@ export function defineElement(
       );
     }
 
+    /** @internal */
     connectedCallback(): void {
       this.requestRender();
       this.dispatchEvent(new Event('init'));
@@ -125,12 +130,14 @@ export function defineElement(
       );
     }
 
+    /** @internal */
     disconnectedCallback(): void {
       this.dispatchEvent(new Event('destroy'));
       this._subscriptions.unsubscribe();
       this._eventSubscriptions.forEach(complete => complete());
     }
 
+    /** Creates an observable from the element event. */
     on<K extends keyof CustomElementEventMap>(
       event: K,
       options?: boolean | AddEventListenerOptions
@@ -146,6 +153,7 @@ export function defineElement(
       return subject.asObservable();
     }
 
+    /** Request element render. */
     requestRender(): void {
       if (this.isConnected && !this._requestedRender) {
         this._requestedRender = true;

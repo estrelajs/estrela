@@ -1,5 +1,5 @@
-const STATE_HOOK = Symbol('state');
-const EFFECT_HOOK = Symbol('effect');
+const STATE_HOOK = Symbol('STATE_HOOK');
+const EFFECT_HOOK = Symbol('EFFECT_HOOK');
 
 export function getHooks(element: Object) {
   let index = 0;

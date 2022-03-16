@@ -1,7 +1,7 @@
-import { StateSubject } from '../observables/state_subject';
-import { HTMLTemplate } from '../types';
-import { isHtmlResult, isInTag } from '../utils';
-import { coerceArray } from '../utils/misc';
+import { StateSubject } from '../../observables/StateSubject';
+import { HTMLTemplate } from '../../types';
+import { isHtmlResult, isInTag } from '../../utils';
+import { coerceArray } from '../../utils/misc';
 
 /** HtmlResult contains the HTML data to be rendered. */
 export class HTMLResult {

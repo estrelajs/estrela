@@ -1,10 +1,10 @@
 import { catchError, from, Observable, of } from 'rxjs';
 import { DirectiveCallback, HTMLTemplate } from '../types';
 
-export function async<T extends HTMLTemplate>(
-  deferred: Promise<T> | Observable<T>,
-  onWaiting?: T,
-  onError?: T
+export function async(
+  deferred: Promise<HTMLTemplate> | Observable<HTMLTemplate>,
+  onWaiting?: HTMLTemplate,
+  onError?: HTMLTemplate
 ): DirectiveCallback {
   return (requestRender, { useEffect, useState }) => {
     const [result, setResult] = useState(onWaiting);

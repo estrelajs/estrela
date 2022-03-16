@@ -1,2 +1,2 @@
-export { EventEmitter } from './event_emitter';
-export { StateSubject } from './state_subject';
+export { EventEmitter } from './EventEmitter';
+export { StateSubject } from './StateSubject';

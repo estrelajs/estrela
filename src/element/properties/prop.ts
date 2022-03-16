@@ -1,7 +1,9 @@
-import { StateSubject } from '../observables';
-import { CURRENT_ELEMENT } from '../element/token';
+import { StateSubject } from '../../observables';
+import { CURRENT_ELEMENT } from '../token';
 
 const PROP_REGEX = /([a-zA-Z0-9$_]+)((\s|(\/\*.*\*\/))+)?=.*prop(<.*>)?\(.*\)/g;
+
+export const PROPS_TOKEN = Symbol('PROPS_TOKEN');
 
 export interface PropOptions<T> {
   /** The prop key to be bound on the element tag. */
@@ -16,7 +18,7 @@ export function prop<T>(
   options: Required<Pick<PropOptions<T>, 'value'>> & Omit<PropOptions<T>, 'value'>
 ): StateSubject<T>;
 export function prop<T>(options?: PropOptions<T>): StateSubject<T | undefined>;
-export function prop<T>(options?: PropOptions<T>): StateSubject<T | undefined> {
+export function prop(options?: PropOptions<any>): StateSubject<any> {
   let { value, key } = options ?? {};
   const state = new StateSubject<any>(value);
 
@@ -36,7 +38,7 @@ export function prop<T>(options?: PropOptions<T>): StateSubject<T | undefined> {
     }
 
     for (const k of keys) {
-      if (!Reflect.hasOwnMetadata(k, CURRENT_ELEMENT.context, 'props')) {
+      if (!Reflect.hasOwnMetadata(k, CURRENT_ELEMENT.context, PROPS_TOKEN)) {
         key = k;
         break;
       }
@@ -44,7 +46,7 @@ export function prop<T>(options?: PropOptions<T>): StateSubject<T | undefined> {
   }
 
   if (key) {
-    Reflect.defineMetadata(key, state, CURRENT_ELEMENT.context, 'props');
+    Reflect.defineMetadata(key, state, CURRENT_ELEMENT.context, PROPS_TOKEN);
   }
 
   return state;

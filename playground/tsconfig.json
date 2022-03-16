@@ -4,6 +4,5 @@
     "noEmit": true,
     "noImplicitAny": false
   },
-  "include": ["./"],
-  "exclude": ["./dist"]
+  "include": ["src"]
 }

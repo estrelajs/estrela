@@ -1,5 +1,6 @@
 import morphAttrs from './morphAttrs';
 import morphdomFactory from './morphdom';
+export * from './util';
 
 export interface MorphDomOptions {
   getNodeKey?: (node: Node) => any;
@@ -18,4 +19,3 @@ export interface MorphDomFunc {
 }
 
 export const morphdom: MorphDomFunc = morphdomFactory(morphAttrs);
-export * from './util';

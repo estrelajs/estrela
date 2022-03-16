@@ -1,8 +1,8 @@
+import { EventEmitter, StateSubject } from '../../observables';
+import { HTMLTemplate } from '../../types';
+import { addEventListener, coerceArray, tryToBindPropValue } from '../../utils';
+import { getHooks } from '../hooks';
 import { morphdom, toElement } from '../morphdom';
-import { EventEmitter, StateSubject } from '../observables';
-import { HTMLTemplate } from '../types';
-import { addEventListener, coerceArray, tryToBindPropValue } from '../utils';
-import { getHooks } from './hooks';
 import { HTMLResult } from './HTMLResult';
 
 type AttrBind =

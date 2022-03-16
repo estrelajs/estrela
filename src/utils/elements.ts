@@ -1,4 +1,5 @@
 import { Subject } from 'rxjs';
+import { PROPERTIES_TOKEN } from '../element/properties/properties';
 import { ElementProperties } from '../types/ElementProperties';
 import { isObserver } from './observables';
 
@@ -27,7 +28,7 @@ export function getElementProperty<K extends keyof ElementProperties>(
   key: K
 ): ElementProperties[K] | undefined {
   const properties = Reflect.getOwnMetadata(
-    'properties',
+    PROPERTIES_TOKEN,
     element
   ) as ElementProperties;
   return properties?.[key];

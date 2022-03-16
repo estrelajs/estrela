@@ -1,8 +1,10 @@
-import { EventEmitter } from '../observables/event_emitter';
-import { CURRENT_ELEMENT } from '../element/token';
+import { EventEmitter } from '../../observables/EventEmitter';
+import { CURRENT_ELEMENT } from '../token';
 
 const EMITTER_REGEX =
   /([a-zA-Z0-9$_]+)((\s|(\/\*.*\*\/))+)?=.*emitter(<.*>)?\(.*\)/g;
+
+export const EMITTERS_TOKEN = Symbol('EMITTERS_TOKEN');
 
 export interface EmitterOptions {
   async?: boolean;
@@ -28,7 +30,7 @@ export function emitter<T>({ async, key }: EmitterOptions = {}): EventEmitter<T>
     }
 
     for (const k of keys) {
-      if (!Reflect.hasOwnMetadata(k, CURRENT_ELEMENT.context, 'emitters')) {
+      if (!Reflect.hasOwnMetadata(k, CURRENT_ELEMENT.context, EMITTERS_TOKEN)) {
         key = k;
         break;
       }
@@ -36,7 +38,7 @@ export function emitter<T>({ async, key }: EmitterOptions = {}): EventEmitter<T>
   }
 
   if (key) {
-    Reflect.defineMetadata(key, emitter, CURRENT_ELEMENT.context, 'emitters');
+    Reflect.defineMetadata(key, emitter, CURRENT_ELEMENT.context, EMITTERS_TOKEN);
   }
 
   return emitter;

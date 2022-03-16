@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs';
-import { CURRENT_ELEMENT } from './token';
 import { CustomElementEventMap } from '../types';
+import { CURRENT_ELEMENT } from './token';
 
 /** Creates an observable from the element event. */
 export function onEvent<K extends keyof CustomElementEventMap>(
