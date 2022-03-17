@@ -1,7 +1,7 @@
 import { StateSubject } from '../../observables/StateSubject';
-import { HTMLTemplate } from '../../types';
+import { DirectiveHooks } from '../../types';
 import { isHtmlResult, isInTag } from '../../utils';
-import { coerceArray, isFalsy } from '../../utils/misc';
+import { coerceArray, isDirective, isFalsy } from '../../utils/misc';
 
 /** HtmlResult contains the HTML data to be rendered. */
 export class HTMLResult {
@@ -15,12 +15,16 @@ export class HTMLResult {
    * @param args array to receive the template arguments
    * @returns html result string
    */
-  render(args: any[]): string {
+  render(args: any[], hooks: DirectiveHooks): string {
     if (this.template.length === 1) {
       return this.template[0];
     }
 
     const html = this.args.reduce((html: string, arg, idx) => {
+      if (isDirective(arg)) {
+        arg = arg.render(hooks);
+      }
+
       const setContent = (content: string, wrapInComments?: boolean) => {
         if (wrapInComments) {
           content = `<!---->${content}<!---->`;
@@ -36,7 +40,9 @@ export class HTMLResult {
 
       // when arg is HtmlResult
       if (argTemplates.length > 0) {
-        const content = argTemplates.map(result => result.render(args)).join('');
+        const content = argTemplates
+          .map(result => result.render(args, hooks))
+          .join('');
         return setContent(content);
       }
 
@@ -50,14 +56,14 @@ export class HTMLResult {
         return setContent(content);
       }
 
-      // when arg is a function (directive)
-      if (typeof arg === 'function') {
-        let index = args.indexOf(arg);
-        if (index === -1) {
-          index = args.push(arg) - 1;
-        }
-        return setContent(`<template _argIndex="${index}"></template>`, true);
-      }
+      // // when arg is a function (directive)
+      // if (typeof arg === 'function') {
+      //   let index = args.indexOf(arg);
+      //   if (index === -1) {
+      //     index = args.push(arg) - 1;
+      //   }
+      //   return setContent(`<template _argIndex="${index}"></template>`, true);
+      // }
 
       // else render value right away
       const renderValue = (value: any): string => {

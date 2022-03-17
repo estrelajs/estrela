@@ -1,28 +1,26 @@
 <script tag="app-counter">
   import { prop } from 'estrela'
+  import { async } from 'estrela/directives';
   import { map } from 'rxjs';
 
   const count = prop<number>({ value: 0 })
 
-  // const classes$ = count.pipe(
-  //   map(value => ({
-  //     even: value % 2 === 0,
-  //     odd: value % 2 === 1
-  //   }))
-  // );
-
-  // <div
-  //   class:even={count() % 2 === 0}
-  //   class:odd={count() % 2 === 1}
-  // >
-  //   Count is { count }
-  // </div>
+  const classes$ = count.pipe(
+    map(value => ({
+      even: value % 2 === 0,
+      odd: value % 2 === 1
+    }))
+  );
 </script>
 
-<div class={{
-  even: count() % 2 === 0,
-  odd: count() % 2 === 1
-}}>
+<div class={async(classes$)}>
+  Count is { count }
+</div>
+
+<div
+  class:even={count() % 2 === 0}
+  class:odd={count() % 2 === 1}
+>
   Count is { count }
 </div>
 

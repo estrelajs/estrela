@@ -35,35 +35,37 @@ export function render(
     return;
   }
 
-  const args: any[] = [];
-  const html = coerceTemplate(template)
-    .map(temp => temp.render(args))
-    .join('');
-  const root = toElement(`<div>${html}</div>`);
-  const hooks = getHooks(element);
-
-  // requestRender function for directive
-  const requestRender = () => {
-    let el = element;
-    if (element instanceof ShadowRoot) {
-      el = element.host;
-    }
-    if ((el as CustomElement).requestRender) {
-      (el as CustomElement).requestRender();
-    } else {
-      render(template, el);
-    }
+  // hooks for directives
+  const hooks = {
+    ...getHooks(element),
+    requestRender() {
+      let el = element;
+      if (element instanceof ShadowRoot) {
+        el = element.host;
+      }
+      if ((el as CustomElement).requestRender) {
+        (el as CustomElement).requestRender();
+      } else {
+        render(template, el);
+      }
+    },
   };
 
-  // directives bind
-  Array.from(root.querySelectorAll('template[_argIndex]')).forEach(template => {
-    const directive: DirectiveCallback =
-      args[Number(template.getAttribute('_argIndex'))];
-    if (typeof directive === 'function') {
-      render(directive(requestRender, hooks), template);
-      template.replaceWith(...Array.from(template.childNodes));
-    }
-  });
+  const args: any[] = [];
+  const html = coerceTemplate(template)
+    .map(temp => temp.render(args, hooks))
+    .join('');
+  const root = toElement(`<div>${html}</div>`);
+
+  // // directives bind
+  // Array.from(root.querySelectorAll('template[_argIndex]')).forEach(template => {
+  //   const directive: DirectiveCallback<any> =
+  //     args[Number(template.getAttribute('_argIndex'))];
+  //   if (typeof directive === 'function') {
+  //     render(directive(requestRender, hooks), template);
+  //     template.replaceWith(...Array.from(template.childNodes));
+  //   }
+  // });
 
   // patch changes
   morphdom(element, root, getMorphOptions(args));
