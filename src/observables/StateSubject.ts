@@ -1,4 +1,12 @@
-import { ObjectUnsubscribedError, Subject } from 'rxjs';
+import {
+  identity,
+  ObjectUnsubscribedError,
+  Observable,
+  OperatorFunction,
+  startWith,
+  Subject,
+  UnaryFunction,
+} from 'rxjs';
 
 export interface StateSubject<T> extends Subject<T> {
   /** Current state value. */
@@ -53,12 +61,37 @@ class StateSubject_ extends Subject<any> {
     super.next(this._value);
   }
 
+  pipe(...operations: OperatorFunction<any, any>[]): Observable<any> {
+    operations.unshift(startWith(this._value));
+    return pipeFromArray(operations)(this);
+  }
+
   /** @internal */
   protected _throwIfClosed() {
     if (this.closed) {
       throw new ObjectUnsubscribedError();
     }
   }
+}
+
+/** @internal */
+export function pipeFromArray<T, R>(
+  fns: Array<UnaryFunction<T, R>>
+): UnaryFunction<T, R> {
+  if (fns.length === 0) {
+    return identity as UnaryFunction<any, any>;
+  }
+
+  if (fns.length === 1) {
+    return fns[0];
+  }
+
+  return function piped(input: T): R {
+    return fns.reduce(
+      (prev: any, fn: UnaryFunction<T, R>) => fn(prev),
+      input as any
+    );
+  };
 }
 
 export const StateSubject: {

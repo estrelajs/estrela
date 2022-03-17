@@ -10,6 +10,7 @@ import {
   addEventListener,
   coerceTemplate,
   getElementProperty,
+  isNil,
   isObserver,
   toElement,
 } from '../../utils';
@@ -57,16 +58,6 @@ export function render(
     .join('');
   const root = toElement(`<div>${html}</div>`);
 
-  // // directives bind
-  // Array.from(root.querySelectorAll('template[_argIndex]')).forEach(template => {
-  //   const directive: DirectiveCallback<any> =
-  //     args[Number(template.getAttribute('_argIndex'))];
-  //   if (typeof directive === 'function') {
-  //     render(directive(requestRender, hooks), template);
-  //     template.replaceWith(...Array.from(template.childNodes));
-  //   }
-  // });
-
   // patch changes
   morphdom(element, root, getMorphOptions(args));
 }
@@ -101,7 +92,7 @@ function getMorphOptions(args: any[]): MorphDomOptions {
         const propName = attr.replace(/^([\w-]+)?:/, '');
         const prop = getElementProperty(element, 'props')?.[propName];
 
-        if (isRef || isEvent || isClassBind || prop) {
+        if (isRef || isClass || isEvent || isClassBind || prop) {
           refElement.removeAttribute(attr);
         } else {
           refElement.setAttribute(attr, String(attrValue));
@@ -122,7 +113,7 @@ function getMorphOptions(args: any[]): MorphDomOptions {
         }
 
         if (isClass) {
-          let classes: string = String(attrValue);
+          let classes: string = isNil(attrValue) ? '' : String(attrValue);
           if (Array.isArray(attrValue)) {
             classes = attrValue.map(String).join(' ');
           } else if (typeof attrValue === 'object') {
@@ -143,11 +134,9 @@ function getMorphOptions(args: any[]): MorphDomOptions {
         }
 
         if (isClassBind) {
-          if (hasChanged(bind, attrValue)) {
-            const action = attrValue ? 'add' : 'remove';
-            refElement.classList[action](propName);
-            attrBinds[attr] = { attr, data: attrValue };
-          }
+          const action = attrValue ? 'add' : 'remove';
+          refElement.classList[action](propName);
+          attrBinds[attr] = { attr, data: attrValue };
           return;
         }
 
