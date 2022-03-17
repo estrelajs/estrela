@@ -7,12 +7,12 @@ import {
   FunctionalElement,
 } from '../types';
 import { coerceArray, getElementProperty } from '../utils';
+import { CONTEXT } from './context';
 import { EMITTERS_TOKEN } from './properties/emitter';
 import { PROPS_TOKEN } from './properties/prop';
 import { PROPERTIES_TOKEN } from './properties/properties';
 import { STATES_TOKEN } from './properties/state';
 import { render } from './template/render';
-import { CURRENT_ELEMENT } from './token';
 
 export function defineElement(
   name: string,
@@ -28,8 +28,8 @@ export function defineElement(
       super();
 
       // set context reference
-      CURRENT_ELEMENT.context = this;
-      CURRENT_ELEMENT.element = element;
+      CONTEXT.instance = this;
+      CONTEXT.factory = element;
 
       // init shadow DOM
       this.attachShadow({ mode: 'open' });
@@ -49,6 +49,7 @@ export function defineElement(
         'render',
         () => {
           this.dispatchEvent(new Event('prerender'));
+          CONTEXT.element = this.shadowRoot!;
           render(getElementTemplate(), this.shadowRoot!);
           this.dispatchEvent(new Event('postrender'));
         },

@@ -1,5 +1,5 @@
 import { StateSubject } from '../../observables';
-import { CURRENT_ELEMENT } from '../token';
+import { CONTEXT } from '../context';
 
 const PROP_REGEX = /([a-zA-Z0-9$_]+)((\s|(\/\*.*\*\/))+)?=.*prop(<.*>)?\(.*\)/g;
 
@@ -29,7 +29,7 @@ export function prop(options?: PropOptions<any>): StateSubject<any> {
         'You should manually set the key name in the "prop" options object'
     );
 
-    const element = CURRENT_ELEMENT.element.toString();
+    const element = CONTEXT.factory.toString();
     const keys: string[] = [];
 
     let match: RegExpExecArray | null;
@@ -38,7 +38,7 @@ export function prop(options?: PropOptions<any>): StateSubject<any> {
     }
 
     for (const k of keys) {
-      if (!Reflect.hasOwnMetadata(k, CURRENT_ELEMENT.context, PROPS_TOKEN)) {
+      if (!Reflect.hasOwnMetadata(k, CONTEXT.instance, PROPS_TOKEN)) {
         key = k;
         break;
       }
@@ -46,7 +46,7 @@ export function prop(options?: PropOptions<any>): StateSubject<any> {
   }
 
   if (key) {
-    Reflect.defineMetadata(key, state, CURRENT_ELEMENT.context, PROPS_TOKEN);
+    Reflect.defineMetadata(key, state, CONTEXT.instance, PROPS_TOKEN);
   }
 
   return state;

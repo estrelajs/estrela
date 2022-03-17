@@ -1,5 +1,5 @@
 import { EventEmitter } from '../../observables/EventEmitter';
-import { CURRENT_ELEMENT } from '../token';
+import { CONTEXT } from '../context';
 
 const EMITTER_REGEX =
   /([a-zA-Z0-9$_]+)((\s|(\/\*.*\*\/))+)?=.*emitter(<.*>)?\(.*\)/g;
@@ -21,7 +21,7 @@ export function emitter<T>({ async, key }: EmitterOptions = {}): EventEmitter<T>
         'You should manually set the key name in the "prop" options object'
     );
 
-    const element = CURRENT_ELEMENT.element.toString();
+    const element = CONTEXT.factory.toString();
     const keys: string[] = [];
 
     let match: RegExpExecArray | null;
@@ -30,7 +30,7 @@ export function emitter<T>({ async, key }: EmitterOptions = {}): EventEmitter<T>
     }
 
     for (const k of keys) {
-      if (!Reflect.hasOwnMetadata(k, CURRENT_ELEMENT.context, EMITTERS_TOKEN)) {
+      if (!Reflect.hasOwnMetadata(k, CONTEXT.instance, EMITTERS_TOKEN)) {
         key = k;
         break;
       }
@@ -38,7 +38,7 @@ export function emitter<T>({ async, key }: EmitterOptions = {}): EventEmitter<T>
   }
 
   if (key) {
-    Reflect.defineMetadata(key, emitter, CURRENT_ELEMENT.context, EMITTERS_TOKEN);
+    Reflect.defineMetadata(key, emitter, CONTEXT.instance, EMITTERS_TOKEN);
   }
 
   return emitter;
