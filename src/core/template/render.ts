@@ -1,11 +1,6 @@
 import morphdom from 'morphdom';
 import { StateSubject } from '../../observables';
-import {
-  CustomElement,
-  DirectiveCallback,
-  HTMLTemplate,
-  MorphDomOptions,
-} from '../../types';
+import { CustomElement, HTMLTemplate, MorphDomOptions } from '../../types';
 import {
   addEventListener,
   coerceTemplate,
@@ -21,6 +16,17 @@ type AttrBind<T = any> = {
   data: T;
   listener?: () => void;
 };
+
+type AttrHandlerName =
+  | 'bind'
+  | 'class'
+  | 'classbind'
+  | 'default'
+  | 'event'
+  | 'prop'
+  | 'ref'
+  | 'style'
+  | 'stylebind';
 
 const ELEMENT_ATTRIBUTES = new Map<Element, Record<string, AttrBind | undefined>>();
 
@@ -62,20 +68,22 @@ export function render(
   morphdom(element, root, getMorphOptions(args));
 }
 
-function getMorphOptions(args: any[]): MorphDomOptions {
+export function getMorphOptions(args: any[]): MorphDomOptions {
   const hasChanged = (bind?: AttrBind, value?: any) => {
     return !bind || bind.data !== value;
   };
 
-  const bindAttributes = (element: Element, refElement: Element) => {
-    const attributeNames = refElement.getAttributeNames?.() ?? [];
+  const bindAttributes = (element: HTMLElement, reflectElement: HTMLElement) => {
+    const attributeNames = reflectElement.getAttributeNames?.() ?? [];
     const attrBinds = ELEMENT_ATTRIBUTES.get(element) ?? {};
 
     new Set([...attributeNames, ...Object.keys(attrBinds)]).forEach(attr => {
       const bind = attrBinds[attr];
 
       if (attributeNames.includes(attr)) {
-        let attrValue: any = refElement.getAttribute(attr);
+        const [, , namespace, name, , filter] =
+          /^(([\w-]+):)?([\w-]+)(.(\w+))?$/.exec(attr) ?? [];
+        let attrValue: any = reflectElement.getAttribute(attr);
         let attrArg: any = undefined;
 
         // when attr is arg index, we get the bindValue from the args
@@ -84,70 +92,90 @@ function getMorphOptions(args: any[]): MorphDomOptions {
           attrValue = attrArg instanceof StateSubject ? attrArg() : attrArg;
         }
 
-        const isRef = attr === 'ref';
-        const isClass = attr === 'class';
-        const isEvent = /^on:[\w-]+/.test(attr);
-        const isClassBind = /^class:[\w-]+$/.test(attr);
+        // remove attribute from the reflect Element.
+        reflectElement.removeAttribute(attr);
 
-        const propName = attr.replace(/^([\w-]+)?:/, '');
-        const prop = getElementProperty(element, 'props')?.[propName];
+        switch (getAttrHandlerName(element, name, namespace)) {
+          case 'bind':
+            return;
 
-        if (isRef || isClass || isEvent || isClassBind || prop) {
-          refElement.removeAttribute(attr);
-        } else {
-          refElement.setAttribute(attr, String(attrValue));
-        }
-
-        if (isRef) {
-          if (hasChanged(bind, attrArg)) {
-            if (isObserver(attrArg)) {
-              attrArg.next(element);
-            } else if (typeof attrArg === 'function') {
-              attrArg(element);
+          case 'class':
+            let classes: string;
+            if (Array.isArray(attrValue)) {
+              classes = attrValue.map(String).join(' ');
+            } else if (typeof attrValue === 'object') {
+              classes = Object.keys(attrValue)
+                .filter(key => !!attrValue[key])
+                .flatMap(keys => keys.split(' '))
+                .join(' ');
             } else {
-              console.error('Bind error! Could not bind element ref.');
+              classes = isNil(attrValue) ? '' : String(attrValue);
             }
-            attrBinds[attr] = { attr, data: attrArg };
-          }
-          return;
-        }
+            reflectElement.setAttribute('class', classes);
+            return;
 
-        if (isClass) {
-          let classes: string = isNil(attrValue) ? '' : String(attrValue);
-          if (Array.isArray(attrValue)) {
-            classes = attrValue.map(String).join(' ');
-          } else if (typeof attrValue === 'object') {
-            classes = Object.keys(attrValue)
-              .filter(key => !!attrValue[key])
-              .join(' ');
-          }
-          refElement.setAttribute('class', classes);
-          return;
-        }
+          case 'classbind':
+            const action = attrValue ? 'add' : 'remove';
+            reflectElement.classList[action](name);
+            attrBinds[attr] = { attr, data: attrValue };
+            return;
 
-        if (isEvent) {
-          if (hasChanged(bind, attrArg)) {
-            const listener = addEventListener(element, propName, attrArg);
-            attrBinds[attr] = { attr, data: attrArg, listener };
-          }
-          return;
-        }
+          case 'event':
+            if (hasChanged(bind, attrArg)) {
+              const listener = addEventListener(element, name, attrArg);
+              attrBinds[attr] = { attr, data: attrArg, listener };
+            }
+            return;
 
-        if (isClassBind) {
-          const action = attrValue ? 'add' : 'remove';
-          refElement.classList[action](propName);
-          attrBinds[attr] = { attr, data: attrValue };
-          return;
-        }
+          case 'prop':
+            const prop = getElementProperty(element, 'props')?.[name];
+            if (hasChanged(bind, attrValue)) {
+              if (isObserver(prop)) {
+                prop.next(attrValue);
+              }
+              attrBinds[attr] = { attr, data: attrValue };
+            }
+            return;
 
-        if (hasChanged(bind, attrValue)) {
-          if (prop && isObserver(prop)) {
-            prop.next(attrValue);
-          }
-          attrBinds[attr] = { attr, data: attrValue };
-        }
+          case 'ref':
+            if (hasChanged(bind, attrArg)) {
+              if (isObserver(attrArg)) {
+                attrArg.next(element);
+              } else if (typeof attrArg === 'function') {
+                attrArg(element);
+              } else {
+                console.error('Bind error! Could not bind element ref.');
+              }
+              attrBinds[attr] = { attr, data: attrArg };
+            }
+            return;
 
-        return;
+          case 'style':
+            let styles: string;
+            if (typeof attrValue === 'object') {
+              styles = Object.entries(attrValue)
+                .map((k, v) => {
+                  const [, key, filter] = /^([\w-]+)(.(\w+))?$/.exec(attr) ?? [];
+                  const value = filter ? `${v}${filter}` : v;
+                  return `${key}:${value};`;
+                })
+                .join('');
+            } else {
+              styles = isNil(attrValue) ? '' : String(attrValue);
+            }
+            reflectElement.setAttribute('style', styles);
+            return;
+
+          case 'stylebind':
+            reflectElement.style[name as any] = filter
+              ? `${attrValue}${filter}`
+              : attrValue;
+            return;
+
+          default:
+            reflectElement.setAttribute(attr, attrValue);
+            return;
+        }
       }
 
       // if it gets here, means we need to dispose the binding.
@@ -176,7 +204,7 @@ function getMorphOptions(args: any[]): MorphDomOptions {
       return true;
     },
     onNodeAdded(node) {
-      const el = node as Element;
+      const el = node as HTMLElement;
       bindAttributes(el, el);
       return node;
     },
@@ -189,4 +217,33 @@ function getMorphOptions(args: any[]): MorphDomOptions {
       });
     },
   };
+}
+
+export function getAttrHandlerName(
+  element: Element,
+  name: string,
+  namespace?: string
+): AttrHandlerName {
+  if (!namespace && /^ref|class|style$/.test(name)) {
+    return name as 'ref' | 'class' | 'style';
+  }
+
+  if (namespace && /^bind|class|style$/.test(namespace)) {
+    return `${namespace.replace('bind', '')}bind` as
+      | 'bind'
+      | 'classbind'
+      | 'stylebind';
+  }
+
+  if (namespace === 'on') {
+    return 'event';
+  }
+
+  const prop = getElementProperty(element, 'props')?.[name];
+
+  if (prop) {
+    return 'prop';
+  }
+
+  return 'default';
 }
