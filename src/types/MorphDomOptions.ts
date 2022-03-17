@@ -1,7 +1,3 @@
-import morphAttrs from './morphAttrs';
-import morphdomFactory from './morphdom';
-export * from './util';
-
 export interface MorphDomOptions {
   getNodeKey?: (node: Node) => any;
   onBeforeNodeAdded?: (node: Node) => Node;
@@ -13,9 +9,3 @@ export interface MorphDomOptions {
   onBeforeElChildrenUpdated?: (fromEl: HTMLElement, toEl: HTMLElement) => boolean;
   childrenOnly?: boolean;
 }
-
-export interface MorphDomFunc {
-  (fromNode: Node, toNode: Node | string, options?: MorphDomOptions): void;
-}
-
-export const morphdom: MorphDomFunc = morphdomFactory(morphAttrs);

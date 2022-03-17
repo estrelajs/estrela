@@ -1,13 +1,14 @@
+import morphdom from 'morphdom';
 import { StateSubject } from '../../observables';
-import { HTMLTemplate } from '../../types';
+import { HTMLTemplate, MorphDomOptions } from '../../types';
 import {
   addEventListener,
   coerceTemplate,
   getElementProperty,
   isObserver,
+  toElement,
 } from '../../utils';
 import { getHooks } from '../hooks';
-import { morphdom, MorphDomOptions, toElement } from '../morphdom';
 
 type AttrBind<T = any> = {
   attr: string;
@@ -127,7 +128,9 @@ export function render(
   element: Element | DocumentFragment
 ): void {
   if (!element) {
-    console.error('Could not render template! Element is undefined.');
+    console.error(
+      'Template render error! A valid Element is required to render the template.'
+    );
     return;
   }
 
@@ -135,7 +138,7 @@ export function render(
   const html = coerceTemplate(template)
     .map(temp => temp.render(args))
     .join('');
-  const root = toElement(`<div>${html}</div>`) as HTMLElement;
+  const root = toElement(`<div>${html}</div>`);
   const hooks = getHooks(element);
 
   // requestRender function for directive
