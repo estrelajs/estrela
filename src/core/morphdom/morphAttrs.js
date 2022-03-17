@@ -1,9 +1,7 @@
 var DOCUMENT_FRAGMENT_NODE = 11;
 
 export default function morphAttrs(fromNode, toNode) {
-  var toNodeAttrs = Array.from(toNode.attributes).filter(
-    attr => !/^on:[\w-]+|key|ref$/.test(attr.name)
-  );
+  var toNodeAttrs = toNode.attributes;
   var attr;
   var attrName;
   var attrNamespaceURI;

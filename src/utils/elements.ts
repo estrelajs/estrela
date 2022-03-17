@@ -4,15 +4,15 @@ import { ElementProperties } from '../types/ElementProperties';
 import { isObserver } from './observables';
 
 /** Add event listener to element and return a remover function. */
-export function addEventListener(
+export function addEventListener<T>(
   element: Element,
   event: string,
-  listener: Function | Subject<unknown>
+  listener: (e: T) => void | Subject<T>
 ): () => void {
   const hook = (event: unknown) => {
     const data = event instanceof CustomEvent ? event.detail : event;
-    if ((listener as any).next) {
-      (listener as any).next(data);
+    if (isObserver(listener)) {
+      listener.next(data);
     }
     if (typeof listener === 'function') {
       listener(data);
@@ -32,12 +32,4 @@ export function getElementProperty<K extends keyof ElementProperties>(
     element
   ) as ElementProperties;
   return properties?.[key];
-}
-
-/** Try to bind element prop value if exists. */
-export function tryToBindPropValue(el: Element, propName: string, value: any) {
-  const prop = getElementProperty(el, 'props')?.[propName];
-  if (prop && isObserver(prop)) {
-    prop.next(value);
-  }
 }
