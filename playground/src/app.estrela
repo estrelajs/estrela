@@ -15,5 +15,10 @@
 
 <br /><br />
 
-<h2>Counter</h2>
+<h2>Styles</h2>
 <app-counter count={count}></app-counter>
+
+<br /><br />
+
+<h2>Async fetch</h2>
+<app-github></app-github>
