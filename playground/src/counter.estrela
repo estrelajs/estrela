@@ -1,7 +1,21 @@
 <script tag="app-counter">
   import { prop } from 'estrela'
 
-  const count = prop<number>()
+  const count = prop<number>({ value: 0 })
 </script>
 
-<div>Count is { count }</div>
+<div
+  class:even={count() % 2 === 0}
+  class:odd={count() % 2 === 1}
+>
+  Count is { count }
+</div>
+
+<style>
+  div.odd {
+    background: lightcoral;
+  }
+  div.even {
+    background: lightblue;
+  }
+</style>

@@ -82,60 +82,73 @@ function getMorphOptions(args: any[]): MorphDomOptions {
       const bind = attrBinds[attr];
 
       if (attributeNames.includes(attr)) {
-        let arg: any = undefined;
-        let value: any = refElement.getAttribute(attr);
+        let attrValue: any = refElement.getAttribute(attr);
+        let attrArg: any = undefined;
 
         // when attr is arg index, we get the bindValue from the args
-        if (value && /^\$\$\d+$/.test(value)) {
-          arg = args[Number(value.replace('$$', ''))];
-          value = arg instanceof StateSubject ? arg() : arg;
+        if (attrValue && /^\$\$\d+$/.test(attrValue)) {
+          attrArg = args[Number(attrValue.replace('$$', ''))];
+          attrValue = attrArg instanceof StateSubject ? attrArg() : attrArg;
         }
 
         const isRef = attr === 'ref';
         const isEvent = /^on:[\w-]+/.test(attr);
+        const isClassBind = /^class:[\w-]+$/.test(attr);
+
         const propName = attr.replace(/^([\w-]+)?:/, '');
         const prop = getElementProperty(element, 'props')?.[propName];
 
-        if (isRef || isEvent || prop) {
+        if (isRef || isEvent || isClassBind || prop) {
           refElement.removeAttribute(attr);
         } else {
-          refElement.setAttribute(attr, String(value));
+          refElement.setAttribute(attr, String(attrValue));
         }
 
         if (isRef) {
-          if (hasChanged(bind, arg)) {
-            if (isObserver(arg)) {
-              arg.next(element);
-            } else if (typeof arg === 'function') {
-              arg(element);
+          if (hasChanged(bind, attrArg)) {
+            if (isObserver(attrArg)) {
+              attrArg.next(element);
+            } else if (typeof attrArg === 'function') {
+              attrArg(element);
             } else {
               console.error('Bind error! Could not bind element ref.');
             }
-            attrBinds[attr] = { attr, data: arg };
+            attrBinds[attr] = { attr, data: attrArg };
           }
           return;
         }
 
         if (isEvent) {
-          if (hasChanged(bind, arg)) {
-            const listener = addEventListener(element, propName, arg);
-            attrBinds[attr] = { attr, data: arg, listener };
+          if (hasChanged(bind, attrArg)) {
+            const listener = addEventListener(element, propName, attrArg);
+            attrBinds[attr] = { attr, data: attrArg, listener };
           }
           return;
         }
 
-        if (hasChanged(bind, value)) {
-          if (prop && isObserver(prop)) {
-            prop.next(value);
+        if (isClassBind) {
+          if (hasChanged(bind, attrValue)) {
+            const action = attrValue ? 'add' : 'remove';
+            refElement.classList[action](propName);
+            attrBinds[attr] = { attr, data: attrValue };
           }
-          attrBinds[attr] = { attr, data: value };
+          return;
         }
-      } else {
-        // it means we need to dispose the binding.
-        bind?.listener?.();
-        delete attrBinds[attr];
-        element.removeAttribute(attr);
+
+        if (hasChanged(bind, attrValue)) {
+          if (prop && isObserver(prop)) {
+            prop.next(attrValue);
+          }
+          attrBinds[attr] = { attr, data: attrValue };
+        }
+
+        return;
       }
+
+      // if it gets here, means we need to dispose the binding.
+      bind?.listener?.();
+      delete attrBinds[attr];
+      element.removeAttribute(attr);
     });
 
     if (Object.keys(attrBinds).length) {
