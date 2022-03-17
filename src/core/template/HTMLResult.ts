@@ -56,15 +56,6 @@ export class HTMLResult {
         return setContent(content);
       }
 
-      // // when arg is a function (directive)
-      // if (typeof arg === 'function') {
-      //   let index = args.indexOf(arg);
-      //   if (index === -1) {
-      //     index = args.push(arg) - 1;
-      //   }
-      //   return setContent(`<template _argIndex="${index}"></template>`, true);
-      // }
-
       // else render value right away
       const renderValue = (value: any): string => {
         if (isFalsy(value)) {
