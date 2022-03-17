@@ -42,15 +42,14 @@ export function defineElement(
       });
 
       // get element template getter
-      const getElementTemplate = element(this);
+      const templateGetter = element(this);
 
       // define element renderer
       Reflect.defineMetadata(
         'render',
         () => {
           this.dispatchEvent(new Event('prerender'));
-          CONTEXT.element = this.shadowRoot!;
-          render(getElementTemplate(), this.shadowRoot!);
+          render(templateGetter, this.shadowRoot ?? this);
           this.dispatchEvent(new Event('postrender'));
         },
         this

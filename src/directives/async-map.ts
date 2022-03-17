@@ -1,44 +1,33 @@
 import { catchError, from, map, Observable, of } from 'rxjs';
-import { DirectiveCallback, HTMLTemplate } from '../types';
+import { useEffect, useState } from '../core/hooks';
 
 export function asyncMap<T, R>(
   deferredArray: Promise<T[]> | Observable<T[]>,
   callback: (item: T, index: number, array: T[]) => R
-): DirectiveCallback<R[] | undefined>;
+): R[] | undefined;
 export function asyncMap<T, R>(
   deferredArray: Promise<T[]> | Observable<T[]>,
   callback: (item: T, index: number, array: T[]) => R,
   onWaiting: R[],
   onError?: R[]
-): DirectiveCallback<R[]>;
+): R[];
 export function asyncMap<T, R>(
   deferredArray: Promise<T[]> | Observable<T[]>,
   callback: (item: T, index: number, array: T[]) => R,
   onWaiting?: R[],
   onError?: R[]
-): DirectiveCallback<R[] | undefined> {
-  let render: Function;
+): R[] | undefined {
+  const [result, setResult] = useState(onWaiting);
 
-  return {
-    directive: 'asyncMap',
-    render: ({ requestRender, useEffect, useState }) => {
-      const [result, setResult] = useState(onWaiting);
-      render = requestRender;
+  useEffect(() => {
+    const subscription = from(deferredArray)
+      .pipe(
+        map(data => data.map(callback)),
+        catchError(() => of(onError))
+      )
+      .subscribe(setResult);
+    return () => subscription.unsubscribe();
+  }, [deferredArray]);
 
-      useEffect(() => {
-        const subscription = from(deferredArray)
-          .pipe(
-            map(data => data.map(callback)),
-            catchError(() => of(onError))
-          )
-          .subscribe((content: any) => {
-            setResult(content);
-            render();
-          });
-        return () => subscription.unsubscribe();
-      }, [deferredArray]);
-
-      return result;
-    },
-  };
+  return result;
 }

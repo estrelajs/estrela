@@ -1,7 +1,6 @@
 import { StateSubject } from '../../observables/StateSubject';
-import { DirectiveHooks } from '../../types';
 import { isHtmlResult, isInTag } from '../../utils';
-import { coerceArray, isDirective, isFalsy } from '../../utils/misc';
+import { coerceArray, isFalsy } from '../../utils/misc';
 
 /** HtmlResult contains the HTML data to be rendered. */
 export class HTMLResult {
@@ -15,16 +14,12 @@ export class HTMLResult {
    * @param args array to receive the template arguments
    * @returns html result string
    */
-  render(args: any[], hooks: DirectiveHooks): string {
+  render(args: any[]): string {
     if (this.template.length === 1) {
       return this.template[0];
     }
 
     const html = this.args.reduce((html: string, arg, idx) => {
-      if (isDirective(arg)) {
-        arg = arg.render(hooks);
-      }
-
       const setContent = (content: string, wrapInComments?: boolean) => {
         if (wrapInComments) {
           content = `<!---->${content}<!---->`;
@@ -40,9 +35,7 @@ export class HTMLResult {
 
       // when arg is HtmlResult
       if (argTemplates.length > 0) {
-        const content = argTemplates
-          .map(result => result.render(args, hooks))
-          .join('');
+        const content = argTemplates.map(result => result.render(args)).join('');
         return setContent(content);
       }
 

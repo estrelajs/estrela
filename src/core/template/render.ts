@@ -1,6 +1,6 @@
 import morphdom from 'morphdom';
 import { StateSubject } from '../../observables';
-import { CustomElement, HTMLTemplate, MorphDomOptions } from '../../types';
+import { HTMLTemplate, MorphDomOptions } from '../../types';
 import {
   addEventListener,
   coerceTemplate,
@@ -9,7 +9,7 @@ import {
   isObserver,
   toElement,
 } from '../../utils';
-import { getHooks } from '../hooks';
+import { CONTEXT } from '../context';
 
 type AttrBind<T = any> = {
   attr: string;
@@ -32,8 +32,8 @@ const ELEMENT_ATTRIBUTES = new Map<Element, Record<string, AttrBind | undefined>
 
 /** Render template in element. */
 export function render(
-  template: HTMLTemplate,
-  element: Element | DocumentFragment
+  template: HTMLTemplate | (() => HTMLTemplate),
+  element: HTMLElement | DocumentFragment
 ): void {
   if (!element) {
     console.error(
@@ -42,25 +42,18 @@ export function render(
     return;
   }
 
-  // hooks for directives
-  const hooks = {
-    ...getHooks(element),
-    requestRender() {
-      let el = element;
-      if (element instanceof ShadowRoot) {
-        el = element.host;
-      }
-      if ((el as CustomElement).requestRender) {
-        (el as CustomElement).requestRender();
-      } else {
-        render(template, el);
-      }
-    },
-  };
+  // set context
+  CONTEXT.hookIndex = 0;
+  CONTEXT.element = element;
+  CONTEXT.template = template;
+
+  if (typeof template === 'function') {
+    template = template();
+  }
 
   const args: any[] = [];
   const html = coerceTemplate(template)
-    .map(temp => temp.render(args, hooks))
+    .map(temp => temp.render(args))
     .join('');
   const root = toElement(`<div>${html}</div>`);
 

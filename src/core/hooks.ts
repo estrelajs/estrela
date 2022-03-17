@@ -1,9 +1,11 @@
+import { CustomElement } from '../types';
+import { CONTEXT } from './context';
+import { render } from './template/render';
+
 const STATE_HOOK = Symbol('STATE_HOOK');
 const EFFECT_HOOK = Symbol('EFFECT_HOOK');
 
-export function getHooks(element: Object) {
-  let index = 0;
-
+function getReflections(element: Object) {
   const get = (propertyKey: symbol, metadataKey: any) =>
     Reflect.getOwnMetadata(metadataKey, element, propertyKey);
   const has = (propertyKey: symbol, metadataKey: any) =>
@@ -11,31 +13,60 @@ export function getHooks(element: Object) {
   const set = (propertyKey: symbol, metadataKey: any, value: any) =>
     Reflect.defineMetadata(metadataKey, value, element, propertyKey);
 
-  const useState = <T>(initialValue: T) => {
-    const cachedIndex = index;
-    if (!has(STATE_HOOK, cachedIndex)) {
-      set(STATE_HOOK, cachedIndex, initialValue);
+  return { get, has, set };
+}
+
+export function useRender(): () => void {
+  const element = CONTEXT.element;
+  const template = CONTEXT.template;
+  return () => {
+    let el = element as Element;
+    if (element instanceof ShadowRoot) {
+      el = element.host;
     }
-    const state = get(STATE_HOOK, cachedIndex) as T;
-    const setter = (newValue: T) => {
-      set(STATE_HOOK, cachedIndex, newValue);
-    };
-    index++;
-    return [state, setter] as [T, (newValue: T) => void];
+    if ((el as CustomElement).requestRender) {
+      (el as CustomElement).requestRender();
+    } else {
+      render(template, element);
+    }
+  };
+}
+
+export function useState<T>(initialValue: T): [T, (newValue: T) => void] {
+  const { get, has, set } = getReflections(CONTEXT.element);
+  const requestRender = useRender();
+  const index = CONTEXT.hookIndex;
+
+  if (!has(STATE_HOOK, index)) {
+    set(STATE_HOOK, index, initialValue);
+  }
+
+  const state = get(STATE_HOOK, index) as T;
+  const setter = (newValue: T) => {
+    set(STATE_HOOK, index, newValue);
+    requestRender();
   };
 
-  const useEffect = (callback: () => void | (() => void), dependencies: any[]) => {
-    const cachedIndex = index;
-    const hasChanged = dependencies.some(
-      (dep, i) => dep !== get(STATE_HOOK, cachedIndex)?.[i]
-    );
-    if (dependencies === undefined || hasChanged) {
-      get(EFFECT_HOOK, cachedIndex)?.();
-      set(EFFECT_HOOK, cachedIndex, callback());
-      set(STATE_HOOK, cachedIndex, dependencies);
-    }
-    index++;
-  };
+  CONTEXT.hookIndex++;
+  return [state, setter];
+}
 
-  return { useState, useEffect };
+export function useEffect(
+  callback: () => void | (() => void),
+  dependencies: any[]
+): void {
+  const { get, set } = getReflections(CONTEXT.element);
+  const index = CONTEXT.hookIndex;
+
+  const hasChanged = dependencies.some(
+    (dep, i) => dep !== get(STATE_HOOK, index)?.[i]
+  );
+
+  if (dependencies === undefined || hasChanged) {
+    get(EFFECT_HOOK, index)?.();
+    set(EFFECT_HOOK, index, callback());
+    set(STATE_HOOK, index, dependencies);
+  }
+
+  CONTEXT.hookIndex++;
 }

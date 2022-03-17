@@ -10,6 +10,6 @@
 </script>
 
 <h1>
-  { async(greet, 'Hello') }
+  { async(greet) ?? 'Hello' }
   { when(name() === 'Eduardo', 'o cara', name()) }!
 </h1>

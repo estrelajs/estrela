@@ -1,5 +1,5 @@
 import { HTMLResult } from '../core';
-import { DirectiveCallback, HTMLTemplate } from '../types';
+import { HTMLTemplate } from '../types';
 
 /** Make sure data is an array. */
 export function coerceArray<T>(data: T | T[] | null | undefined): T[] {
@@ -17,13 +17,6 @@ export function coerceTemplate(template: HTMLTemplate): HTMLResult[] {
     const parsed = isFalsy(data) ? '' : String(data);
     return new HTMLResult([parsed] as any, []);
   });
-}
-
-/** check if value is a directive callback. */
-export function isDirective<T = any>(x: any): x is DirectiveCallback<T> {
-  return (
-    x?.directive && typeof x.render === 'function' && Object.keys(x).length === 2
-  );
 }
 
 /** Check if value is false, null or undefined. */
