@@ -11,17 +11,17 @@ export function getHooks(element: Object) {
   const set = (propertyKey: symbol, metadataKey: any, value: any) =>
     Reflect.defineMetadata(metadataKey, value, element, propertyKey);
 
-  const useState = (initialValue: any) => {
+  const useState = <T>(initialValue: T) => {
     const cachedIndex = index;
     if (!has(STATE_HOOK, cachedIndex)) {
       set(STATE_HOOK, cachedIndex, initialValue);
     }
-    const state = get(STATE_HOOK, cachedIndex);
-    const setter = (newValue: any) => {
+    const state = get(STATE_HOOK, cachedIndex) as T;
+    const setter = (newValue: T) => {
       set(STATE_HOOK, cachedIndex, newValue);
     };
     index++;
-    return [state, setter];
+    return [state, setter] as [T, (newValue: T) => void];
   };
 
   const useEffect = (callback: () => void | (() => void), dependencies: any[]) => {

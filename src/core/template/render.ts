@@ -1,6 +1,11 @@
 import morphdom from 'morphdom';
 import { StateSubject } from '../../observables';
-import { HTMLTemplate, MorphDomOptions } from '../../types';
+import {
+  CustomElement,
+  DirectiveCallback,
+  HTMLTemplate,
+  MorphDomOptions,
+} from '../../types';
 import {
   addEventListener,
   coerceTemplate,
@@ -18,7 +23,53 @@ type AttrBind<T = any> = {
 
 const ELEMENT_ATTRIBUTES = new Map<Element, Record<string, AttrBind | undefined>>();
 
-const getMorphOptions = (args: any[]): MorphDomOptions => {
+/** Render template in element. */
+export function render(
+  template: HTMLTemplate,
+  element: Element | DocumentFragment
+): void {
+  if (!element) {
+    console.error(
+      'Template render error! A valid Element is required to render the template.'
+    );
+    return;
+  }
+
+  const args: any[] = [];
+  const html = coerceTemplate(template)
+    .map(temp => temp.render(args))
+    .join('');
+  const root = toElement(`<div>${html}</div>`);
+  const hooks = getHooks(element);
+
+  // requestRender function for directive
+  const requestRender = () => {
+    let el = element;
+    if (element instanceof ShadowRoot) {
+      el = element.host;
+    }
+    if ((el as CustomElement).requestRender) {
+      (el as CustomElement).requestRender();
+    } else {
+      render(template, el);
+    }
+  };
+
+  // directives bind
+  Array.from(root.querySelectorAll('template[_argIndex]')).forEach(template => {
+    const directive: DirectiveCallback =
+      args[Number(template.getAttribute('_argIndex'))];
+    if (typeof directive === 'function') {
+      render(directive(requestRender, hooks), template);
+      template.replaceWith(...Array.from(template.childNodes));
+    }
+  });
+
+  // patch changes
+  morphdom(element, root, getMorphOptions(args));
+}
+
+function getMorphOptions(args: any[]): MorphDomOptions {
   const hasChanged = (bind?: AttrBind, value?: any) => {
     return !bind || bind.data !== value;
   };
@@ -120,44 +171,4 @@ const getMorphOptions = (args: any[]): MorphDomOptions => {
       });
     },
   };
-};
-
-/** Render template in element. */
-export function render(
-  template: HTMLTemplate,
-  element: Element | DocumentFragment
-): void {
-  if (!element) {
-    console.error(
-      'Template render error! A valid Element is required to render the template.'
-    );
-    return;
-  }
-
-  const args: any[] = [];
-  const html = coerceTemplate(template)
-    .map(temp => temp.render(args))
-    .join('');
-  const root = toElement(`<div>${html}</div>`);
-  const hooks = getHooks(element);
-
-  // requestRender function for directive
-  const requestRender = () => {
-    if (!(element as any)._requestedRender) {
-      render(template, element);
-    }
-  };
-
-  // directive bind
-  Array.from(root.querySelectorAll('template[_argIndex]')).forEach(template => {
-    const directive = args[Number(template.getAttribute('_argIndex'))];
-    if (typeof directive === 'function') {
-      const htmlTemplate = directive(requestRender, hooks);
-      render(htmlTemplate, template);
-      template.replaceWith(...(template.childNodes as any));
-    }
-  });
-
-  // patch changes
-  morphdom(element, root, getMorphOptions(args));
 }

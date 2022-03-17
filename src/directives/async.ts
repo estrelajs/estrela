@@ -6,8 +6,11 @@ export function async(
   onWaiting?: HTMLTemplate,
   onError?: HTMLTemplate
 ): DirectiveCallback {
-  return (requestRender, { useEffect, useState }) => {
+  let requestRender: Function;
+
+  return (_requestRender, { useEffect, useState }) => {
     const [result, setResult] = useState(onWaiting);
+    requestRender = _requestRender;
 
     useEffect(() => {
       const subscription = from(deferred)
