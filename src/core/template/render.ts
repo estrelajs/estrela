@@ -92,6 +92,7 @@ function getMorphOptions(args: any[]): MorphDomOptions {
         }
 
         const isRef = attr === 'ref';
+        const isClass = attr === 'class';
         const isEvent = /^on:[\w-]+/.test(attr);
         const isClassBind = /^class:[\w-]+$/.test(attr);
 
@@ -115,6 +116,19 @@ function getMorphOptions(args: any[]): MorphDomOptions {
             }
             attrBinds[attr] = { attr, data: attrArg };
           }
+          return;
+        }
+
+        if (isClass) {
+          let classes: string = String(attrValue);
+          if (Array.isArray(attrValue)) {
+            classes = attrValue.map(String).join(' ');
+          } else if (typeof attrValue === 'object') {
+            classes = Object.keys(attrValue)
+              .filter(key => !!attrValue[key])
+              .join(' ');
+          }
+          refElement.setAttribute('class', classes);
           return;
         }
 
