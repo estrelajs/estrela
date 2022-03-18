@@ -115,6 +115,7 @@ export function getMorphOptions(args: any[]): MorphDomOptions {
 
           case 'event':
             if (hasChanged(bind, attrArg)) {
+              bind?.listener?.();
               const listener = addEventListener(element, name, attrArg);
               attrBinds[attr] = { attr, data: attrArg, listener };
             }
