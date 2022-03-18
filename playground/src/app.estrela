@@ -22,3 +22,8 @@
 
 <h2>Async fetch</h2>
 <app-github></app-github>
+
+<br /><br />
+
+<h2>Switch</h2>
+<app-switch></app-switch>

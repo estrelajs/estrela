@@ -1,5 +1,5 @@
 <script tag="app-github">
-  import { async } from 'estrela/directives';
+  import { async, memo } from 'estrela/directives';
 
   const GITHUB_API = '//api.github.com/search/repositories';
   const repositories = fetch(`${GITHUB_API}?q=estrela`)
@@ -10,7 +10,7 @@
 <ul>
   {
     async(
-      repositories.then(items => items.map(repo => <li>{ repo.name }</li>)),
+      memo(() => repositories.then(items => items.map(repo => <li>{ repo.name }</li>))),
       <li>Loading...</li>,
       <li>Error! Something went wrong!</li>
     )
