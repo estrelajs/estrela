@@ -13,9 +13,9 @@
     "resolveJsonModule": true,
     "noImplicitAny": true,
     "paths": {
-      "estrela": ["src/index.ts"],
-      "estrela/directives": ["src/directives/index.ts"]
+      "estrela": ["packages/index.ts"],
+      "estrela/directives": ["packages/directives/index.ts"]
     }
   },
-  "include": ["src"]
+  "include": ["packages"]
 }

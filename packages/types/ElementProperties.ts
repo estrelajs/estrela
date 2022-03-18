@@ -1,5 +1,5 @@
 import { Subscription } from 'rxjs';
-import { EventEmitter, StateSubject } from '../observables';
+import { EventEmitter, StateSubject } from '../core';
 
 export interface ElementProperties {
   emitters?: Record<string, EventEmitter<any>>;

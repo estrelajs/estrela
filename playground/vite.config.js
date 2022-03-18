@@ -7,9 +7,12 @@ export default defineConfig({
     alias: [
       {
         find: 'estrela/directives',
-        replacement: path.resolve(__dirname, '../src/directives/index.ts'),
+        replacement: path.resolve(__dirname, '../packages/directives/index.ts'),
       },
-      { find: 'estrela', replacement: path.resolve(__dirname, '../src/index.ts') },
+      {
+        find: 'estrela',
+        replacement: path.resolve(__dirname, '../packages/index.ts'),
+      },
     ],
   },
   plugins: [estrela()],

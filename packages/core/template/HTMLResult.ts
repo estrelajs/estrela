@@ -1,5 +1,5 @@
 import { escape } from 'html-escaper';
-import { StateSubject } from '../../observables/StateSubject';
+import { StateSubject } from '../observables/StateSubject';
 import { isHtmlResult, isInTag } from '../../utils';
 import { coerceArray, isFalsy } from '../../utils/misc';
 

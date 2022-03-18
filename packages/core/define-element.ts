@@ -1,5 +1,6 @@
 import { merge, Observable, Subject, Subscription } from 'rxjs';
-import { EventEmitter, StateSubject } from '../observables';
+import { EventEmitter } from './observables/EventEmitter';
+import { StateSubject } from './observables/StateSubject';
 import {
   CustomElement,
   CustomElementEventMap,

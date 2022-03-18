@@ -3,7 +3,7 @@
 .vscode
 node_modules
 playground
-src
+packages
 tools
 
 # files

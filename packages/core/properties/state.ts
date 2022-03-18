@@ -1,4 +1,4 @@
-import { StateSubject } from '../../observables/StateSubject';
+import { StateSubject } from '../observables/StateSubject';
 import { CONTEXT } from '../context';
 
 export const STATES_TOKEN = Symbol('STATES_TOKEN');

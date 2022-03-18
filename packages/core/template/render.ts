@@ -1,5 +1,5 @@
 import morphdom from 'morphdom';
-import { StateSubject } from '../../observables';
+import { StateSubject } from '../observables/StateSubject';
 import { HTMLTemplate, MorphDomOptions } from '../../types';
 import {
   addEventListener,

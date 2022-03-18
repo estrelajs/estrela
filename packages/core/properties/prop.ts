@@ -1,4 +1,4 @@
-import { StateSubject } from '../../observables';
+import { StateSubject } from '../observables/StateSubject';
 import { CONTEXT } from '../context';
 
 const PROP_REGEX = /([a-zA-Z0-9$_]+)((\s|(\/\*.*\*\/))+)?=.*prop(<.*>)?\(.*\)/g;

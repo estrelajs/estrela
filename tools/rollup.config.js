@@ -7,8 +7,8 @@ const packageJson = require('../package.json');
 
 export default defineConfig({
   input: {
-    index: 'src/index.ts',
-    directives: 'src/directives/index.ts',
+    index: 'packages/index.ts',
+    directives: 'packages/directives/index.ts',
   },
   output: [
     {

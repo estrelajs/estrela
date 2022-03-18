@@ -1,4 +1,4 @@
-import { EventEmitter } from '../../observables/EventEmitter';
+import { EventEmitter } from '../observables/EventEmitter';
 import { CONTEXT } from '../context';
 
 const EMITTER_REGEX =

@@ -1,5 +1,8 @@
+import 'reflect-metadata';
 export * from './define-element';
 export * from './event';
+export { EventEmitter } from './observables/EventEmitter';
+export { StateSubject } from './observables/StateSubject';
 export { emitter } from './properties/emitter';
 export { prop } from './properties/prop';
 export { setProperties } from './properties/properties';
