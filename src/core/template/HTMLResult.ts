@@ -1,3 +1,4 @@
+import { escape } from 'html-escaper';
 import { StateSubject } from '../../observables/StateSubject';
 import { isHtmlResult, isInTag } from '../../utils';
 import { coerceArray, isFalsy } from '../../utils/misc';
@@ -20,9 +21,9 @@ export class HTMLResult {
     }
 
     const html = this.args.reduce((html: string, arg, idx) => {
-      const setContent = (content: string, wrapInComments?: boolean) => {
+      const renderContent = (content: string, wrapInComments?: boolean) => {
         if (wrapInComments) {
-          content = `<!---->${content}<!---->`;
+          content = `<!---->${escape(content)}<!---->`;
         }
         const nextHtml = this.template[idx + 1];
         return html + content + nextHtml;
@@ -36,7 +37,7 @@ export class HTMLResult {
       // when arg is HtmlResult
       if (argTemplates.length > 0) {
         const content = argTemplates.map(result => result.render(args)).join('');
-        return setContent(content);
+        return renderContent(content);
       }
 
       // when we're inside a tag
@@ -46,22 +47,22 @@ export class HTMLResult {
           index = args.push(arg) - 1;
         }
         const content = `${addQuote}$$${index}${addQuote}`;
-        return setContent(content);
+        return renderContent(content);
       }
 
       // else render value right away
-      const renderValue = (value: any): string => {
+      const parseValue = (value: any): string => {
         if (isFalsy(value)) {
           return '';
         }
         if (Array.isArray(value)) {
-          return value.map(v => renderValue(v)).join('');
+          return value.map(v => parseValue(v)).join('');
         }
         return String(value);
       };
 
       const argValue = arg instanceof StateSubject ? arg() : arg;
-      return setContent(renderValue(argValue), true);
+      return renderContent(parseValue(argValue), true);
     }, this.template[0]);
 
     return html;
