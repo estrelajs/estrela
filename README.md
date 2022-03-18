@@ -14,7 +14,7 @@ Head over to [estrelajs.gitbook.io](https://estrelajs.gitbook.io/estrela/)
 
 ### Installation
 
-To install Estrela on your project, run `npm` or `yarn` command:
+To install Estrela on your project, run `npm` or `yarn` command to install estrela and rxjs:
 
 ```bash
 # npm
@@ -30,7 +30,7 @@ Or you can start a new project using the Estrela template by running `degit` com
 $ npx degit estrelajs/template my-project-name
 ```
 
-## Example
+## Basic Estrela Features Example
 
 Estrela takes advantage of web components. To define your custom element, you need to provide a class or a function with a render function. Functional Elements will be called just once, so there's no need for hooks, just declare your variables and use them.
 
@@ -77,7 +77,11 @@ defineElement('app-root', App);
 </body>
 ```
 
-Estrela has its own file format that facilitates the component writing. It removes all the configuration part and allows you to use JSX elements instead of `html` template strings. Here it is a simpler version of the example above.
+Check more examples on [docs](https://estrelajs.gitbook.io/estrela/) site.
+
+## Using Estrela Custom Files
+
+Estrela has its own file format that facilitates the component writing. It removes all the configuration part and allows you to use JSX elements instead of `html` template strings. Here is a simpler version of the example above:
 
 ```html
 <!-- Your element logic lives here. (tag attribute is required to create your custom element) -->
@@ -93,9 +97,7 @@ Estrela has its own file format that facilitates the component writing. It remov
 <div>Count is {count}</div>
 ```
 
-To run Estrela files, you need the Estrela preprocessor. You can use it with `vite` by installing [vite-plugin-estrela](https://github.com/estrelajs/vite-plugin-estrela) or just run the `degit` command above to bootstrap a project for you.
-
-Check more examples on [docs](https://estrelajs.gitbook.io/estrela/).
+To run a project with Estrela files, you will need the Estrela preprocessor. You can integrate it with `vite` by installing [vite-plugin-estrela](https://github.com/estrelajs/vite-plugin-estrela) or just by running the `degit` command above to bootstrap a startup project for you.
 
 ## Contributing
 
