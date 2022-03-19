@@ -5,7 +5,7 @@
 
   const count = prop<number>({ value: 0 })
 
-  const classes$ = count.pipe(
+  const classes = count.pipe(
     map(value => ({
       even: value % 2 === 0,
       odd: value % 2 === 1
@@ -13,7 +13,7 @@
   );
 </script>
 
-<div class={async(classes$)}>
+<div class={async(classes)}>
   Count is { count }
 </div>
 

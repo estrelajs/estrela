@@ -4,7 +4,7 @@
 
   const name = prop<string>();
 
-  const greet: any = new Promise(r => {
+  const greet = new Promise<string>(r => {
     setTimeout(() => r('Welcome'), 5000);
   });
 </script>

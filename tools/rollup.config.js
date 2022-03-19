@@ -23,5 +23,5 @@ export default defineConfig({
     },
   ],
   plugins: [esbuild(), nodeResolve(), commonjs()],
-  external: Object.keys(packageJson.peerDependencies),
+  external: Object.keys(packageJson.dependencies),
 });
