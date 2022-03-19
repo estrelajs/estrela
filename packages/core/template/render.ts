@@ -1,10 +1,5 @@
-import morphdom from 'morphdom';
-import {
-  AttrBind,
-  AttrHandlerName,
-  HTMLTemplate,
-  MorphDomOptions,
-} from '../../types';
+import { morphdom, MorphDomOptions } from './morphdom';
+import { AttrBind, AttrHandlerName, HTMLTemplate } from '../../types';
 import {
   coerceTemplate,
   getElementProperty,

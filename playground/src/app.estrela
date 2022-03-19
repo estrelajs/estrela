@@ -5,13 +5,7 @@
   const count = state(0);
   const inputRef = state<HTMLInputElement>();
 
-  inputRef.subscribe(ref => {
-    ref?.addEventListener('change', e => {
-      console.log(e);
-    })
-  });
-
-  // setInterval(() => count.update(value => ++value), 1000);
+  setInterval(() => count.update(value => ++value), 1000);
 </script>
 
 <app-greeter name={name}></app-greeter>
