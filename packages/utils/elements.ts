@@ -1,7 +1,5 @@
-import { Subject } from 'rxjs';
 import { PROPERTIES_TOKEN } from '../core/properties/properties';
 import { ElementProperties } from '../types/ElementProperties';
-import { isObserver } from './observables';
 
 var range: Range; // Create a range object for efficently rendering strings to elements.
 const doc = typeof document === 'undefined' ? undefined : document;
@@ -46,25 +44,6 @@ export function toElement(str: string): Element {
     return createFragmentFromRange(str);
   }
   return createFragmentFromWrap(str);
-}
-
-/** Add event listener to element and return a remover function. */
-export function addEventListener<T>(
-  element: Element,
-  event: string,
-  listener: (e: T) => void | Subject<T>
-): () => void {
-  const hook = (event: unknown) => {
-    const data = event instanceof CustomEvent ? event.detail : event;
-    if (isObserver(listener)) {
-      listener.next(data);
-    }
-    if (typeof listener === 'function') {
-      listener(data);
-    }
-  };
-  element.addEventListener(event, hook);
-  return () => element.removeEventListener(event, hook);
 }
 
 /** Get reflected value from element properties. */

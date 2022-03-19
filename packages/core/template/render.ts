@@ -1,8 +1,11 @@
 import morphdom from 'morphdom';
-import { StateSubject } from '../observables/StateSubject';
-import { HTMLTemplate, MorphDomOptions } from '../../types';
 import {
-  addEventListener,
+  AttrBind,
+  AttrHandlerName,
+  HTMLTemplate,
+  MorphDomOptions,
+} from '../../types';
+import {
   coerceTemplate,
   getElementProperty,
   isNil,
@@ -10,23 +13,7 @@ import {
   toElement,
 } from '../../utils';
 import { CONTEXT } from '../context';
-
-type AttrBind<T = any> = {
-  attr: string;
-  data: T;
-  listener?: () => void;
-};
-
-type AttrHandlerName =
-  | 'bind'
-  | 'class'
-  | 'classbind'
-  | 'default'
-  | 'event'
-  | 'prop'
-  | 'ref'
-  | 'style'
-  | 'stylebind';
+import { StateSubject } from '../observables/StateSubject';
 
 const ELEMENT_ATTRIBUTES = new Map<Element, Record<string, AttrBind | undefined>>();
 
@@ -114,10 +101,12 @@ export function getMorphOptions(args: any[]): MorphDomOptions {
             return;
 
           case 'event':
-            if (hasChanged(bind, attrArg)) {
-              bind?.listener?.();
-              const listener = addEventListener(element, name, attrArg);
-              attrBinds[attr] = { attr, data: attrArg, listener };
+            if (!bind) {
+              const _bind: AttrBind = { attr, data: attrArg };
+              _bind.cleanup = addEventListener(element, name, _bind);
+              attrBinds[attr] = _bind;
+            } else {
+              bind.data = attrArg;
             }
             return;
 
@@ -173,7 +162,7 @@ export function getMorphOptions(args: any[]): MorphDomOptions {
       }
 
       // if it gets here, means we need to dispose the binding.
-      bind?.listener?.();
+      bind?.cleanup?.();
       delete attrBinds[attr];
       element.removeAttribute(attr);
     });
@@ -211,6 +200,25 @@ export function getMorphOptions(args: any[]): MorphDomOptions {
       });
     },
   };
+}
+
+/** Add event listener to element and return a remover function. */
+export function addEventListener<T>(
+  element: Element,
+  event: string,
+  bind: AttrBind
+): () => void {
+  const hook = (event: unknown) => {
+    const data = event instanceof CustomEvent ? event.detail : event;
+    if (isObserver(bind.data)) {
+      bind.data.next(data);
+    }
+    if (typeof bind.data === 'function') {
+      bind.data(data);
+    }
+  };
+  element.addEventListener(event, hook);
+  return () => element.removeEventListener(event, hook);
 }
 
 export function getAttrHandlerName(

@@ -1,6 +1,23 @@
 import { Observable } from 'rxjs';
 import { HTMLResult } from '../core';
 
+export type AttrBind<T = any> = {
+  attr: string;
+  data: T;
+  cleanup?: () => void;
+};
+
+export type AttrHandlerName =
+  | 'bind'
+  | 'class'
+  | 'classbind'
+  | 'default'
+  | 'event'
+  | 'prop'
+  | 'ref'
+  | 'style'
+  | 'stylebind';
+
 export interface CustomElementEventMap extends HTMLElementEventMap {
   destroy: Event;
   init: Event;
