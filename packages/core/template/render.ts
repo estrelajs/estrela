@@ -56,8 +56,9 @@ export function getMorphOptions(args: any[]): MorphDomOptions {
       const bind = attrBinds[attr];
 
       if (attributeNames.includes(attr)) {
-        const [, , namespace, name, , filter] =
-          /^(([\w-]+):)?([\w-]+)(.(\w+))?$/.exec(attr) ?? [];
+        const [, , namespace, name, , accessor, , filter] =
+          /(([\w-]+):)?([\w-]+)(\.([\w-]+))?(\|([\w-]+))?/.exec(attr) ?? [];
+
         let attrValue: any = reflectElement.getAttribute(attr);
         let attrArg: any = undefined;
 
@@ -70,7 +71,7 @@ export function getMorphOptions(args: any[]): MorphDomOptions {
         // remove attribute from the reflect Element.
         reflectElement.removeAttribute(attr);
 
-        switch (getAttrHandlerName(element, name, namespace)) {
+        switch (getAttrHandlerName(element, name, namespace, accessor)) {
           case 'bind':
             return;
 
@@ -91,13 +92,13 @@ export function getMorphOptions(args: any[]): MorphDomOptions {
 
           case 'classbind':
             const action = attrValue ? 'add' : 'remove';
-            reflectElement.classList[action](name);
+            reflectElement.classList[action](accessor);
             attrBinds[attr] = { attr, data: attrValue };
             return;
 
           case 'event':
             if (!bind) {
-              const _bind: AttrBind = { attr, data: attrArg };
+              const _bind: AttrBind = { attr, data: attrArg, filter };
               _bind.cleanup = addEventListener(element, name, _bind);
               attrBinds[attr] = _bind;
             } else {
@@ -145,7 +146,7 @@ export function getMorphOptions(args: any[]): MorphDomOptions {
             return;
 
           case 'stylebind':
-            reflectElement.style[name as any] = filter
+            reflectElement.style[accessor as any] = filter
               ? `${attrValue}${filter}`
               : attrValue;
             return;
@@ -203,7 +204,7 @@ export function addEventListener<T>(
   event: string,
   bind: AttrBind
 ): () => void {
-  const hook = (event: unknown) => {
+  const hook = (event: Event) => {
     const data = event instanceof CustomEvent ? event.detail : event;
     if (isObserver(bind.data)) {
       bind.data.next(data);
@@ -219,17 +220,19 @@ export function addEventListener<T>(
 export function getAttrHandlerName(
   element: Element,
   name: string,
-  namespace?: string
+  namespace?: string,
+  accessor?: string
 ): AttrHandlerName {
-  if (!namespace && /^ref|class|style$/.test(name)) {
+  if (!namespace && !accessor && /^ref|class|style$/.test(name)) {
     return name as 'ref' | 'class' | 'style';
   }
 
-  if (namespace && /^bind|class|style$/.test(namespace)) {
-    return `${namespace.replace('bind', '')}bind` as
-      | 'bind'
-      | 'classbind'
-      | 'stylebind';
+  if (accessor && /^class|style$/.test(name)) {
+    return (name + 'bind') as 'classbind' | 'stylebind';
+  }
+
+  if (namespace === 'bind') {
+    return 'bind';
   }
 
   if (namespace === 'on') {

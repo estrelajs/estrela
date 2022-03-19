@@ -18,8 +18,8 @@
 </div>
 
 <div
-  class:even={count() % 2 === 0}
-  class:odd={count() % 2 === 1}
+  class.even={count() % 2 === 0}
+  class.odd={count() % 2 === 1}
 >
   Count is { count }
 </div>

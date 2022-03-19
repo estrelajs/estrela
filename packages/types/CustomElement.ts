@@ -4,6 +4,7 @@ import { HTMLResult } from '../core';
 export type AttrBind<T = any> = {
   attr: string;
   data: T;
+  filter?: string;
   cleanup?: () => void;
 };
 
