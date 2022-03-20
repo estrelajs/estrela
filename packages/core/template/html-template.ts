@@ -1,18 +1,17 @@
 import { escape } from 'html-escaper';
 import { StateSubject } from '../observables/StateSubject';
-import { isHtmlResult, isInTag } from '../../utils';
+import { isHTMLTemplate, isInTag } from '../../utils';
 import { coerceArray, isFalsy } from '../../utils/misc';
 
-/** HtmlResult contains the HTML data to be rendered. */
-export class HTMLResult {
+export class HTMLTemplate {
   constructor(
     public readonly template: TemplateStringsArray,
     public readonly args: any[]
   ) {}
 
   /**
-   * Renders the HtmlResult object into string
-   * @param args array to receive the template arguments
+   * Renders the HTML template into string.
+   * @param args array reference to receive the template arguments
    * @returns html result string
    */
   render(args: any[]): string {
@@ -32,9 +31,9 @@ export class HTMLResult {
       // helpers
       const inTag = isInTag(html);
       const addQuote = /=$/.test(html) ? '"' : '';
-      const argTemplates = coerceArray(arg).filter(isHtmlResult);
+      const argTemplates = coerceArray(arg).filter(isHTMLTemplate);
 
-      // when arg is HtmlResult
+      // when arg is HTMLTemplate
       if (argTemplates.length > 0) {
         const content = argTemplates.map(result => result.render(args)).join('');
         return renderContent(content);

@@ -2,37 +2,43 @@ import { merge, Observable, Subject, Subscription } from 'rxjs';
 import { EventEmitter } from './observables/EventEmitter';
 import { StateSubject } from './observables/StateSubject';
 import {
-  CustomElement,
-  CustomElementEventMap,
+  EstrelaElement,
+  EstrelaElementEventMap,
   ElementProperties,
-  FunctionalElement,
+  EstrelaComponent,
 } from '../types';
 import { coerceArray, getElementProperty } from '../utils';
-import { CONTEXT } from './context';
 import { EMITTERS_TOKEN } from './properties/emitter';
 import { PROPS_TOKEN } from './properties/prop';
 import { PROPERTIES_TOKEN } from './properties/properties';
 import { STATES_TOKEN } from './properties/state';
 import { render } from './template/render';
+import { ElementRef } from './element-ref';
 
+/**
+ * Define your Component as a Custom Element.
+ *
+ * @param name Element tag
+ * @param component Estrela Component
+ * @param styles list of css styles
+ */
 export function defineElement(
   name: string,
-  element: FunctionalElement,
+  component: EstrelaComponent,
   styles?: string | string[]
 ) {
-  const CustomElement = class extends HTMLElement implements CustomElement {
-    private readonly _eventSubscriptions = new Set<Function>();
+  const Element = class extends HTMLElement implements EstrelaElement {
+    readonly init$: Observable<Event>;
+    readonly destroy$: Observable<Event>;
+    private readonly _events = new Set<Function>();
     private readonly _subscriptions = new Subscription();
     private _requestedRender = false;
 
     constructor() {
       super();
 
-      // set context reference
-      CONTEXT.instance = this;
-      CONTEXT.factory = element;
-
       // init shadow DOM
+      // TODO: optional use shadow dom
       this.attachShadow({ mode: 'open' });
 
       // set styles
@@ -42,16 +48,24 @@ export function defineElement(
         return sheet;
       });
 
-      // get element template getter
-      const templateGetter = element(this);
+      // set Element ref
+      ElementRef.setComponent(component, this);
+
+      // get component renderer function
+      const componentRenderer = component(this);
+
+      // clear Element ref
+      ElementRef.clear();
 
       // define element renderer
       Reflect.defineMetadata(
         'render',
         () => {
+          ElementRef.setComponent(component, this);
           this.dispatchEvent(new Event('prerender'));
-          render(templateGetter, this.shadowRoot ?? this);
+          render(componentRenderer, this.shadowRoot ?? this);
           this.dispatchEvent(new Event('postrender'));
+          ElementRef.clear();
         },
         this
       );
@@ -97,6 +111,10 @@ export function defineElement(
       coerceArray(properties.subscription).forEach(sub =>
         this._subscriptions.add(sub)
       );
+
+      // start observables
+      this.init$ = this.on('init');
+      this.destroy$ = this.on('destroy');
     }
 
     /** @internal */
@@ -136,22 +154,22 @@ export function defineElement(
     disconnectedCallback(): void {
       this.dispatchEvent(new Event('destroy'));
       this._subscriptions.unsubscribe();
-      this._eventSubscriptions.forEach(complete => complete());
+      this._events.forEach(complete => complete());
     }
 
     /** Creates an observable from the element event. */
-    on<K extends keyof CustomElementEventMap>(
+    on<K extends keyof EstrelaElementEventMap>(
       event: K,
       options?: boolean | AddEventListenerOptions
-    ): Observable<CustomElementEventMap[K]> {
-      const subject = new Subject<CustomElementEventMap[K]>();
+    ): Observable<EstrelaElementEventMap[K]> {
+      const subject = new Subject<EstrelaElementEventMap[K]>();
       const listener = (ev: any) => subject.next(ev);
       const completer = () => {
         this.removeEventListener(event as any, listener, options);
         subject.complete();
       };
       this.addEventListener(event as any, listener, options);
-      this._eventSubscriptions.add(completer);
+      this._events.add(completer);
       return subject.asObservable();
     }
 
@@ -167,5 +185,5 @@ export function defineElement(
     }
   };
 
-  window.customElements.define(name, CustomElement);
+  window.customElements.define(name, Element);
 }

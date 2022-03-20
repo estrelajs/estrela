@@ -1,5 +1,5 @@
+import { ElementRef } from '../element-ref';
 import { EventEmitter } from '../observables/EventEmitter';
-import { CONTEXT } from '../context';
 
 const EMITTER_REGEX =
   /([a-zA-Z0-9$_]+)((\s|(\/\*.*\*\/))+)?=.*emitter(<.*>)?\(.*\)/g;
@@ -12,6 +12,14 @@ export interface EmitterOptions {
 }
 
 export function emitter<T>({ async, key }: EmitterOptions = {}): EventEmitter<T> {
+  const ref = ElementRef.ref;
+
+  if (!ref?.element || !ref?.component) {
+    throw new Error(
+      'Out of context error! You cannot create emitter from outside of a component scope.'
+    );
+  }
+
   const emitter = new EventEmitter<T>(async);
 
   // experimental key finder
@@ -21,7 +29,7 @@ export function emitter<T>({ async, key }: EmitterOptions = {}): EventEmitter<T>
         'You should manually set the key name in the "prop" options object'
     );
 
-    const element = CONTEXT.factory.toString();
+    const element = ref.component.toString();
     const keys: string[] = [];
 
     let match: RegExpExecArray | null;
@@ -30,7 +38,7 @@ export function emitter<T>({ async, key }: EmitterOptions = {}): EventEmitter<T>
     }
 
     for (const k of keys) {
-      if (!Reflect.hasOwnMetadata(k, CONTEXT.instance, EMITTERS_TOKEN)) {
+      if (!Reflect.hasOwnMetadata(k, ref.element, EMITTERS_TOKEN)) {
         key = k;
         break;
       }
@@ -38,7 +46,7 @@ export function emitter<T>({ async, key }: EmitterOptions = {}): EventEmitter<T>
   }
 
   if (key) {
-    Reflect.defineMetadata(key, emitter, CONTEXT.instance, EMITTERS_TOKEN);
+    Reflect.defineMetadata(key, emitter, ref.element, EMITTERS_TOKEN);
   }
 
   return emitter;

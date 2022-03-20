@@ -1,6 +1,4 @@
-import { CONTEXT } from '../core/context';
-import { render } from '../core/template/render';
-import { CustomElement } from '../types';
+import { ElementRef } from '../core/element-ref';
 
 export interface Directive {
   dispose?(): void;
@@ -8,16 +6,25 @@ export interface Directive {
 }
 
 export function createDirective<T extends Directive>(
-  Klass: new (requestRender: () => void) => T
+  Klass: new (ref: ElementRef) => T
 ) {
   const directive = (...args: any[]) => {
-    const requestRender = useRender();
-    let [instance, setInstance] = useDirective<T | undefined>(undefined);
+    const ref = ElementRef.ref;
+
+    if (!ref?.host) {
+      throw new Error(
+        'Out of context error! You cannot call a directive from outside of a render scope.'
+      );
+    }
+
+    let [instance, setInstance] = useDirective<T>(ref);
+
     if (instance === undefined || !(instance instanceof Klass)) {
       instance?.dispose?.();
-      instance = new Klass(requestRender);
+      instance = new Klass(ref);
       setInstance(instance);
     }
+
     return instance.transform.apply(instance, args);
   };
   return directive as T['transform'];
@@ -25,47 +32,19 @@ export function createDirective<T extends Directive>(
 
 const DIRECTIVE_HOOK = Symbol('DIRECTIVE_HOOK');
 
-function getStateReflections<T>() {
-  const element = CONTEXT.element;
-  const index = CONTEXT.directiveIndex;
-  const getState = () => Reflect.getOwnMetadata(index, element, DIRECTIVE_HOOK) as T;
-  const hasState = () => Reflect.hasOwnMetadata(index, element, DIRECTIVE_HOOK);
+function getStateReflections<T>(ref: ElementRef) {
+  const host = ref.host!;
+  const hook = ref.hook;
+  const getState = () => Reflect.getOwnMetadata(hook, host, DIRECTIVE_HOOK) as T;
   const setState = (value: T) =>
-    Reflect.defineMetadata(index, value, element, DIRECTIVE_HOOK);
-  return { getState, hasState, setState };
+    Reflect.defineMetadata(hook, value, host, DIRECTIVE_HOOK);
+  return { getState, setState };
 }
 
-function useDirective<T>(initialValue: T | (() => T)): [T, (newValue: T) => void] {
-  const { getState, hasState, setState } = getStateReflections<T>();
-  const requestRender = useRender();
-  if (!hasState()) {
-    const value =
-      typeof initialValue === 'function'
-        ? (initialValue as () => T)()
-        : initialValue;
-    setState(value);
-  }
+function useDirective<T>(ref: ElementRef): [T | undefined, (newValue: T) => void] {
+  ref.nextHook();
+  const { getState, setState } = getStateReflections<T>(ref);
+  const setter = (newValue: T) => setState(newValue);
   const state = getState();
-  const setter = (newValue: T) => {
-    setState(newValue);
-    requestRender();
-  };
-  CONTEXT.directiveIndex++;
   return [state, setter];
-}
-
-function useRender(): () => void {
-  const element = CONTEXT.element;
-  const template = CONTEXT.template;
-  return () => {
-    let el = element as Element;
-    if (element instanceof ShadowRoot) {
-      el = element.host;
-    }
-    if ((el as CustomElement).requestRender) {
-      (el as CustomElement).requestRender();
-    } else {
-      render(template, element);
-    }
-  };
 }

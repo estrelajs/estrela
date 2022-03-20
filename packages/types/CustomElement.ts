@@ -1,5 +1,6 @@
 import { Observable } from 'rxjs';
-import { HTMLResult } from '../core';
+import { HTMLTemplate } from '../core';
+import { HTMLTemplateLike } from './HTMLTemplateLike';
 
 export type AttrBind<T = any> = {
   attr: string;
@@ -19,18 +20,35 @@ export type AttrHandlerName =
   | 'style'
   | 'stylebind';
 
-export interface CustomElementEventMap extends HTMLElementEventMap {
+/** Render function. Will be called on every render cycle. */
+export interface ComponentRender {
+  (): HTMLTemplateLike;
+}
+
+/** Estrela Component Definition. */
+export interface EstrelaComponent {
+  (host: EstrelaElement): ComponentRender;
+}
+
+/** Estrela Element Events. */
+export interface EstrelaElementEventMap extends HTMLElementEventMap {
   destroy: Event;
   init: Event;
   prerender: Event;
   postrender: Event;
 }
 
-/** Custom HTML Element Reference */
-export interface CustomElement extends HTMLElement {
-  addEventListener<K extends keyof CustomElementEventMap>(
+/** Estrela custom HTML element reference. */
+export interface EstrelaElement extends HTMLElement {
+  /** Emits when Element is connected. */
+  readonly init$: Observable<Event>;
+
+  /** Emits when Element is disconnected. */
+  readonly destroy$: Observable<Event>;
+
+  addEventListener<K extends keyof EstrelaElementEventMap>(
     type: K,
-    listener: (this: CustomElement, ev: CustomElementEventMap[K]) => any,
+    listener: (this: EstrelaElement, ev: EstrelaElementEventMap[K]) => any,
     options?: boolean | AddEventListenerOptions
   ): void;
   addEventListener(
@@ -39,17 +57,12 @@ export interface CustomElement extends HTMLElement {
     options?: boolean | AddEventListenerOptions
   ): void;
 
-  on<K extends keyof CustomElementEventMap>(
+  /** Create an observable from events. */
+  on<K extends keyof EstrelaElementEventMap>(
     event: K,
     options?: boolean | AddEventListenerOptions
-  ): Observable<CustomElementEventMap[K]>;
+  ): Observable<EstrelaElementEventMap[K]>;
 
+  /** Request template to be re-rendered in the next tick. */
   requestRender(): void;
-}
-
-/** Functional Estrela Element */
-export interface FunctionalElement {
-  (elementRef: CustomElement): {
-    (): HTMLResult | null;
-  };
 }

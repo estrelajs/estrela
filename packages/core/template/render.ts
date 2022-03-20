@@ -1,5 +1,10 @@
 import { morphdom, MorphDomOptions } from './morphdom';
-import { AttrBind, AttrHandlerName, HTMLTemplate } from '../../types';
+import {
+  AttrBind,
+  AttrHandlerName,
+  ComponentRender,
+  HTMLTemplateLike,
+} from '../../types';
 import {
   coerceTemplate,
   getElementProperty,
@@ -7,15 +12,15 @@ import {
   isObserver,
   toElement,
 } from '../../utils';
-import { CONTEXT } from '../context';
 import { StateSubject } from '../observables/StateSubject';
+import { ElementRef } from '../element-ref';
 
 const ELEMENT_ATTRIBUTES = new Map<Element, Record<string, AttrBind | undefined>>();
 
 /** Render template in element. */
 export function render(
-  template: HTMLTemplate | (() => HTMLTemplate),
-  element: HTMLElement | DocumentFragment
+  template: HTMLTemplateLike | ComponentRender,
+  element: HTMLElement | ShadowRoot
 ): void {
   if (!element) {
     console.error(
@@ -24,10 +29,8 @@ export function render(
     return;
   }
 
-  // set context
-  CONTEXT.directiveIndex = 0;
-  CONTEXT.element = element;
-  CONTEXT.template = template;
+  // set template ref
+  ElementRef.setTemplate(template, element);
 
   if (typeof template === 'function') {
     template = template();

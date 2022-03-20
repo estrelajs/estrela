@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-export * from './define-element';
+export * from './custom-element';
 export * from './event';
 export { EventEmitter } from './observables/EventEmitter';
 export { StateSubject } from './observables/StateSubject';
@@ -9,5 +9,5 @@ export { setProperties } from './properties/properties';
 export { state } from './properties/state';
 export * from './template/css-directive';
 export * from './template/html-directive';
-export * from './template/HTMLResult';
+export * from './template/html-template';
 export * from './template/render';

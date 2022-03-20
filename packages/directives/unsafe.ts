@@ -1,4 +1,4 @@
-import { HTMLResult } from '../core';
+import { HTMLTemplate } from '../core';
 
 /**
  * To prevent XSS attacks, Estrela escapes strings that contains HTML.
@@ -7,6 +7,6 @@ import { HTMLResult } from '../core';
  * @param html html string
  * @returns unscaped html
  */
-export function unsafe(html: string): HTMLResult {
-  return new HTMLResult([html] as any, []);
+export function unsafe(html: string): HTMLTemplate {
+  return new HTMLTemplate([html] as any, []);
 }

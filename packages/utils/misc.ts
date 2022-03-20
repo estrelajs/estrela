@@ -1,5 +1,5 @@
-import { HTMLResult } from '../core';
-import { HTMLTemplate } from '../types';
+import { HTMLTemplate } from '../core';
+import { HTMLTemplateLike } from '../types';
 
 /** Make sure data is an array. */
 export function coerceArray<T>(data: T | T[] | null | undefined): T[] {
@@ -7,15 +7,15 @@ export function coerceArray<T>(data: T | T[] | null | undefined): T[] {
   return array.filter(item => item !== null && item !== undefined) as T[];
 }
 
-/** create HtmlResult from a valid template value. */
-export function coerceTemplate(template: HTMLTemplate): HTMLResult[] {
+/** create HTMLTemplate array from a valid template value. */
+export function coerceTemplate(template: HTMLTemplateLike): HTMLTemplate[] {
   const templateArray = coerceArray(template);
   return templateArray.map(data => {
-    if (data instanceof HTMLResult) {
+    if (data instanceof HTMLTemplate) {
       return data;
     }
     const parsed = isFalsy(data) ? '' : String(data);
-    return new HTMLResult([parsed] as any, []);
+    return new HTMLTemplate([parsed] as any, []);
   });
 }
 

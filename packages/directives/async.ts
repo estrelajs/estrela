@@ -1,4 +1,5 @@
-import { catchError, from, Observable, of, startWith, Subscription } from 'rxjs';
+import { catchError, from, Observable, of, Subscription } from 'rxjs';
+import { ElementRef } from '../core/element-ref';
 import { createDirective, Directive } from './directive';
 
 class AsyncDirective implements Directive {
@@ -10,7 +11,7 @@ class AsyncDirective implements Directive {
   private onError?: any;
 
   // TODO: create a Element ref that works for Component and direct template.
-  constructor(private requestRender: () => void) {}
+  constructor(private elementRef: ElementRef) {}
 
   transform<T>(obj: Observable<T> | Promise<T>): T | null;
   transform<T>(obj: Observable<T> | Promise<T>, onWaiting: T, onError?: T): T;
@@ -61,7 +62,7 @@ class AsyncDirective implements Directive {
   private updateLatestValue(async: any, value: Object): void {
     if (async === this.obj) {
       this.latestValue = value;
-      this.requestRender();
+      this.elementRef.requestRender();
     }
   }
 }

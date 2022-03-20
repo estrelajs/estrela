@@ -1,8 +1,8 @@
-import { HTMLResult } from '../core';
+import { HTMLTemplate } from '../core';
 
-/** Type check for HtmlResult object. */
-export function isHtmlResult(x: any): x is HTMLResult {
-  return x instanceof HTMLResult;
+/** Type check for HTMLTemplate instance. */
+export function isHTMLTemplate(x: any): x is HTMLTemplate {
+  return x instanceof HTMLTemplate;
 }
 
 /** Checks if current html string is inside a tag. */

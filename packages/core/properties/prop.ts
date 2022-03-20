@@ -1,5 +1,5 @@
+import { ElementRef } from '../element-ref';
 import { StateSubject } from '../observables/StateSubject';
-import { CONTEXT } from '../context';
 
 const PROP_REGEX = /([a-zA-Z0-9$_]+)((\s|(\/\*.*\*\/))+)?=.*prop(<.*>)?\(.*\)/g;
 
@@ -19,6 +19,14 @@ export function prop<T>(
 ): StateSubject<T>;
 export function prop<T>(options?: PropOptions<T>): StateSubject<T | undefined>;
 export function prop(options?: PropOptions<any>): StateSubject<any> {
+  const ref = ElementRef.ref;
+
+  if (!ref?.element || !ref?.component) {
+    throw new Error(
+      'Out of context error! You cannot create prop from outside of a component scope.'
+    );
+  }
+
   let { value, key } = options ?? {};
   const state = new StateSubject<any>(value);
 
@@ -29,7 +37,7 @@ export function prop(options?: PropOptions<any>): StateSubject<any> {
         'You should manually set the key name in the "prop" options object'
     );
 
-    const element = CONTEXT.factory.toString();
+    const element = ref.component.toString();
     const keys: string[] = [];
 
     let match: RegExpExecArray | null;
@@ -38,7 +46,7 @@ export function prop(options?: PropOptions<any>): StateSubject<any> {
     }
 
     for (const k of keys) {
-      if (!Reflect.hasOwnMetadata(k, CONTEXT.instance, PROPS_TOKEN)) {
+      if (!Reflect.hasOwnMetadata(k, ref.element, PROPS_TOKEN)) {
         key = k;
         break;
       }
@@ -46,7 +54,7 @@ export function prop(options?: PropOptions<any>): StateSubject<any> {
   }
 
   if (key) {
-    Reflect.defineMetadata(key, state, CONTEXT.instance, PROPS_TOKEN);
+    Reflect.defineMetadata(key, state, ref.element, PROPS_TOKEN);
   }
 
   return state;
