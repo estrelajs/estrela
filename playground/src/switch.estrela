@@ -1,24 +1,19 @@
 <script tag="app-switch">
   import { state } from "estrela";
-  import { async } from "estrela/directives";
+  import { async, show } from "estrela/directives";
   import { delay, of } from "rxjs";
 
   const toggle = state(true);
-  const content1 = of(<div>Content #1</div>).pipe(delay(3000))
-  const content2 = of(<div>Content #2</div>).pipe(delay(3000))
+  const content1$ = of(<div>Content #1</div>).pipe(delay(3000))
+  const content2$ = of(<div>Content #2</div>).pipe(delay(3000))
 </script>
 
-<button on:click={() => {
-  console.log('click');
-  toggle.update(v => !v)
-}}>
-  Load Content #{ toggle() ? '2' : '1' }
+<button on:click={() => toggle.update(v => !v)}>
+  { toggle() ? 'Hide' : 'Show' } Content #1
 </button>
-<br /><br />
-<div class="content">
-  {
-    toggle()
-      ? async(content1, <div>loading Content #1</div>)
-      : async(content2, <div>loading Content #2</div>)
-  }
-</div>
+
+<br/>
+<br/>
+
+{ show(toggle(), async(content1$, <div>loading Content #1</div>)) }
+{ async(content2$, <div>loading Content #2</div>) }

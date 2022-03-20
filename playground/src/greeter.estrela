@@ -1,6 +1,6 @@
 <script tag="app-greeter">
   import { prop } from "estrela";
-  import { async, when } from "estrela/directives";
+  import { async, show } from "estrela/directives";
 
   const name = prop<string>();
 
@@ -11,5 +11,5 @@
 
 <h1>
   { async(greet) ?? 'Hello' }
-  { when(name() === 'Eduardo', 'o cara', name()) }!
+  { show(name() === 'Eduardo', 'o cara', name()) }!
 </h1>

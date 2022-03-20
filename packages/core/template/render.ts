@@ -6,10 +6,11 @@ import {
   HTMLTemplateLike,
 } from '../../types';
 import {
+  apply,
   coerceTemplate,
   getElementProperty,
   isNil,
-  isObserver,
+  isNextObserver,
   toElement,
 } from '../../utils';
 import { StateSubject } from '../observables/StateSubject';
@@ -32,9 +33,8 @@ export function render(
   // set template ref
   ElementRef.setTemplate(template, element);
 
-  if (typeof template === 'function') {
-    template = template();
-  }
+  // return the template itself.
+  template = apply(template);
 
   const args: any[] = [];
   const html = coerceTemplate(template)
@@ -51,10 +51,26 @@ export function getMorphOptions(args: any[]): MorphDomOptions {
     return !bind || bind.data !== value;
   };
 
-  const bindAttributes = (element: HTMLElement, reflectElement: HTMLElement) => {
+  const processElement = (element: HTMLElement, reflectElement: HTMLElement) => {
     const attributeNames = reflectElement.getAttributeNames?.() ?? [];
     const attrBinds = ELEMENT_ATTRIBUTES.get(element) ?? {};
 
+    // remove separator braces
+    reflectElement.childNodes.forEach(node => {
+      const parseText = (text: Text) => {
+        const match = /{{|}}/.exec(text.textContent ?? '');
+        if (match) {
+          const nextText = text.splitText(match.index);
+          nextText.textContent = nextText.textContent?.slice(2) ?? '';
+          parseText(nextText);
+        }
+      };
+      if (typeof (node as Text).splitText === 'function') {
+        parseText(node as Text);
+      }
+    });
+
+    // bind attributes
     new Set([...attributeNames, ...Object.keys(attrBinds)]).forEach(attr => {
       const bind = attrBinds[attr];
 
@@ -112,7 +128,7 @@ export function getMorphOptions(args: any[]): MorphDomOptions {
           case 'prop':
             const prop = getElementProperty(element, 'props')?.[name];
             if (hasChanged(bind, attrValue)) {
-              if (isObserver(prop)) {
+              if (isNextObserver(prop)) {
                 prop.next(attrValue);
               }
               attrBinds[attr] = { attr, data: attrValue };
@@ -121,7 +137,7 @@ export function getMorphOptions(args: any[]): MorphDomOptions {
 
           case 'ref':
             if (hasChanged(bind, attrArg)) {
-              if (isObserver(attrArg)) {
+              if (isNextObserver(attrArg)) {
                 attrArg.next(element);
               } else if (typeof attrArg === 'function') {
                 attrArg(element);
@@ -160,10 +176,12 @@ export function getMorphOptions(args: any[]): MorphDomOptions {
         }
       }
 
-      // if it gets here, means we need to dispose the binding.
-      bind?.cleanup?.();
-      delete attrBinds[attr];
-      element.removeAttribute(attr);
+      // if it gets here, means we need to dispose bindings.
+      if (bind) {
+        bind.cleanup?.();
+        delete attrBinds[attr];
+        element.removeAttribute(attr);
+      }
     });
 
     if (Object.keys(attrBinds).length) {
@@ -182,12 +200,12 @@ export function getMorphOptions(args: any[]): MorphDomOptions {
       return attr ?? key ?? el.id;
     },
     onBeforeElUpdated(fromEl, toEl) {
-      bindAttributes(fromEl, toEl);
+      processElement(fromEl, toEl);
       return true;
     },
     onNodeAdded(node) {
       const el = node as HTMLElement;
-      bindAttributes(el, el);
+      processElement(el, el);
       return node;
     },
     onNodeDiscarded(node) {
@@ -209,7 +227,7 @@ export function addEventListener<T>(
 ): () => void {
   const hook = (event: Event) => {
     const data = event instanceof CustomEvent ? event.detail : event;
-    if (isObserver(bind.data)) {
+    if (isNextObserver(bind.data)) {
       bind.data.next(data);
     }
     if (typeof bind.data === 'function') {

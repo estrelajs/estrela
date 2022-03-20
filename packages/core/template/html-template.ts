@@ -20,9 +20,9 @@ export class HTMLTemplate {
     }
 
     const html = this.args.reduce((html: string, arg, idx) => {
-      const renderContent = (content: string, wrapInComments?: boolean) => {
-        if (wrapInComments) {
-          content = `<!---->${escape(content)}<!---->`;
+      const renderContent = (content: string, escapeContent?: boolean) => {
+        if (content && escapeContent) {
+          content = `{{${escape(content)}}}`;
         }
         const nextHtml = this.template[idx + 1];
         return html + content + nextHtml;

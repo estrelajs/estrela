@@ -1,6 +1,13 @@
 import { HTMLTemplate } from '../core';
 import { HTMLTemplateLike } from '../types';
 
+/** Return value from a value or function. */
+export function apply<T>(value: T | ((...args: any) => T), ...args: any[]): T {
+  return typeof value === 'function'
+    ? (value as Function).apply(value, args)
+    : value;
+}
+
 /** Make sure data is an array. */
 export function coerceArray<T>(data: T | T[] | null | undefined): T[] {
   const array = Array.isArray(data) ? data : [data];

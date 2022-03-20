@@ -1,3 +1,5 @@
+import { apply } from '../utils';
+
 interface Case<T, R> {
   case: T | T[];
   result: R | ((value: T) => R);
@@ -127,7 +129,7 @@ export function switchCase(
       arg.case === value ||
       (Array.isArray(arg.case) && arg.case.includes(value))
     ) {
-      return typeof arg.result === 'function' ? arg.result(value) : arg.result;
+      return apply(arg.result, value);
     }
   }
   return undefined;
