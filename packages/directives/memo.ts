@@ -1,4 +1,28 @@
-import { directive } from './directive';
+import { createDirective, Directive } from './directive';
+
+class MemoDirective implements Directive {
+  private computed = false;
+  private deps: any[] = [];
+  private lastValue: any = undefined;
+
+  transform<T>(valueGetter: () => T, dependencies?: any[]): T {
+    if (!this.computed || this.depsHaveChanged(dependencies)) {
+      this.lastValue = valueGetter();
+      this.computed = true;
+    }
+    return this.lastValue;
+  }
+
+  private depsHaveChanged(deps?: any[]): boolean {
+    if (!deps) {
+      return false;
+    }
+    if (this.deps.length !== deps.length) {
+      return true;
+    }
+    return this.deps.some((dep, i) => deps[i] !== dep);
+  }
+}
 
 /**
  * Memoize value inside the template getter function.
@@ -8,10 +32,4 @@ import { directive } from './directive';
  * @param dependencies dependencies to calculate again
  * @returns memoized value
  */
-export function memo<T>(valueGetter: () => T, dependencies?: any[]) {
-  return directive<T>(
-    'memo',
-    setValue => setValue(valueGetter()),
-    dependencies ?? []
-  );
-}
+export const memo = createDirective(MemoDirective);

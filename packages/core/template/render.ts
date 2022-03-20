@@ -25,7 +25,7 @@ export function render(
   }
 
   // set context
-  CONTEXT.hookIndex = 0;
+  CONTEXT.directiveIndex = 0;
   CONTEXT.element = element;
   CONTEXT.template = template;
 

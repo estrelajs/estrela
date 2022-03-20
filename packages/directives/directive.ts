@@ -1,21 +1,57 @@
-import { CustomElement } from '../types';
 import { CONTEXT } from '../core/context';
 import { render } from '../core/template/render';
+import { CustomElement } from '../types';
 
-type DirectiveEffect<T> = (setValue: (value: T) => void) => void | (() => void);
+export interface Directive {
+  dispose?(): void;
+  transform(...args: any[]): any;
+}
 
-const STATE_HOOK = Symbol('STATE_HOOK');
-const EFFECT_HOOK = Symbol('EFFECT_HOOK');
+export function createDirective<T extends Directive>(
+  Klass: new (requestRender: () => void) => T
+) {
+  const directive = (...args: any[]) => {
+    const requestRender = useRender();
+    let [instance, setInstance] = useDirective<T | undefined>(undefined);
+    if (instance === undefined || !(instance instanceof Klass)) {
+      instance?.dispose?.();
+      instance = new Klass(requestRender);
+      setInstance(instance);
+    }
+    return instance.transform.apply(instance, args);
+  };
+  return directive as T['transform'];
+}
 
-function getReflections(element: Object) {
-  const get = (propertyKey: symbol, metadataKey: any) =>
-    Reflect.getOwnMetadata(metadataKey, element, propertyKey);
-  const has = (propertyKey: symbol, metadataKey: any) =>
-    Reflect.hasOwnMetadata(metadataKey, element, propertyKey);
-  const set = (propertyKey: symbol, metadataKey: any, value: any) =>
-    Reflect.defineMetadata(metadataKey, value, element, propertyKey);
+const DIRECTIVE_HOOK = Symbol('DIRECTIVE_HOOK');
 
-  return { get, has, set };
+function getStateReflections<T>() {
+  const element = CONTEXT.element;
+  const index = CONTEXT.directiveIndex;
+  const getState = () => Reflect.getOwnMetadata(index, element, DIRECTIVE_HOOK) as T;
+  const hasState = () => Reflect.hasOwnMetadata(index, element, DIRECTIVE_HOOK);
+  const setState = (value: T) =>
+    Reflect.defineMetadata(index, value, element, DIRECTIVE_HOOK);
+  return { getState, hasState, setState };
+}
+
+function useDirective<T>(initialValue: T | (() => T)): [T, (newValue: T) => void] {
+  const { getState, hasState, setState } = getStateReflections<T>();
+  const requestRender = useRender();
+  if (!hasState()) {
+    const value =
+      typeof initialValue === 'function'
+        ? (initialValue as () => T)()
+        : initialValue;
+    setState(value);
+  }
+  const state = getState();
+  const setter = (newValue: T) => {
+    setState(newValue);
+    requestRender();
+  };
+  CONTEXT.directiveIndex++;
+  return [state, setter];
 }
 
 function useRender(): () => void {
@@ -32,64 +68,4 @@ function useRender(): () => void {
       render(template, element);
     }
   };
-}
-
-function useState<T>(initialValue: T): [T, (newValue: T) => void] {
-  const { get, has, set } = getReflections(CONTEXT.element);
-  const requestRender = useRender();
-  const index = CONTEXT.hookIndex;
-
-  if (!has(STATE_HOOK, index)) {
-    set(STATE_HOOK, index, initialValue);
-  }
-
-  const state = get(STATE_HOOK, index) as T;
-  const setter = (newValue: T) => {
-    set(STATE_HOOK, index, newValue);
-    requestRender();
-  };
-
-  CONTEXT.hookIndex++;
-  return [state, setter];
-}
-
-function useEffect(callback: () => void | (() => void), dependencies?: any[]): void {
-  const { get, set } = getReflections(CONTEXT.element);
-  const index = CONTEXT.hookIndex;
-
-  const deps = get(STATE_HOOK, index);
-  const hasChanged =
-    deps === undefined ||
-    dependencies === undefined ||
-    dependencies.some((dep, i) => dep !== deps[i]);
-
-  if (hasChanged) {
-    get(EFFECT_HOOK, index)?.();
-    set(EFFECT_HOOK, index, callback());
-    set(STATE_HOOK, index, dependencies);
-  }
-
-  CONTEXT.hookIndex++;
-}
-
-/**
- * Helper function to create template directives.
- *
- * @param name unique directive name
- * @param effect effect handler for the directive
- * @param dependencies will call the effect handler on dependencies change
- * @returns the current value
- */
-export function directive<T>(
-  name: string,
-  effect: DirectiveEffect<T>,
-  dependencies: any[]
-): T {
-  let [result, setResult] = useState<T>(undefined as any);
-  const _setResult = (newValue: T) => {
-    setResult(newValue);
-    result = newValue;
-  };
-  useEffect(() => effect(_setResult), [name, ...dependencies]);
-  return result;
 }
