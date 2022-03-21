@@ -3,13 +3,17 @@
 
   const name = state('Stranger');
   const count = state(0);
-  const inputRef = state<HTMLInputElement>();
 
   setInterval(() => count.update(value => ++value), 1000);
 </script>
 
 <app-greeter name={name}></app-greeter>
-<input ref={inputRef} on:input={({ target }) => name.next(target.value)}/>
+<input bind:value={name} />
+
+<br /><br />
+
+<h2>Forms</h2>
+<app-forms></app-forms>
 
 <br /><br />
 

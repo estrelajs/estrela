@@ -78,14 +78,15 @@ export function defineElement(
         Reflect.getMetadata(STATES_TOKEN, this) ?? [];
 
       // Get element props
-      const propKeys: string[] = Reflect.getOwnMetadataKeys(this, PROPS_TOKEN);
+      const propKeys: string[] = Reflect.getOwnMetadataKeys(this, PROPS_TOKEN) ?? [];
       const elementProps = propKeys.reduce((acc, key) => {
         acc[key] = Reflect.getOwnMetadata(key, this, PROPS_TOKEN);
         return acc;
       }, {} as Record<string, StateSubject<any>>);
 
       // Get element emitters
-      const emitterKeys: string[] = Reflect.getOwnMetadataKeys(this, EMITTERS_TOKEN);
+      const emitterKeys: string[] =
+        Reflect.getOwnMetadataKeys(this, EMITTERS_TOKEN) ?? [];
       const elementEmitters = emitterKeys.reduce((acc, key) => {
         acc[key] = Reflect.getOwnMetadata(key, this, EMITTERS_TOKEN);
         return acc;
@@ -99,7 +100,6 @@ export function defineElement(
         ...others
       } = (Reflect.getOwnMetadata(PROPERTIES_TOKEN, this) as ElementProperties) ??
       {};
-
       const properties = {
         emitters,
         state,
@@ -107,12 +107,20 @@ export function defineElement(
         ...others,
       };
 
-      // set element ref
+      // set properties metadata.
       Reflect.defineMetadata(PROPERTIES_TOKEN, properties, this);
 
       // add element subscriptions to the local one
       coerceArray(properties.subscription).forEach(sub =>
         this._subscriptions.add(sub)
+      );
+
+      // subscribe to states
+      this._subscriptions.add(
+        merge(
+          ...coerceArray(getElementProperty(this, 'state')),
+          ...Object.values(getElementProperty(this, 'props') ?? {})
+        ).subscribe(() => this.requestRender())
       );
 
       // subscribe to emitters
@@ -131,14 +139,6 @@ export function defineElement(
         }
       });
 
-      // subscribe to states
-      this._subscriptions.add(
-        merge(
-          ...coerceArray(getElementProperty(this, 'state')),
-          ...Object.values(getElementProperty(this, 'props') ?? {})
-        ).subscribe(() => this.requestRender())
-      );
-
       // start event observables
       this.init$ = this.on('init');
       this.destroy$ = this.on('destroy');
@@ -155,7 +155,7 @@ export function defineElement(
 
     disconnectedCallback(): void {
       // emit disconnect
-      this.dispatchEvent(new Event('disconect'));
+      this.dispatchEvent(new Event('disconnect'));
 
       if (!this.isConnected) {
         this._subscriptions.unsubscribe();

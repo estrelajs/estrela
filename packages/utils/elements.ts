@@ -6,26 +6,26 @@ const doc = typeof document === 'undefined' ? undefined : document;
 const HAS_TEMPLATE_SUPPORT = !!doc && 'content' in doc.createElement('template');
 const HAS_RANGE_SUPPORT = !!doc && 'createContextualFragment' in doc.createRange?.();
 
-function createFragmentFromTemplate(str: string): Element {
+function createFragmentFromTemplate(str: string): HTMLElement {
   var template = document.createElement('template');
   template.innerHTML = str;
-  return template.content.childNodes[0] as Element;
+  return template.content.childNodes[0] as HTMLElement;
 }
 
-function createFragmentFromRange(str: string): Element {
+function createFragmentFromRange(str: string): HTMLElement {
   if (!range) {
     range = document.createRange();
     range.selectNode(document.body);
   }
 
   var fragment = range.createContextualFragment(str);
-  return fragment.childNodes[0] as Element;
+  return fragment.childNodes[0] as HTMLElement;
 }
 
-function createFragmentFromWrap(str: string): Element {
+function createFragmentFromWrap(str: string): HTMLElement {
   var fragment = document.createElement('body');
   fragment.innerHTML = str;
-  return fragment.childNodes[0] as Element;
+  return fragment.childNodes[0] as HTMLElement;
 }
 
 /**
@@ -33,7 +33,7 @@ function createFragmentFromWrap(str: string): Element {
  * var html = new DOMParser().parseFromString(str: string, 'text/html');
  * return html.body.firstChild;
  */
-export function toElement(str: string): Element {
+export function toElement(str: string): HTMLElement {
   str = str.trim();
   if (HAS_TEMPLATE_SUPPORT) {
     // avoid restrictions on content for things like `<tr><th>Hi</th></tr>` which

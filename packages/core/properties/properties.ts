@@ -3,7 +3,7 @@ import { ElementRef } from '../element-ref';
 
 export const PROPERTIES_TOKEN = Symbol('PROPERTIES_TOKEN');
 
-export function setProperties(properties: ElementProperties) {
+export function setProperties(properties: Partial<ElementProperties>) {
   const ref = ElementRef.ref;
 
   if (!ref?.element || !ref?.component) {

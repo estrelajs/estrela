@@ -1,12 +1,7 @@
-var DOCUMENT_FRAGMENT_NODE = 11;
+const DOCUMENT_FRAGMENT_NODE = 11;
 
-export default function morphAttrs(fromNode, toNode) {
-  var toNodeAttrs = toNode.attributes;
-  var attr;
-  var attrName;
-  var attrNamespaceURI;
-  var attrValue;
-  var fromValue;
+export function morphAttrs(fromNode: HTMLElement, toNode: HTMLElement): void {
+  const toNodeAttrs = toNode.attributes;
 
   // document-fragments dont have attributes so lets not do anything
   if (
@@ -18,14 +13,14 @@ export default function morphAttrs(fromNode, toNode) {
 
   // update attributes on original DOM element
   for (var i = toNodeAttrs.length - 1; i >= 0; i--) {
-    attr = toNodeAttrs[i];
-    attrName = attr.name;
-    attrNamespaceURI = attr.namespaceURI;
-    attrValue = attr.value;
+    const attr = toNodeAttrs[i];
+    let attrName = attr.name;
+    const attrNamespaceURI = attr.namespaceURI;
+    const attrValue = attr.value;
 
     if (attrNamespaceURI) {
       attrName = attr.localName || attrName;
-      fromValue = fromNode.getAttributeNS(attrNamespaceURI, attrName);
+      const fromValue = fromNode.getAttributeNS(attrNamespaceURI, attrName);
 
       if (fromValue !== attrValue) {
         if (attr.prefix === 'xmlns') {
@@ -34,7 +29,7 @@ export default function morphAttrs(fromNode, toNode) {
         fromNode.setAttributeNS(attrNamespaceURI, attrName, attrValue);
       }
     } else {
-      fromValue = fromNode.getAttribute(attrName);
+      const fromValue = fromNode.getAttribute(attrName);
 
       if (fromValue !== attrValue) {
         fromNode.setAttribute(attrName, attrValue);
@@ -44,12 +39,12 @@ export default function morphAttrs(fromNode, toNode) {
 
   // Remove any extra attributes found on the original DOM element that
   // weren't found on the target element.
-  var fromNodeAttrs = fromNode.attributes;
+  const fromNodeAttrs = fromNode.attributes;
 
   for (var d = fromNodeAttrs.length - 1; d >= 0; d--) {
-    attr = fromNodeAttrs[d];
-    attrName = attr.name;
-    attrNamespaceURI = attr.namespaceURI;
+    const attr = fromNodeAttrs[d];
+    let attrName = attr.name;
+    const attrNamespaceURI = attr.namespaceURI;
 
     if (attrNamespaceURI) {
       attrName = attr.localName || attrName;

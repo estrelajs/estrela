@@ -1,4 +1,3 @@
-import { morphdom, MorphDomOptions } from './morphdom';
 import {
   AttrBind,
   AttrHandlerName,
@@ -9,14 +8,20 @@ import {
   apply,
   coerceTemplate,
   getElementProperty,
-  isNil,
+  isFalsy,
   isNextObserver,
+  isNil,
   toElement,
 } from '../../utils';
-import { StateSubject } from '../observables/StateSubject';
 import { ElementRef } from '../element-ref';
+import { StateSubject } from '../observables/StateSubject';
+import { bindHandler } from './bind-handler';
+import { morphdom, MorphDomOptions } from './morphdom';
 
-const ELEMENT_ATTRIBUTES = new Map<Element, Record<string, AttrBind | undefined>>();
+const ELEMENT_ATTRIBUTES = new Map<
+  HTMLElement,
+  Record<string, AttrBind | undefined>
+>();
 
 /** Render template in element. */
 export function render(
@@ -25,7 +30,7 @@ export function render(
 ): void {
   if (!element) {
     console.error(
-      'Template render error! A valid Element is required to render the template.'
+      'Template render error! A valid HTMLElement is required to render the template.'
     );
     return;
   }
@@ -43,14 +48,10 @@ export function render(
   const root = toElement(`<div>${html}</div>`);
 
   // patch changes
-  morphdom(element, root, getMorphOptions(args));
+  morphdom(element as HTMLElement, root, getMorphOptions(args));
 }
 
 export function getMorphOptions(args: any[]): MorphDomOptions {
-  const hasChanged = (bind?: AttrBind, value?: any) => {
-    return !bind || bind.data !== value;
-  };
-
   const processElement = (element: HTMLElement, reflectElement: HTMLElement) => {
     const attributeNames = reflectElement.getAttributeNames?.() ?? [];
     const attrBinds = ELEMENT_ATTRIBUTES.get(element) ?? {};
@@ -75,9 +76,10 @@ export function getMorphOptions(args: any[]): MorphDomOptions {
       const bind = attrBinds[attr];
 
       if (attributeNames.includes(attr)) {
-        const [, , namespace, name, , accessor, , filter] =
+        const [, , namespace, attrName, , accessor, , filter] =
           /(([\w-]+):)?([\w-]+)(\.([\w-]+))?(\|([\w-]+))?/.exec(attr) ?? [];
 
+        const prop = getElementProperty(element, 'props')?.[attrName];
         let attrValue: any = reflectElement.getAttribute(attr);
         let attrArg: any = undefined;
 
@@ -87,11 +89,49 @@ export function getMorphOptions(args: any[]): MorphDomOptions {
           attrValue = attrArg instanceof StateSubject ? attrArg() : attrArg;
         }
 
-        // remove attribute from the reflect Element.
+        // remove attribute from the reflect HTMLElement.
         reflectElement.removeAttribute(attr);
 
-        switch (getAttrHandlerName(element, name, namespace, accessor)) {
+        // attr handler
+        const handler = getAttrHandlerName(element, attrName, namespace, accessor);
+
+        const bindEvent = (event: string, target?: string) => {
+          if (!bind) {
+            const newBind: AttrBind = { attr, data: attrArg, filter, target };
+            addEventListener(element, event, newBind);
+            attrBinds[attr] = newBind;
+          } else {
+            bind.data = attrArg;
+          }
+        };
+
+        const bindProp = () => {
+          if (!bind || bind.data !== attrValue) {
+            if (isNextObserver(prop)) {
+              prop.next(attrValue);
+            }
+            attrBinds[attr] = { attr, data: attrValue };
+          }
+        };
+
+        switch (handler) {
           case 'bind':
+            if (attrArg instanceof StateSubject) {
+              if (prop) {
+                bindProp();
+                if (!bind) {
+                  const subscription = prop.subscribe(attrArg);
+                  attrBinds[attr]!.cleanup = () => subscription.unsubscribe();
+                }
+              } else {
+                const target = attrName === 'bind' ? undefined : attrName;
+                attrBinds[attr] = bindHandler(element, attr, attrArg, bind, target);
+              }
+            } else {
+              console.error(
+                'Bind error! You can only bind to StateSubject instances.'
+              );
+            }
             return;
 
           case 'class':
@@ -116,13 +156,7 @@ export function getMorphOptions(args: any[]): MorphDomOptions {
             return;
 
           case 'event':
-            if (!bind) {
-              const _bind: AttrBind = { attr, data: attrArg, filter };
-              _bind.cleanup = addEventListener(element, name, _bind);
-              attrBinds[attr] = _bind;
-            } else {
-              bind.data = attrArg;
-            }
+            bindEvent(attrName);
             return;
 
           case 'key':
@@ -132,13 +166,7 @@ export function getMorphOptions(args: any[]): MorphDomOptions {
             return;
 
           case 'prop':
-            const prop = getElementProperty(element, 'props')?.[name];
-            if (hasChanged(bind, attrValue)) {
-              if (isNextObserver(prop)) {
-                prop.next(attrValue);
-              }
-              attrBinds[attr] = { attr, data: attrValue };
-            }
+            bindProp();
             return;
 
           case 'ref':
@@ -177,7 +205,10 @@ export function getMorphOptions(args: any[]): MorphDomOptions {
             return;
 
           default:
-            reflectElement.setAttribute(attr, attrValue);
+            if (!isFalsy(attrValue)) {
+              attrValue = attrValue === true ? '' : attrValue;
+              reflectElement.setAttribute(attrName, attrValue);
+            }
             return;
         }
       }
@@ -200,7 +231,7 @@ export function getMorphOptions(args: any[]): MorphDomOptions {
   return {
     childrenOnly: true,
     getNodeKey(node) {
-      const el = node as Element;
+      const el = node as HTMLElement;
       const attr = el.getAttribute?.('key');
       const key = ELEMENT_ATTRIBUTES.get(el)?.['key']?.data;
       return attr ?? key ?? el.id;
@@ -215,9 +246,12 @@ export function getMorphOptions(args: any[]): MorphDomOptions {
       return node;
     },
     onNodeDiscarded(node) {
-      const el = node as Element;
-      ELEMENT_ATTRIBUTES.forEach((_, elem) => {
+      const el = node as HTMLElement;
+      ELEMENT_ATTRIBUTES.forEach((attrBinds, elem) => {
         if (el.contains(elem) || el.shadowRoot?.contains(elem)) {
+          Object.values(attrBinds).forEach(bind => {
+            bind?.cleanup?.();
+          });
           ELEMENT_ATTRIBUTES.delete(elem);
         }
       });
@@ -227,12 +261,17 @@ export function getMorphOptions(args: any[]): MorphDomOptions {
 
 /** Add event listener to element and return a remover function. */
 export function addEventListener<T>(
-  element: Element,
+  element: HTMLElement,
   event: string,
   bind: AttrBind
-): () => void {
+): void {
   const hook = (event: Event) => {
-    const data = event instanceof CustomEvent ? event.detail : event;
+    let data: any = event;
+    if (event instanceof CustomEvent) {
+      data = event.detail;
+    } else if (bind.target) {
+      data = (event.target as any)[bind.target];
+    }
     if (isNextObserver(bind.data)) {
       bind.data.next(data);
     }
@@ -241,15 +280,19 @@ export function addEventListener<T>(
     }
   };
   element.addEventListener(event, hook);
-  return () => element.removeEventListener(event, hook);
+  bind.cleanup = () => element.removeEventListener(event, hook);
 }
 
 export function getAttrHandlerName(
-  element: Element,
+  element: HTMLElement,
   name: string,
   namespace?: string,
   accessor?: string
 ): AttrHandlerName {
+  if (name === 'bind') {
+    return 'bind';
+  }
+
   if (!namespace && !accessor && /^class|key|ref|style$/.test(name)) {
     return name as 'class' | 'key' | 'ref' | 'style';
   }
@@ -258,17 +301,11 @@ export function getAttrHandlerName(
     return (name + 'bind') as 'classbind' | 'stylebind';
   }
 
-  if (namespace === 'bind') {
-    return 'bind';
+  if (namespace && /^bind|on$/.test(namespace)) {
+    return namespace.replace('on', 'event') as 'bind' | 'event';
   }
 
-  if (namespace === 'on') {
-    return 'event';
-  }
-
-  const prop = getElementProperty(element, 'props')?.[name];
-
-  if (prop) {
+  if (getElementProperty(element, 'props')?.[name]) {
     return 'prop';
   }
 

@@ -5,26 +5,26 @@ export const doc = typeof document === 'undefined' ? undefined : document;
 const HAS_TEMPLATE_SUPPORT = !!doc && 'content' in doc.createElement('template');
 const HAS_RANGE_SUPPORT = !!doc && 'createContextualFragment' in doc.createRange?.();
 
-function createFragmentFromTemplate(str: string): ChildNode {
+function createFragmentFromTemplate(str: string): HTMLElement {
   var template = document.createElement('template');
   template.innerHTML = str;
-  return template.content.childNodes[0];
+  return template.content.childNodes[0] as HTMLElement;
 }
 
-function createFragmentFromRange(str: string): ChildNode {
+function createFragmentFromRange(str: string): HTMLElement {
   if (!range) {
     range = document.createRange();
     range.selectNode(document.body);
   }
 
   var fragment = range.createContextualFragment(str);
-  return fragment.childNodes[0];
+  return fragment.childNodes[0] as HTMLElement;
 }
 
-function createFragmentFromWrap(str: string): ChildNode {
+function createFragmentFromWrap(str: string): HTMLElement {
   var fragment = document.createElement('body');
   fragment.innerHTML = str;
-  return fragment.childNodes[0];
+  return fragment.childNodes[0] as HTMLElement;
 }
 
 /**
@@ -32,7 +32,7 @@ function createFragmentFromWrap(str: string): ChildNode {
  * var html = new DOMParser().parseFromString(str: string, 'text/html');
  * return html.body.firstChild;
  */
-export function toElement(str: string): ChildNode {
+export function toElement(str: string): HTMLElement {
   str = str.trim();
   if (HAS_TEMPLATE_SUPPORT) {
     // avoid restrictions on content for things like `<tr><th>Hi</th></tr>` which
@@ -52,7 +52,7 @@ export function toElement(str: string): ChildNode {
  * NOTE: We don't bother checking `namespaceURI` because you will never find two HTML elements with the same
  *       nodeName and different namespace URIs.
  */
-export function compareNodeNames(fromEl: Element, toEl: Element): boolean {
+export function compareNodeNames(fromEl: HTMLElement, toEl: HTMLElement): boolean {
   var fromNodeName = fromEl.nodeName;
   var toNodeName = toEl.nodeName;
   var fromCodeStart, toCodeStart;
@@ -86,16 +86,19 @@ export function compareNodeNames(fromEl: Element, toEl: Element): boolean {
  * @param {string} [namespaceURI] the element's namespace URI, i.e. the value of
  * its `xmlns` attribute or its inferred namespace.
  */
-export function createElementNS(name: string, namespaceURI: string): Element {
+export function createElementNS(
+  name: string,
+  namespaceURI: string | null
+): HTMLElement {
   return !namespaceURI || namespaceURI === NS_XHTML
     ? document.createElement(name)
-    : document.createElementNS(namespaceURI, name);
+    : (document.createElementNS(namespaceURI, name) as HTMLElement);
 }
 
 /**
  * Copies the children of one DOM element to another DOM element
  */
-export function moveChildren(fromEl: Element, toEl: Element): Element {
+export function moveChildren(fromEl: HTMLElement, toEl: HTMLElement): HTMLElement {
   var curChild = fromEl.firstChild;
   while (curChild) {
     var nextChild = curChild.nextSibling;

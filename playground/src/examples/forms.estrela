@@ -1,0 +1,72 @@
+<script tag="app-forms">
+  import { state } from "estrela";
+  import { async } from "estrela/directives";
+  import { combineLatest, map } from "rxjs";
+
+  const name = state('');
+  const age = state(0);
+  const radio = state('awesome');
+  const check = state(true);
+  const select = state('value3');
+  const textarea = state('textarea');
+
+  const json$ = combineLatest([
+    name.pipe(),
+    age.pipe(),
+    radio.pipe(),
+    check.pipe(),
+    select.pipe(),
+    textarea.pipe(),
+  ]).pipe(
+    map(([name, age, radio, check, select, textarea]) => ({
+      name,
+      age,
+      radio,
+      check,
+      select,
+      textarea,
+    })),
+    map(obj => JSON.stringify(obj, undefined, 2))
+  );
+</script>
+
+<form>
+  <div>
+    <label for="name">Name:</label>
+    <input id="name" bind={name} />
+  </div>
+
+  <div>
+    <label for="age">Age:</label>
+    <input id="age" type="number" bind={age} />
+  </div>
+
+  <div>
+    <input bind={radio} type="radio" id="estrela" value="estrela" />
+    <label for="estrela">Estrela</label>
+    <input bind={radio} type="radio" id="is" value="is" />
+    <label for="is">Is</label>
+    <input bind={radio} type="radio" id="awesome" value="awesome" />
+    <label for="awesome">Awesome</label>
+  </div>
+
+  <div>
+    <input id="check" type="checkbox" bind={check} />
+    <label for="check">Checkbox</label>
+  </div>
+
+  <div>
+    <select bind={select}>
+      <option value="value1">Value 1</option>
+      <option value="value2">Value 2</option>
+      <option value="value3">Value 3</option>
+    </select>
+  </div>
+
+  <div>
+    <textarea bind={textarea}></textarea>
+  </div>
+</form>
+
+<h5>Result:</h5>
+<pre>{ async(json$) }</pre>
