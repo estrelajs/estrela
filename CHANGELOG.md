@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.2] - Bug fixes - 2022/02/20
+
+### Changed
+- Refactored Directive API.
+- Refactored Element Ref API.
+- Renamed `when` directive to `show`.
+
+### Fixed
+- Fixed regression on element `key`.
+- Fixed bug on event listeners.
+- Fixed bug on connect and disconnect.
+
 ## [0.6.1] - Syntax and Fixes - 2022/02/19
 
 ### Changed
