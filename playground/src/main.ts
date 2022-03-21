@@ -3,9 +3,11 @@ import './style.css';
 
 // components
 import './app.estrela';
-import './counter.estrela';
-import './github.estrela';
-import './greeter.estrela';
-import './switch.estrela';
+import './examples/counter.estrela';
+import './examples/github.estrela';
+import './examples/greeter.estrela';
+import './examples/switch.estrela';
+import './github/github-content.estrela';
+import './github/github-result.estrela';
 
 render('<app-root></app-root>', document.getElementById('app')!);

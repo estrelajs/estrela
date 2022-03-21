@@ -25,3 +25,8 @@
 
 <h2>Switch</h2>
 <app-switch></app-switch>
+
+<br /><br />
+
+<h2>Github Example</h2>
+<app-github-content></app-github-content>

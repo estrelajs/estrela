@@ -1,0 +1,37 @@
+<script tag="app-github-result">
+  import { prop, emitter, onEvent } from "estrela";
+
+  const result = prop<any>();
+  const remove = emitter<any>();
+
+  onEvent('destroy').subscribe(event => {
+    console.log('element destroyed', event.target);
+  });
+
+  const Button = ({ onClick, children }: any) => (
+    <button on:click={onClick}>{ children }</button>
+  );
+</script>
+
+<div>
+  <a href={result().html_url} target="_blank">{ result().full_name }</a>
+  🌟<strong>{ result().stargazers_count }</strong>
+</div>
+
+<p>{ result().description }</p>
+
+{
+  Button({
+    onClick: () => remove.emit(result()),
+    children: 'Remove',
+  })
+}
+
+<style>
+  :host {
+    padding: 10px;
+    margin: 10px;
+    background: white;
+    box-shadow: 0 1px 5px #888;
+  }
+</style>

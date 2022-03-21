@@ -1,5 +1,4 @@
 import { Observable } from 'rxjs';
-import { HTMLTemplate } from '../core';
 import { HTMLTemplateLike } from './HTMLTemplateLike';
 
 export type AttrBind<T = any> = {
@@ -15,6 +14,7 @@ export type AttrHandlerName =
   | 'classbind'
   | 'default'
   | 'event'
+  | 'key'
   | 'prop'
   | 'ref'
   | 'style'
@@ -32,18 +32,20 @@ export interface EstrelaComponent {
 
 /** Estrela Element Events. */
 export interface EstrelaElementEventMap extends HTMLElementEventMap {
+  connect: Event;
   destroy: Event;
+  disconnect: Event;
   init: Event;
-  prerender: Event;
   postrender: Event;
+  prerender: Event;
 }
 
 /** Estrela custom HTML element reference. */
 export interface EstrelaElement extends HTMLElement {
-  /** Emits when Element is connected. */
+  /** Emits when Element is initialized. */
   readonly init$: Observable<Event>;
 
-  /** Emits when Element is disconnected. */
+  /** Emits when Element is destroyed. */
   readonly destroy$: Observable<Event>;
 
   addEventListener<K extends keyof EstrelaElementEventMap>(

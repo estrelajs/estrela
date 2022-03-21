@@ -1,0 +1,54 @@
+<script tag="app-github-content">
+  import { state } from "estrela";
+
+  let loading = true;
+  const results = state<any[]>([]);
+  const GITHUB_API = '//api.github.com/search/repositories';
+
+  // fetch data and initial render template
+  fetch(`${GITHUB_API}?q=estrela`)
+    .then(r => r.json())
+    .then<any[]>(json => json?.items ?? [])
+    .then(items => {
+      loading = false;
+      results.next(items);
+    });
+
+  // onRemove: update results and render again
+  const onRemove = (result: any) => {
+    results.update(results => results.filter(item => item !== result));
+  };
+
+  // will cleanup subscriptions on component discard
+  results.subscribe(results => console.log(results));
+</script>
+
+<h1>Example</h1>
+{
+  loading
+    ? <i>loading...</i>
+    : <div>Items: { results().length }</div>
+}
+<div class="list">
+  {
+    results().map(
+      result =>
+        <app-github-result
+          key={result.id}
+          result={result}
+          on:remove={onRemove}
+        ></app-github-result>
+    )
+  }
+</div>
+
+<style>
+  h1 {
+    text-align: center;
+  }
+
+  .list {
+    display: flex;
+    flex-flow: column;
+  }
+</style>

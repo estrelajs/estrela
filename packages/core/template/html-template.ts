@@ -30,7 +30,8 @@ export class HTMLTemplate {
 
       // helpers
       const inTag = isInTag(html);
-      const addQuote = /=$/.test(html) ? '"' : '';
+      const [, tag, hasQuotes] = /([\w-]+)=(["'])?$/.exec(html) ?? [];
+      const addQuote = hasQuotes ? '' : '"';
       const argTemplates = coerceArray(arg).filter(isHTMLTemplate);
 
       // when arg is HTMLTemplate
@@ -41,6 +42,11 @@ export class HTMLTemplate {
 
       // when we're inside a tag
       if (inTag) {
+        if (tag === 'key') {
+          const content = `${addQuote}${arg}${addQuote}`;
+          return renderContent(content);
+        }
+
         let index = args.indexOf(arg);
         if (index === -1) {
           index = args.push(arg) - 1;

@@ -125,6 +125,12 @@ export function getMorphOptions(args: any[]): MorphDomOptions {
             }
             return;
 
+          case 'key':
+            if (!bind) {
+              attrBinds[attr] = { attr, data: attrValue };
+            }
+            return;
+
           case 'prop':
             const prop = getElementProperty(element, 'props')?.[name];
             if (hasChanged(bind, attrValue)) {
@@ -136,7 +142,7 @@ export function getMorphOptions(args: any[]): MorphDomOptions {
             return;
 
           case 'ref':
-            if (hasChanged(bind, attrArg)) {
+            if (!bind) {
               if (isNextObserver(attrArg)) {
                 attrArg.next(element);
               } else if (typeof attrArg === 'function') {
@@ -244,8 +250,8 @@ export function getAttrHandlerName(
   namespace?: string,
   accessor?: string
 ): AttrHandlerName {
-  if (!namespace && !accessor && /^ref|class|style$/.test(name)) {
-    return name as 'ref' | 'class' | 'style';
+  if (!namespace && !accessor && /^class|key|ref|style$/.test(name)) {
+    return name as 'class' | 'key' | 'ref' | 'style';
   }
 
   if (accessor && /^class|style$/.test(name)) {

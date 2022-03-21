@@ -28,8 +28,11 @@ export function defineElement(
   styles?: string | string[]
 ) {
   const Element = class extends HTMLElement implements EstrelaElement {
+    // event observables
     readonly init$: Observable<Event>;
     readonly destroy$: Observable<Event>;
+
+    // privates
     private readonly _events = new Set<Function>();
     private readonly _subscriptions = new Subscription();
     private _requestedRender = false;
@@ -112,18 +115,7 @@ export function defineElement(
         this._subscriptions.add(sub)
       );
 
-      // start observables
-      this.init$ = this.on('init');
-      this.destroy$ = this.on('destroy');
-    }
-
-    /** @internal */
-    connectedCallback(): void {
-      this.requestRender();
-      this.dispatchEvent(new Event('init'));
-
       // subscribe to emitters
-      const emitters = getElementProperty(this, 'emitters') ?? {};
       Object.keys(emitters).forEach(key => {
         const emitter = emitters[key];
         if (emitter instanceof EventEmitter) {
@@ -140,21 +132,36 @@ export function defineElement(
       });
 
       // subscribe to states
-      const observables = [
-        ...coerceArray(getElementProperty(this, 'state')),
-        ...Object.values(getElementProperty(this, 'props') ?? {}),
-      ];
-
       this._subscriptions.add(
-        merge(...observables).subscribe(() => this.requestRender())
+        merge(
+          ...coerceArray(getElementProperty(this, 'state')),
+          ...Object.values(getElementProperty(this, 'props') ?? {})
+        ).subscribe(() => this.requestRender())
       );
+
+      // start event observables
+      this.init$ = this.on('init');
+      this.destroy$ = this.on('destroy');
+
+      // emit init
+      this.dispatchEvent(new Event('init'));
     }
 
-    /** @internal */
+    connectedCallback(): void {
+      // emit connect
+      this.dispatchEvent(new Event('connect'));
+      this.requestRender();
+    }
+
     disconnectedCallback(): void {
-      this.dispatchEvent(new Event('destroy'));
-      this._subscriptions.unsubscribe();
-      this._events.forEach(complete => complete());
+      // emit disconnect
+      this.dispatchEvent(new Event('disconect'));
+
+      if (!this.isConnected) {
+        this._subscriptions.unsubscribe();
+        this._events.forEach(complete => complete());
+        this.dispatchEvent(new Event('destroy'));
+      }
     }
 
     /** Creates an observable from the element event. */
