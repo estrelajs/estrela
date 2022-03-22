@@ -1,3 +1,3 @@
-export * from './CustomElement';
+export * from './EstrelaElement';
 export * from './ElementProperties';
 export * from './HTMLTemplateLike';

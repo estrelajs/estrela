@@ -2,24 +2,9 @@ import { Observable } from 'rxjs';
 import { HTMLTemplateLike } from './HTMLTemplateLike';
 
 export type AttrBind<T = any> = {
-  attr: string;
   data: T;
-  filter?: string;
-  target?: string;
   cleanup?: () => void;
 };
-
-export type AttrHandlerName =
-  | 'bind'
-  | 'class'
-  | 'classbind'
-  | 'default'
-  | 'event'
-  | 'key'
-  | 'prop'
-  | 'ref'
-  | 'style'
-  | 'stylebind';
 
 export interface ChangeEvent<T extends HTMLElement> extends Event {
   target: T;

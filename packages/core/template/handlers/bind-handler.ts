@@ -1,43 +1,16 @@
-import { AttrBind, ChangeEvent } from '../../types';
-import { isNextObserver } from '../../utils';
-import { StateSubject } from '../observables/StateSubject';
-
-function createEventListener(
-  element: Element,
-  event: string,
-  target: string,
-  bind: AttrBind
-): () => void;
-function createEventListener(
-  element: Element,
-  event: string,
-  listener: (e: Event) => void
-): () => void;
-function createEventListener(
-  element: Element,
-  event: string,
-  listener: ((e: Event) => void) | string,
-  bind?: AttrBind
-): () => void {
-  if (typeof listener === 'string') {
-    const target = listener;
-    listener = (e: Event) => e.target && bind!.data.next((e.target as any)[target]);
-  }
-  let _listener = listener;
-  element.addEventListener(event, _listener);
-  return () => element.removeEventListener(event, _listener);
-}
+import { AttrBind, ChangeEvent } from '../../../types';
+import { isNextObserver } from '../../../utils';
+import { StateSubject } from '../../observables/StateSubject';
 
 export function bindHandler(
   element: Element,
-  attr: string,
   state: StateSubject<any>,
   bind?: AttrBind,
   target?: string
 ): AttrBind {
   const createBind = (event: string, target: string): AttrBind => {
     if (!bind) {
-      bind = { attr, data: state };
+      bind = { data: state };
       bind.cleanup = createEventListener(element, event, target, bind);
     } else {
       bind.data = state;
@@ -80,7 +53,7 @@ export function bindHandler(
         option => option.value === state()
       );
       if (!bind) {
-        bind = { attr, data: state };
+        bind = { data: state };
         const listener = (e: Event) => {
           const target = (e as ChangeEvent<HTMLSelectElement>).target;
           const option = target.options.item(target.selectedIndex);
@@ -101,5 +74,33 @@ export function bindHandler(
       return createBind('input', target);
   }
 
-  return { attr, data: state };
+  return { data: state };
+}
+
+function createEventListener(
+  element: Element,
+  event: string,
+  target: string,
+  bind: AttrBind<StateSubject<any>>
+): () => void;
+function createEventListener(
+  element: Element,
+  event: string,
+  listener: (e: Event) => void
+): () => void;
+function createEventListener(
+  element: Element,
+  event: string,
+  targetOrListener: ((e: Event) => void) | string,
+  bind?: AttrBind<StateSubject<any>>
+): () => void {
+  if (typeof targetOrListener === 'string') {
+    const target = targetOrListener;
+    const state = bind!.data;
+    targetOrListener = (e: Event) =>
+      e.target && state.next((e.target as any)[target]);
+  }
+  let _listener = targetOrListener;
+  element.addEventListener(event, _listener);
+  return () => element.removeEventListener(event, _listener);
 }
