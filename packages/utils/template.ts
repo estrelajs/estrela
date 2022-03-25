@@ -5,7 +5,7 @@ export function isHTMLTemplate(x: any): x is HTMLTemplate {
   return x instanceof HTMLTemplate;
 }
 
-/** Checks if current html string is inside a tag. */
+/** Checks if current html chunk ends inside a tag. */
 export function isInTag(html: string): boolean {
   for (let i = html.length - 1; i >= 0; i--) {
     if (html[i] === '<') return true;

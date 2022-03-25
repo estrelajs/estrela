@@ -3,6 +3,8 @@ import { HTMLTemplateLike } from './HTMLTemplateLike';
 
 export type AttrBind<T = any> = {
   data: T;
+  accessor?: string;
+  filters?: string[];
   cleanup?: () => void;
 };
 

@@ -7,8 +7,14 @@
   setInterval(() => count.update(value => ++value), 1000);
 </script>
 
-<app-greeter name={name}></app-greeter>
-<input bind:value={name} />
+<app-greeter name={name}>
+  <p slot="test">Slot Test</p>
+</app-greeter>
+<input
+  bind={name}
+  style.width|px="300"
+  on:keydown.enter|ctrlkey|altkey|once={() => console.log('enter')}
+/>
 
 <br /><br />
 

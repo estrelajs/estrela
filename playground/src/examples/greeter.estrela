@@ -13,3 +13,5 @@
   { async(greet) ?? 'Hello' }
   { show(name() === 'Eduardo', 'o cara', name()) }!
 </h1>
+
+<slot name="test"></slot>
