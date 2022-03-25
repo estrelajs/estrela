@@ -8,17 +8,11 @@ export const PROPS_TOKEN = Symbol('PROPS_TOKEN');
 export interface PropOptions<T> {
   /** The prop key to be bound on the element tag. */
   key?: string;
-
-  /** Initial value to start with. */
-  value?: T;
 }
 
 export function prop<T>(): StateSubject<T | undefined>;
-export function prop<T>(
-  options: Required<Pick<PropOptions<T>, 'value'>> & Omit<PropOptions<T>, 'value'>
-): StateSubject<T>;
-export function prop<T>(options?: PropOptions<T>): StateSubject<T | undefined>;
-export function prop(options?: PropOptions<any>): StateSubject<any> {
+export function prop<T>(initialValue: T, options?: PropOptions<T>): StateSubject<T>;
+export function prop(value?: any, options?: PropOptions<any>): StateSubject<any> {
   const ref = ElementRef.ref;
 
   if (!ref?.element || !ref?.component) {
@@ -27,7 +21,7 @@ export function prop(options?: PropOptions<any>): StateSubject<any> {
     );
   }
 
-  let { value, key } = options ?? {};
+  let { key } = options ?? {};
   const state = new StateSubject<any>(value);
 
   // experimental key finder

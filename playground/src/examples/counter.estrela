@@ -3,7 +3,7 @@
   import { async } from 'estrela/directives';
   import { map } from 'rxjs';
 
-  const count = prop<number>({ value: 0 })
+  const count = prop<number>(0)
 
   const classes = count.pipe(
     map(value => ({
