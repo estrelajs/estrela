@@ -1,0 +1,15 @@
+{
+  "name": "estrela-monorepo",
+  "private": true,
+  "engines": {
+    "node": ">=v14.0.0"
+  },
+  "workspaces": [
+    "packages/estrela",
+    "packages/playground",
+    "packages/vite-plugin-estrela"
+  ],
+  "scripts": {
+    "dev": "cd packages/playground && yarn dev"
+  }
+}
