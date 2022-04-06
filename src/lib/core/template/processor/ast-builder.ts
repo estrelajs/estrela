@@ -12,26 +12,26 @@ export type ElementProps<T extends Object = Record<string, string>> = Omit<
   ref?: ObservableState<any> | ((ref: any) => void);
 };
 
-export interface AstElementNode {
+export interface AstNode {
   tagName: string;
   props: ElementProps;
-  children: (string | AstElementNode)[];
+  children: AstChildNode[];
   isSelfClosing?: boolean;
 }
 
-export type AstNode = string | AstElementNode;
+export type AstChildNode = string | AstNode;
 
-export function buildAst({ html, tokens }: HTMLTemplateResult): any {
-  const elements: [AstNode] = [
+export function buildAst({ html, tokens }: HTMLTemplateResult): AstNode {
+  const elements: AstChildNode[] = [
     {
-      tagName: 'root',
+      tagName: 'template',
       props: {},
       children: [],
     },
   ];
 
   const getParent = () => {
-    return elements[elements.length - 1] as AstElementNode;
+    return elements[elements.length - 1] as AstNode;
   };
 
   for (let index = 0; index < html.length; index++) {
@@ -103,7 +103,7 @@ export function buildAst({ html, tokens }: HTMLTemplateResult): any {
     }
   }
 
-  return getParent().children;
+  return getParent();
 }
 
 function getAttributes(attrs: string, tokens: unknown[]): ElementProps {

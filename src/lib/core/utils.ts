@@ -7,3 +7,8 @@ export function coerceArray<T>(data: T | T[]): T[] {
 export function isFalsy(x: any): x is false | null | undefined {
   return x === false || x === null || x === undefined;
 }
+
+/** Check if value is null or undefined. */
+export function isNil(x: any): x is null | undefined {
+  return x === null || x === undefined;
+}

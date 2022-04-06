@@ -13,4 +13,8 @@ const App = (name: string) => {
   `;
 };
 
-render(App('world'), document.body);
+render(App('world'), document.getElementById('app')!);
+
+setTimeout(() => {
+  render(App('there'), document.getElementById('app')!);
+}, 3000);
