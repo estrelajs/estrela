@@ -2,7 +2,7 @@ import VNode from 'virtual-dom/vnode/vnode';
 import VText from 'virtual-dom/vnode/vtext';
 import { isNil } from '../../utils';
 import { AstChildNode, AstNode } from './ast-builder';
-import { Widget } from './widget';
+import { FragmentWidget } from '../widgets/fragment-widget';
 
 export function buildVTree(ast: AstNode): VirtualDOM.VNode {
   const visitor = (node: AstChildNode): VirtualDOM.VTree => {
@@ -16,7 +16,7 @@ export function buildVTree(ast: AstNode): VirtualDOM.VNode {
     const _key = isNil(key) ? undefined : String(key);
 
     if (typeof element === 'function') {
-      return new Widget(element, _props);
+      return new FragmentWidget(element, _props);
     }
 
     return new VNode(element, _props, _children, _key);

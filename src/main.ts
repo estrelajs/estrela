@@ -1,47 +1,43 @@
-import { html, render, state } from './lib';
+import { Component, html, render, state } from './lib';
 
-function Counter1({ text, count }: any) {
-  return html`
-    <div>${text} is ${count}</div>
-    <div>${text} is ${count}</div>
-  `;
+interface CounterProps {
+  count: number;
 }
 
-function Counter2({ text, count }: any) {
-  return html`
-    <div>${text} is ${count}</div>
-    <div>${text} is ${count}</div>
-  `;
-}
+const Counter: Component<CounterProps> = ({ count }) => {
+  return html`<div>Count is ${count}</div>`;
+};
 
-let count = -1;
+const Random: Component = () => {
+  const random = state(Math.random());
+  return html`<div>Random is ${random}</div>`;
+};
 
-function App() {
+const App: Component = () => {
   const name = 'world';
   const titleClass = 'title';
+  const count = state(0);
   const visible = state(false);
-  count++;
+
+  // any kind of side effect, no `useEffect` needed.
+  setInterval(() => count.update(v => v + 1), 1000);
 
   return html`
-    <h1>Hello World!</h1>
-    ${count % 2 === 0
-      ? html`<${Counter1} text="Counter 1" count=${count} />`
-      : ''}
-    <${Counter2} text="Counter 2" count=${count} />
+    <h1 class="${titleClass}">Hello, ${name}!</h1>
+
+    <input
+      id="toggle"
+      type="checkbox"
+      checked=${visible}
+      onchange=${() => visible.update(v => !v)}
+    />
+    <label for="toggle">Show first random number</label>
+
+    ${() => visible() && html`<${Random} />`}
+    <${Random} />
+
+    <${Counter} count=${count} />
   `;
-
-  // return html`
-  //   <h1 class="${titleClass}">Hello, ${name}!</h1>
-  //   <input type="checkbox" checked=${visible} />
-  //   ${visible() && html`<app-element></app-element>`}
-  //   <app-element></app-element>
-  //   <input type="text" placeholder="Type something..." />
-  //   <div>Count is ${count}</div>
-  // `;
-}
-
-const appRender = () => {
-  render(html`<${App} />`, document.getElementById('app')!);
 };
-setInterval(appRender, 1000);
-appRender();
+
+render(html`<${App} />`, document.getElementById('app')!);

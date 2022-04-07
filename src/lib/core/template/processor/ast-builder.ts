@@ -5,7 +5,7 @@ import { isFalsy } from '../../utils';
 import { HTMLTemplate } from '../html';
 import { HTMLTemplateResult } from './template-builder';
 
-export type ElementProps<T extends Object = Record<string, string>> = Omit<
+export type ElementProps<T extends Object = Record<string, any>> = Omit<
   T,
   'key' | 'ref'
 > & {
@@ -76,17 +76,20 @@ export function buildAst({ html, tokens }: HTMLTemplateResult): AstNode {
       if (match) {
         if (match.trim().length > 0) {
           // replace tokens with data
-          const content = match.split(/({{\d+}})/g).map(token => {
-            // if is not token - return it
-            if (!TOKEN_REGEX.test(token)) {
-              return token;
-            }
+          const content = match
+            .split(/({{\d+}})/g)
+            .filter(token => token.trim().length > 0)
+            .map(token => {
+              // if is not token - return it
+              if (!TOKEN_REGEX.test(token)) {
+                return token;
+              }
 
-            // get token value
-            const index = token.replace(TOKEN_REGEX, '$1');
-            const value = tokens[Number(index)];
-            return parseValue(value);
-          });
+              // get token value
+              const index = token.replace(TOKEN_REGEX, '$1');
+              const value = tokens[Number(index)];
+              return parseValue(value);
+            });
 
           // push tokens to parent
           getParent().children.push(...content);
@@ -114,13 +117,15 @@ function getAttributes(attrs: string, tokens: unknown[]): ElementProps {
       value = tokens[Number(index)];
     }
 
-    result[key] = value;
+    result[key] = isObservableState(value) ? value() : value;
   }
   return result;
 }
 
 function parseValue(value: unknown): string {
-  value = isObservableState(value) ? value() : value;
+  // if (typeof value === 'function') {
+  //   value = value();
+  // }
   if (isFalsy(value)) {
     return '';
   }

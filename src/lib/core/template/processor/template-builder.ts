@@ -17,6 +17,13 @@ export function buildHTMLTemplate({
     (html: string, arg: unknown, idx: number): string => {
       const content = coerceArray(arg)
         .map(token => {
+          // if is not in tag
+          if (!/<[^>]*$/.test(html)) {
+            if (typeof token === 'function') {
+              token = token();
+            }
+          }
+
           if (isHTMLTemplate(token)) {
             return token.args.reduce(
               templateReducer(token.template),

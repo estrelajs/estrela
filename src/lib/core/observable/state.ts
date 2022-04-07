@@ -3,6 +3,8 @@ import { createObservable, createSubscriber } from './mixins';
 import { Observable } from './observable';
 import { Observer } from './types';
 
+export const STATE_STORE = new Set<ObservableState<any>>([]);
+
 export interface ObservableState<T> extends Observable<T> {
   /** Current state value. */
   (): T;
@@ -39,6 +41,7 @@ export function state(initialValue?: any): ObservableState<any> {
     return value;
   };
   const instance = Object.assign(valueGetter, descriptor);
+  STATE_STORE.add(instance);
   // if (ElementRef.currentRef) {
   //   ElementRef.currentRef.states.push(instance);
   // }
