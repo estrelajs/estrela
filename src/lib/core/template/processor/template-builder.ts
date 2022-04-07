@@ -12,30 +12,36 @@ export function buildHTMLTemplate({
 }: HTMLTemplate): HTMLTemplateResult {
   const tokens: unknown[] = [];
 
-  const templateReducer = (html: string, arg: unknown, idx: number): string => {
-    const content = coerceArray(arg).map(token => {
-      if (isHTMLTemplate(token)) {
-        const { template, args } = token;
-        return args.reduce(templateReducer, template[0]);
-      } else {
-        // match quotes
-        let [match, quotes] = /<[^>]*=\s*(['"])?$/.exec(html) ?? [];
-        quotes = match && !quotes ? '"' : '';
+  const templateReducer =
+    (template: TemplateStringsArray) =>
+    (html: string, arg: unknown, idx: number): string => {
+      const content = coerceArray(arg)
+        .map(token => {
+          if (isHTMLTemplate(token)) {
+            return token.args.reduce(
+              templateReducer(token.template),
+              token.template[0]
+            );
+          } else {
+            // match quotes
+            let [match, quotes] = /<[^>]*=\s*(['"])?$/.exec(html) ?? [];
+            quotes = match && !quotes ? '"' : '';
 
-        // add token
-        let index = tokens.indexOf(token);
-        if (index === -1) {
-          index = tokens.push(token) - 1;
-        }
+            // add token
+            let index = tokens.indexOf(token);
+            if (index === -1) {
+              index = tokens.push(token) - 1;
+            }
 
-        return `${quotes}{{${index}}}${quotes}`;
-      }
-    });
+            return `${quotes}{{${index}}}${quotes}`;
+          }
+        })
+        .join('');
 
-    return `${html}${content}${template[idx + 1]}`;
-  };
+      return `${html}${content}${template[idx + 1]}`;
+    };
 
-  const html = args.reduce(templateReducer, template[0]);
+  const html = args.reduce(templateReducer(template), template[0]);
 
   return { html, tokens };
 }
