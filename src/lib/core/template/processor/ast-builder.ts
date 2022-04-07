@@ -17,7 +17,6 @@ export interface AstNode {
   element: string | (() => HTMLTemplate);
   props: ElementProps;
   children: AstChildNode[];
-  isSelfClosing?: boolean;
 }
 
 export type AstChildNode = string | AstNode;
@@ -63,15 +62,9 @@ export function buildAst({ html, tokens }: HTMLTemplateResult): AstNode {
 
       // close tag
       if (isSelfClosing || isClosingTag) {
-        const element = elements.pop();
-
-        // if (typeof element === 'object') {
-        //   element.isSelfClosing =
-        //     !!isSelfClosing && /^[^-]+$/.test(element.tag);
-        // }
-
         // push element to its parent
-        getParent().children.push(element!);
+        const node = elements.pop();
+        getParent().children.push(node!);
       }
 
       // move index to the end of tag
@@ -81,21 +74,23 @@ export function buildAst({ html, tokens }: HTMLTemplateResult): AstNode {
       const [match] = /[^<]*/s.exec(html.substring(index)) ?? [];
 
       if (match) {
-        // replace tokens with data
-        const content = match.split(/({{\d+}})/g).map(token => {
-          // if is not token - return it
-          if (!TOKEN_REGEX.test(token)) {
-            return token;
-          }
+        if (match.trim().length > 0) {
+          // replace tokens with data
+          const content = match.split(/({{\d+}})/g).map(token => {
+            // if is not token - return it
+            if (!TOKEN_REGEX.test(token)) {
+              return token;
+            }
 
-          // get token value
-          const index = token.replace(TOKEN_REGEX, '$1');
-          const value = tokens[Number(index)];
-          return parseValue(value);
-        });
+            // get token value
+            const index = token.replace(TOKEN_REGEX, '$1');
+            const value = tokens[Number(index)];
+            return parseValue(value);
+          });
 
-        // push tokens to parent
-        getParent().children.push(...content);
+          // push tokens to parent
+          getParent().children.push(...content);
+        }
 
         // move index to the end of content
         index = index + match.length - 1;

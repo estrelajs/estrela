@@ -3,12 +3,13 @@ import VText from 'virtual-dom/vnode/vtext';
 import VNode from 'virtual-dom/vnode/vnode';
 import walk from 'dom-walk';
 
-import { HTMLTemplate } from '../html';
+import { html, HTMLTemplate } from '../html';
 import { ElementProps } from './ast-builder';
 import { createTree } from './create-tree';
 
 export class Widget implements VirtualDOM.Widget {
   readonly type = 'Widget';
+  childNodes: ChildNode[] = [];
   tree!: VirtualDOM.VNode;
 
   constructor(
@@ -17,7 +18,7 @@ export class Widget implements VirtualDOM.Widget {
   ) {}
 
   init(): Element {
-    const fragment = document.createDocumentFragment();
+    const fragment = document.createDocumentFragment() as Node;
     this.tree = createTree(this.Component(this.props));
     this.tree.children.forEach(node => {
       const child =
@@ -26,16 +27,32 @@ export class Widget implements VirtualDOM.Widget {
           : create(node);
       fragment.appendChild(child);
     });
-    return fragment.cloneNode(true) as Element;
+    this.childNodes = Array.from(fragment.childNodes);
+    return fragment as Element;
   }
 
   update(previous: Widget, element: Element): void {
+    const parent = element.parentElement!;
+    const elementIndex = Array.from(parent.childNodes).indexOf(element);
+    const childNodesLength = this.childNodes.length;
+
     this.tree = createTree(this.Component(this.props));
     const patches = this.shiftPatches(element, diff(previous.tree, this.tree));
-    patch(element.parentElement!, patches);
+    patch(parent, patches);
+
+    this.childNodes = Array.from(parent.childNodes).slice(
+      elementIndex,
+      elementIndex + childNodesLength
+    );
   }
 
-  destroy(node: Element): void {}
+  destroy(element: Element): void {
+    this.childNodes.forEach(child => {
+      if (child.parentElement) {
+        child.remove();
+      }
+    });
+  }
 
   private shiftPatches(
     element: Element,
@@ -51,7 +68,7 @@ export class Widget implements VirtualDOM.Widget {
         shift++;
       }
     });
-    if (shift > 0) {
+    if (found && shift > 0) {
       Object.keys(patches)
         .reverse()
         .forEach(key => {

@@ -1,10 +1,20 @@
 import { html, render, state } from './lib';
 
-function Counter({ text, count }: any) {
-  return html`<div>${text} is ${count}</div>`;
+function Counter1({ text, count }: any) {
+  return html`
+    <div>${text} is ${count}</div>
+    <div>${text} is ${count}</div>
+  `;
 }
 
-let count = 0;
+function Counter2({ text, count }: any) {
+  return html`
+    <div>${text} is ${count}</div>
+    <div>${text} is ${count}</div>
+  `;
+}
+
+let count = -1;
 
 function App() {
   const name = 'world';
@@ -13,10 +23,11 @@ function App() {
   count++;
 
   return html`
+    <h1>Hello World!</h1>
     ${count % 2 === 0
-      ? html`<${Counter} text="Counter 1" count=${count} />`
+      ? html`<${Counter1} text="Counter 1" count=${count} />`
       : ''}
-    <${Counter} text="Counter 2" count=${count} />
+    <${Counter2} text="Counter 2" count=${count} />
   `;
 
   // return html`
