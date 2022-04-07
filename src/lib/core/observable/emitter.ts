@@ -1,6 +1,5 @@
-import { createObservable, createSubscriber } from './mixins';
+import { createObservable } from './mixins';
 import { Observable } from './observable';
-import { Observer } from './types';
 
 export interface EventEmitter<T> extends Observable<T> {
   /**
@@ -10,10 +9,9 @@ export interface EventEmitter<T> extends Observable<T> {
 }
 
 export function emitter<T>(async = false) {
-  const observers = new Set<Observer<T>>();
-  const subscriber = createSubscriber(observers);
+  const [obsevable, subscriber] = createObservable();
   return {
-    ...createObservable(subscriber, observers),
+    ...obsevable,
     emit(value: T) {
       if (async) {
         setTimeout(subscriber.next, undefined, value);

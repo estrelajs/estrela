@@ -1,4 +1,4 @@
-import { createObservable, createSubscriber } from './mixins';
+import { createObservable } from './mixins';
 import { Observer, Subscription } from './types';
 
 export interface Observable<T> {
@@ -14,8 +14,5 @@ export interface Observable<T> {
 export function observable<T>(
   subscribe?: (subscriber: Observer<T>) => void
 ): Observable<T> {
-  const observers = new Set<Observer<T>>();
-  const subscriber = createSubscriber(observers);
-  subscribe?.(subscriber);
-  return createObservable(subscriber, observers);
+  return createObservable(subscribe)[0];
 }

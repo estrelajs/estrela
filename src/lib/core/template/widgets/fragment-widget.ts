@@ -1,13 +1,12 @@
-import { create, diff, patch } from 'virtual-dom';
-import VText from 'virtual-dom/vnode/vtext';
-import VNode from 'virtual-dom/vnode/vnode';
 import walk from 'dom-walk';
-
+import { create, diff, patch } from 'virtual-dom';
+import VNode from 'virtual-dom/vnode/vnode';
+import VText from 'virtual-dom/vnode/vtext';
+import { ObservableState, state, Subscription } from '../../observable';
+import { STATE_STORE } from '../../observable/mixins';
 import { HTMLTemplate } from '../html';
 import { ElementProps } from '../processor/ast-builder';
 import { createTree } from '../processor/create-tree';
-import { ObservableState, state, STATE_STORE } from '../../observable/state';
-import { Subscription } from '../../observable';
 
 export class FragmentWidget implements VirtualDOM.Widget {
   readonly type = 'Widget';

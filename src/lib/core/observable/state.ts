@@ -1,9 +1,6 @@
 // import { ElementRef } from '../element';
-import { createObservable, createSubscriber } from './mixins';
+import { createObservable, STATE_STORE } from './mixins';
 import { Observable } from './observable';
-import { Observer } from './types';
-
-export const STATE_STORE = new Set<ObservableState<any>>([]);
 
 export interface ObservableState<T> extends Observable<T> {
   /** Current state value. */
@@ -26,10 +23,9 @@ export function state<T>(): ObservableState<T | undefined>;
 export function state<T>(initialValue: T): ObservableState<T>;
 export function state(initialValue?: any): ObservableState<any> {
   let value = initialValue ?? undefined;
-  const observers = new Set<Observer<any>>();
-  const subscriber = createSubscriber(observers);
+  const [obsevable, subscriber] = createObservable();
   const descriptor = {
-    ...createObservable(subscriber, observers),
+    ...obsevable,
     next(next: any) {
       subscriber.next((value = next));
     },
@@ -42,8 +38,5 @@ export function state(initialValue?: any): ObservableState<any> {
   };
   const instance = Object.assign(valueGetter, descriptor);
   STATE_STORE.add(instance);
-  // if (ElementRef.currentRef) {
-  //   ElementRef.currentRef.states.push(instance);
-  // }
   return instance;
 }
