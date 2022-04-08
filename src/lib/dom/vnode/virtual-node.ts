@@ -1,8 +1,8 @@
 import { Component, ComponentRef, ObservableState } from '../../core';
 
 export interface VData {
-  props: { [key: string]: any };
-  key: string | number | undefined;
+  key?: string | number;
+  props?: { [key: string]: any };
   ref?: ObservableState<Node> | ((ref: Node) => void);
 }
 
@@ -21,7 +21,7 @@ export class VirtualNode {
   getNode(): Node | undefined {
     let node = this.node;
     while (node instanceof DocumentFragment) {
-      node = (node as any)._parent;
+      node = (node as any).stepfather;
     }
     return node;
   }
@@ -29,7 +29,7 @@ export class VirtualNode {
   getParent(): Node | undefined {
     let node = this.node?.parentNode ?? this.node;
     while (node instanceof DocumentFragment) {
-      node = (node as any)._parent;
+      node = (node as any).stepfather;
     }
     return node;
   }

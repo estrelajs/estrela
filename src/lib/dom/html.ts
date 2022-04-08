@@ -1,9 +1,4 @@
-export class HTMLTemplate {
-  constructor(
-    public readonly template: TemplateStringsArray,
-    public readonly args: unknown[]
-  ) {}
-}
+import { HTMLTemplate } from '../core';
 
 export const html = (
   template: TemplateStringsArray,

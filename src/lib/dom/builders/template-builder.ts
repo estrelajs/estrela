@@ -1,5 +1,5 @@
+import { HTMLTemplate } from '../../core';
 import { coerceArray } from '../../utils';
-import { HTMLTemplate } from '../html';
 import { VFragment } from '../vnode';
 import { buildVNode } from './vnode-builder';
 

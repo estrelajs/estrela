@@ -1,5 +1,5 @@
+import { HTMLTemplate } from '../core';
 import { buildTemplate } from './builders/template-builder';
-import { HTMLTemplate } from './html';
 import { patch } from './patch';
 import { VFragment } from './vnode';
 

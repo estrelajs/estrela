@@ -44,7 +44,7 @@ const App = () => {
   setInterval(() => count.update(v => v + 1), 1000);
 
   return html`
-    <h1>Hello World</h1>
+    <h1 class="greet">Hello World</h1>
     <p>This is a simple example of a component</p>
     <input
       id="toggle"

@@ -1,9 +1,13 @@
 import { ComponentRef } from '../../core';
+import { setAttr } from '../attr-handler';
 import { isVComponent, isVFragment, isVText, VNode } from '../vnode';
 
 export function buildNode(newNode: VNode): Node {
   if (isVComponent(newNode)) {
-    const ref = ComponentRef.createRef(newNode.Component, newNode.data.props);
+    const ref = ComponentRef.createRef(
+      newNode.Component,
+      newNode.data.props ?? {}
+    );
     ref.patchChildren(newNode.children);
     newNode.ref = ref;
   }
@@ -23,9 +27,8 @@ export function buildNode(newNode: VNode): Node {
 
   // set attributes
   if (!isVFragment(newNode) && !(element instanceof DocumentFragment)) {
-    Object.keys(newNode.data.props).forEach(key => {
-      (element as any)[key] = newNode.data.props[key];
-    });
+    const props = newNode.data.props ?? {};
+    Object.keys(props).forEach(key => setAttr(element, key, props[key]));
   }
 
   return element;

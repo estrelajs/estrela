@@ -25,7 +25,7 @@ export function patch(oldNode: VNode | Node, newNode: VNode): void {
   if (isVComponent(oldNode) && isVComponent(newNode)) {
     const ref = oldNode.ref;
     if (ref) {
-      ref.patchProps(newNode.data.props);
+      ref.patchProps(newNode.data.props ?? {});
       ref.patchChildren(newNode.children);
       newNode.ref = ref;
     }
