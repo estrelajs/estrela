@@ -1,5 +1,4 @@
-import { Component, ObservableState } from '../../core';
-import { ComponentRef } from '../component-ref';
+import { Component, ComponentRef, ObservableState } from '../../core';
 
 export interface VData {
   props: { [key: string]: any };

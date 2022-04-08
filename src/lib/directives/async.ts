@@ -1,5 +1,4 @@
-import { from, Observable, Subscription } from '../core';
-import { ComponentRef } from '../dom/component-ref';
+import { from, Observable, Subscription, ComponentRef } from '../core';
 import { createDirective, Directive } from './directive';
 
 class AsyncDirective implements Directive {

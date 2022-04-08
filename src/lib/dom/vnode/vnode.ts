@@ -1,5 +1,4 @@
-import { Component } from '../../core';
-import { ComponentRef } from '../component-ref';
+import { Component, ComponentRef } from '../../core';
 import { VData, VirtualNode } from './virtual-node';
 
 type MethodsOf<T extends Object> = Pick<

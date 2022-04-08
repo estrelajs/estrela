@@ -1,4 +1,4 @@
-import { ComponentRef } from '../component-ref';
+import { ComponentRef } from '../../core';
 import { isVComponent, isVFragment, isVText, VNode } from '../vnode';
 
 export function buildNode(newNode: VNode): Node {

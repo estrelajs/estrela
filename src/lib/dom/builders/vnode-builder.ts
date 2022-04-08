@@ -1,7 +1,7 @@
 import { escape } from 'html-escaper';
 import { Component } from '../../core';
 import { isObservableState } from '../../core/observable';
-import { isFalsy } from '../../core/utils';
+import { isFalsy } from '../../utils';
 import { f, h, t, VData, VElement, VFragment, VNode } from '../vnode';
 import { HTMLTemplateResult } from './template-builder';
 

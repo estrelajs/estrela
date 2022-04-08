@@ -1,8 +1,8 @@
-import { Component, ObservableState, state } from '../core';
-import { buildTemplate } from './builders/template-builder';
-import { HTMLTemplate } from './html';
-import { patch } from './patch';
-import { f, VNode } from './vnode';
+import { Component, ObservableState, state } from '.';
+import { buildTemplate } from '../dom/builders/template-builder';
+import { HTMLTemplate } from '../dom/html';
+import { patch } from '../dom/patch';
+import { f, VNode } from '../dom/vnode';
 
 export class ComponentRef {
   readonly props: Record<string, ObservableState<any>> = {};
