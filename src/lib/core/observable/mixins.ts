@@ -1,9 +1,6 @@
 import { Observable } from './observable';
-import { ObservableState } from './state';
 import { Observer, Subscriber } from './types';
 import { isObservableState } from './utils';
-
-export const STATE_STORE = new Set<ObservableState<any>>([]);
 
 export const symbol_observable: typeof Symbol.observable = (() =>
   (typeof Symbol === 'function' && Symbol.observable) ||

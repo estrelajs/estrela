@@ -1,5 +1,6 @@
 // import { ElementRef } from '../element';
-import { createObservable, STATE_STORE } from './mixins';
+import { ComponentRef } from '../../dom/component-ref';
+import { createObservable } from './mixins';
 import { Observable } from './observable';
 
 export interface ObservableState<T> extends Observable<T> {
@@ -36,7 +37,11 @@ export function state(initialValue?: any): ObservableState<any> {
   const valueGetter = function _state() {
     return value;
   };
+
   const instance = Object.assign(valueGetter, descriptor);
-  STATE_STORE.add(instance);
+  if (ComponentRef.currentRef) {
+    ComponentRef.currentRef.pushState(instance);
+  }
+
   return instance;
 }

@@ -1,63 +1,38 @@
 import { escape } from 'html-escaper';
-
-import { isObservableState, ObservableState } from '../../observable';
-import { isFalsy } from '../../utils';
-import { HTMLTemplate } from '../html';
+import { Component } from '../../core';
+import { isObservableState } from '../../core/observable';
+import { isFalsy } from '../../core/utils';
+import { f, h, t, VData, VElement, VFragment, VNode } from '../vnode';
 import { HTMLTemplateResult } from './template-builder';
-
-export type ElementProps<T extends Object = Record<string, any>> = Omit<
-  T,
-  'key' | 'ref'
-> & {
-  key?: string | number;
-  ref?: ObservableState<any> | ((ref: any) => void);
-};
-
-export interface AstNode {
-  element: string | (() => HTMLTemplate);
-  props: ElementProps;
-  children: AstChildNode[];
-}
-
-export type AstChildNode = string | AstNode;
 
 // Token Regex
 const TOKEN_REGEX = /^{{(\d+)}}$/;
 
-export function buildAst({ html, tokens }: HTMLTemplateResult): AstNode {
-  const elements: AstChildNode[] = [
-    {
-      element: 'template',
-      props: {},
-      children: [],
-    },
-  ];
+export function buildVNode({ html, tokens }: HTMLTemplateResult): VFragment {
+  const elements: VNode[] = [f([])];
 
   const getParent = () => {
-    return elements[elements.length - 1] as AstNode;
+    return elements[elements.length - 1] as VElement;
   };
 
   for (let index = 0; index < html.length; index++) {
     if (html[index] === '<') {
-      let Component: (() => HTMLTemplate) | null = null;
+      let Component: Component | null = null;
       let [match, isClosingTag, tagName, attrs, isSelfClosing] =
         /^<(\/)?([^\s\/>]+)([^\/>]*)(\/)?>/s.exec(html.substring(index)) ?? [];
 
       // check tag function
       if (/^{{\d+}}$/.test(tagName)) {
         const index = tagName.replace(TOKEN_REGEX, '$1');
-        Component = tokens[Number(index)] as () => HTMLTemplate;
+        Component = tokens[Number(index)] as Component;
       }
 
       // open tag
       if (!isClosingTag) {
         // push opened element
         const props = getAttributes(attrs, tokens);
-        elements.push({
-          element: Component ?? tagName,
-          props,
-          children: [],
-        });
+        const node = Component ? h(Component, props) : h(tagName, props, []);
+        elements.push(node);
       }
 
       // close tag
@@ -89,7 +64,8 @@ export function buildAst({ html, tokens }: HTMLTemplateResult): AstNode {
               const index = token.replace(TOKEN_REGEX, '$1');
               const value = tokens[Number(index)];
               return parseValue(value);
-            });
+            })
+            .map(token => t(token));
 
           // push tokens to parent
           getParent().children.push(...content);
@@ -101,11 +77,11 @@ export function buildAst({ html, tokens }: HTMLTemplateResult): AstNode {
     }
   }
 
-  return getParent();
+  return getParent() as VFragment;
 }
 
-function getAttributes(attrs: string, tokens: unknown[]): ElementProps {
-  const result: ElementProps = {};
+function getAttributes(attrs: string, tokens: unknown[]): VData {
+  const result: Record<string, any> = {};
   const attrRegex = /([^\s=]+)="([^'"]+)"/g;
   let match: RegExpExecArray | null;
 
@@ -117,15 +93,18 @@ function getAttributes(attrs: string, tokens: unknown[]): ElementProps {
       value = tokens[Number(index)];
     }
 
-    result[key] = isObservableState(value) ? value() : value;
+    if (key === 'ref') {
+      result[key] = value;
+    } else {
+      result[key] = isObservableState(value) ? value() : value;
+    }
   }
-  return result;
+
+  const { key, ref, ...props } = result;
+  return { key, ref, props };
 }
 
 function parseValue(value: unknown): string {
-  // if (typeof value === 'function') {
-  //   value = value();
-  // }
   if (isFalsy(value)) {
     return '';
   }
