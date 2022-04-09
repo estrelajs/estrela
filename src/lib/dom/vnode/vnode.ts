@@ -11,26 +11,26 @@ type MethodsOf<T extends Object> = Pick<
 export type VText = MethodsOf<VirtualNode> & {
   type: 'text';
   content: string;
-  set node(node: Text | undefined);
+  node: Text | undefined;
 };
 
 export type VFragment = MethodsOf<VirtualNode> & {
   type: 'fragment';
   children: VNode[];
-  set node(node: Node | undefined);
+  node: Node | undefined;
 };
 
 export type VComponent = VFragment & {
   data: VData;
   Component: Component;
-  ref?: ComponentRef;
+  ref: ComponentRef | undefined;
 };
 
 export type VElement = MethodsOf<VirtualNode> & {
   type: string;
   data: VData;
   children: VNode[];
-  set node(node: Node | undefined);
+  node: Node | undefined;
 };
 
 export type VNode = VComponent | VElement | VFragment | VText;

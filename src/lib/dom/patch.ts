@@ -31,6 +31,8 @@ export function patch(oldNode: VNode | Node, newNode: VNode): void {
     }
   }
 
+  // TODO: patch attributes
+
   walkChildren(oldNode, newNode);
 }
 

@@ -1,4 +1,4 @@
-import { Component, observable, state } from './lib';
+import { Component, css, observable, state } from './lib';
 import { async } from './lib/directives';
 import { html, render } from './lib/dom';
 
@@ -37,7 +37,7 @@ const Counter: Component<CounterProps> = ({ count }) => {
   `;
 };
 
-const App = () => {
+const App: Component = () => {
   const count = state(0);
   const visible = state(true);
 
@@ -58,5 +58,11 @@ const App = () => {
     <${Counter} count=${count} />
   `;
 };
+
+css(App)/* css */ `
+  .greet {
+    color: red;
+  }
+`;
 
 render(html`<${App} />`, document.getElementById('app')!);

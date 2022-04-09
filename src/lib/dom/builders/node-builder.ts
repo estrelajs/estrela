@@ -1,6 +1,12 @@
-import { ComponentRef } from '../../core';
+import { ComponentRef, StyledComponent } from '../../core';
 import { setAttr } from '../attr-handler';
-import { isVComponent, isVFragment, isVText, VNode } from '../vnode';
+import {
+  isVComponent,
+  isVFragment,
+  isVText,
+  VNode,
+  vNodeWalker,
+} from '../vnode';
 
 export function buildNode(newNode: VNode): Node {
   if (isVComponent(newNode)) {
@@ -8,8 +14,19 @@ export function buildNode(newNode: VNode): Node {
       newNode.Component,
       newNode.data.props ?? {}
     );
-    ref.patchChildren(newNode.children);
+
     newNode.ref = ref;
+    ref.patchChildren(newNode.children);
+
+    const styledComponent = newNode.Component as StyledComponent<any>;
+    if (styledComponent.styleId) {
+      vNodeWalker(newNode, node => {
+        if (!isVText(node) && !isVFragment(node)) {
+          node.data.props ??= {};
+          node.data.props[`_host-${styledComponent.styleId}`] = '';
+        }
+      });
+    }
   }
 
   if (isVText(newNode)) {

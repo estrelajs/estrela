@@ -7,5 +7,4 @@ export type Props<T extends Object> = {
 
 export interface Component<T extends Object = {}> {
   (props: Props<T>): HTMLTemplate;
-  styles?: string | string[];
 }
