@@ -1,7 +1,7 @@
 import { HTMLTemplate } from '../../core';
 import { coerceArray } from '../../utils';
 import { VFragment } from '../vnode';
-import { buildVNode } from './vnode-builder';
+import { buildVirtualTree } from './virtual-tree-builder';
 
 export interface HTMLTemplateResult {
   html: string;
@@ -10,7 +10,7 @@ export interface HTMLTemplateResult {
 
 export function buildTemplate(template: HTMLTemplate): VFragment {
   const result = buildTemplateResult(template);
-  return buildVNode(result) as VFragment;
+  return buildVirtualTree(result);
 }
 
 function buildTemplateResult({

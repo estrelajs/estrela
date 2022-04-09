@@ -8,7 +8,10 @@ import { HTMLTemplateResult } from './template-builder';
 // Token Regex
 const TOKEN_REGEX = /^{{(\d+)}}$/;
 
-export function buildVNode({ html, tokens }: HTMLTemplateResult): VFragment {
+export function buildVirtualTree({
+  html,
+  tokens,
+}: HTMLTemplateResult): VFragment {
   const elements: VNode[] = [f([])];
 
   const getParent = () => {
