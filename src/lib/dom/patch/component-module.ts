@@ -2,7 +2,7 @@ import { Module, VNode } from 'snabbdom';
 import { ComponentNode, isComponentNode } from '../component/component-node';
 import { ComponentRef } from '../component/component-ref';
 
-function componentPatch(oldVNode: VNode, vNode: VNode): void {
+function componentPatch(oldVNode: VNode, vNode?: VNode): void {
   if (isComponentNode(vNode)) {
     const old = oldVNode as ComponentNode;
     vNode.ref =
@@ -16,9 +16,8 @@ function componentPatch(oldVNode: VNode, vNode: VNode): void {
   }
 }
 
-const module: Partial<Module> = {
+export const componentModule: Module = {
   create: componentPatch,
   update: componentPatch,
+  destroy: componentPatch,
 };
-
-export default module;

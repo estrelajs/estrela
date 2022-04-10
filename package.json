@@ -5,15 +5,21 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "jest",
+    "test:watch": "jest --watch"
   },
   "devDependencies": {
     "@types/html-escaper": "^3.0.0",
+    "@types/jest": "^27.4.1",
     "html-escaper": "^3.0.3",
+    "jest": "^27.5.1",
     "postcss": "^8.4.12",
     "postcss-prefix-selector": "^1.15.0",
     "postcss-selector-parser": "^6.0.10",
     "snabbdom": "^3.4.0",
+    "ts-jest": "^27.1.4",
+    "ts-node": "^10.7.0",
     "typescript": "^4.5.4",
     "vite": "^2.9.0"
   }

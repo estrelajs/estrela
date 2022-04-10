@@ -12,3 +12,7 @@ export function isFalsy(x: any): x is false | null | undefined {
 export function isNil(x: any): x is null | undefined {
   return x === null || x === undefined;
 }
+
+export function toCamelCase(str: string): string {
+  return str.replace(/[-_](\w)/g, (_, c) => c.toUpperCase());
+}

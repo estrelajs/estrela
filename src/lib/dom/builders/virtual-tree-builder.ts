@@ -1,8 +1,8 @@
 import { escape } from 'html-escaper';
-import { fragment, h, vnode, VNode, VNodeData } from 'snabbdom';
+import { fragment, h, vnode, VNode } from 'snabbdom';
 import { Component } from '../../core';
-import { isObservableState } from '../../core/observable';
 import { isFalsy } from '../../utils';
+import { getAttributeData } from '../attributes/attribute-data-handler';
 import { createComponentNode } from '../component/component-node';
 import { HTMLTemplateResult } from './template-builder';
 
@@ -23,7 +23,7 @@ export function buildVirtualTree({ html, tokens }: HTMLTemplateResult): VNode {
         /^<(\/)?([^\s\/>]+)([^\/>]*)(\/)?>/s.exec(html.substring(index)) ?? [];
 
       // check tag function
-      if (/^{{\d+}}$/.test(tagName)) {
+      if (TOKEN_REGEX.test(tagName)) {
         const index = tagName.replace(TOKEN_REGEX, '$1');
         Component = tokens[Number(index)] as Component;
       }
@@ -31,10 +31,10 @@ export function buildVirtualTree({ html, tokens }: HTMLTemplateResult): VNode {
       // open tag
       if (!isClosingTag) {
         // push opened element
-        const props = getAttributes(attrs, tokens);
+        const data = getAttributeData(attrs, tokens, !!Component);
         const node = Component
-          ? createComponentNode(Component, props)
-          : h(tagName, props, []);
+          ? createComponentNode(Component, data)
+          : h(tagName, data, []);
         elements.push(node);
       }
 
@@ -83,30 +83,6 @@ export function buildVirtualTree({ html, tokens }: HTMLTemplateResult): VNode {
   }
 
   return getParent();
-}
-
-function getAttributes(attrs: string, tokens: unknown[]): VNodeData {
-  const result: Record<string, any> = {};
-  const attrRegex = /([^\s=]+)="([^'"]+)"/g;
-  let match: RegExpExecArray | null;
-
-  while ((match = attrRegex.exec(attrs))) {
-    let [, key, value] = match as any;
-
-    if (TOKEN_REGEX.test(value)) {
-      const index = value.replace(TOKEN_REGEX, '$1');
-      value = tokens[Number(index)];
-    }
-
-    if (key === 'ref') {
-      result[key] = value;
-    } else {
-      result[key] = isObservableState(value) ? value() : value;
-    }
-  }
-
-  const { key, ref, ...props } = result;
-  return { key, ref, props };
 }
 
 function parseValue(value: unknown): string {
