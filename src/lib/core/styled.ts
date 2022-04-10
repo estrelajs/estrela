@@ -1,12 +1,12 @@
 import postcss from 'postcss';
 import prefixer from 'postcss-prefix-selector';
-import { Component } from '../types';
+import { Component } from './types';
 
 export interface StyledComponent<T> extends Component<T> {
   styleId: string;
 }
 
-export const css =
+export const styled =
   <T>(Component: Component<T>) =>
   (template: TemplateStringsArray, ...args: any[]): void => {
     const styledComponent = Component as StyledComponent<T>;

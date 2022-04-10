@@ -1,4 +1,4 @@
-import { Component, css, observable, state } from './lib';
+import { Component, styled, observable, state } from './lib';
 import { async } from './lib/directives';
 import { html, render } from './lib/dom';
 
@@ -59,7 +59,7 @@ const App: Component = () => {
   `;
 };
 
-css(App)/* css */ `
+styled(App)/* css */ `
   .greet {
     color: red;
   }

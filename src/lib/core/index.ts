@@ -1,3 +1,3 @@
 export * from './observable';
-export * from './styles';
+export * from './styled';
 export * from './types';
