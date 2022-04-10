@@ -1,4 +1,4 @@
-import { HTMLTemplate } from './html';
+import { HTMLTemplate } from '../dom';
 import { ObservableState } from './observable';
 
 export type Props<T extends Object> = {

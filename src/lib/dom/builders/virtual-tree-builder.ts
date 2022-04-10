@@ -1,21 +1,19 @@
 import { escape } from 'html-escaper';
+import { fragment, h, vnode, VNode, VNodeData } from 'snabbdom';
 import { Component } from '../../core';
 import { isObservableState } from '../../core/observable';
 import { isFalsy } from '../../utils';
-import { f, h, t, VData, VElement, VFragment, VNode } from '../vnode';
+import { createComponentNode } from '../component/component-node';
 import { HTMLTemplateResult } from './template-builder';
 
 // Token Regex
 const TOKEN_REGEX = /^{{(\d+)}}$/;
 
-export function buildVirtualTree({
-  html,
-  tokens,
-}: HTMLTemplateResult): VFragment {
-  const elements: VNode[] = [f([])];
+export function buildVirtualTree({ html, tokens }: HTMLTemplateResult): VNode {
+  const elements: VNode[] = [fragment([])];
 
   const getParent = () => {
-    return elements[elements.length - 1] as VElement;
+    return elements[elements.length - 1] as VNode;
   };
 
   for (let index = 0; index < html.length; index++) {
@@ -34,7 +32,9 @@ export function buildVirtualTree({
       if (!isClosingTag) {
         // push opened element
         const props = getAttributes(attrs, tokens);
-        const node = Component ? h(Component, props) : h(tagName, props, []);
+        const node = Component
+          ? createComponentNode(Component, props)
+          : h(tagName, props, []);
         elements.push(node);
       }
 
@@ -42,7 +42,7 @@ export function buildVirtualTree({
       if (isSelfClosing || isClosingTag) {
         // push element to its parent
         const node = elements.pop();
-        getParent().children.push(node!);
+        getParent().children?.push(node!);
       }
 
       // move index to the end of tag
@@ -68,10 +68,12 @@ export function buildVirtualTree({
               const value = tokens[Number(index)];
               return parseValue(value);
             })
-            .map(token => t(token));
+            .map(token =>
+              vnode(undefined, undefined, undefined, token, undefined)
+            );
 
           // push tokens to parent
-          getParent().children.push(...content);
+          getParent().children?.push(...content);
         }
 
         // move index to the end of content
@@ -80,10 +82,10 @@ export function buildVirtualTree({
     }
   }
 
-  return getParent() as VFragment;
+  return getParent();
 }
 
-function getAttributes(attrs: string, tokens: unknown[]): VData {
+function getAttributes(attrs: string, tokens: unknown[]): VNodeData {
   const result: Record<string, any> = {};
   const attrRegex = /([^\s=]+)="([^'"]+)"/g;
   let match: RegExpExecArray | null;

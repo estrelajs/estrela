@@ -1,6 +1,5 @@
-import { HTMLTemplate } from '../../core';
 import { coerceArray } from '../../utils';
-import { VFragment } from '../vnode';
+import { HTMLTemplate } from '../html';
 import { buildVirtualTree } from './virtual-tree-builder';
 
 export interface HTMLTemplateResult {
@@ -8,7 +7,7 @@ export interface HTMLTemplateResult {
   tokens: unknown[];
 }
 
-export function buildTemplate(template: HTMLTemplate): VFragment {
+export function buildTemplate(template: HTMLTemplate) {
   const result = buildTemplateResult(template);
   return buildVirtualTree(result);
 }

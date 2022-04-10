@@ -1,16 +1,16 @@
-import { buildTemplate } from '../dom/builders/template-builder';
-import { patch } from '../dom/patch';
-import { f, VNode } from '../dom/vnode';
-import { HTMLTemplate } from './html';
-import { ObservableState, state } from './observable';
-import { Component } from './types';
+import { fragment, VNode } from 'snabbdom';
+
+import { Component, ObservableState, state } from '../../core';
+import { buildTemplate } from '../builders/template-builder';
+import { HTMLTemplate } from '../html';
+import { patch } from '../patch';
 
 export class ComponentRef {
   readonly props: Record<string, ObservableState<any>> = {};
   readonly states: ObservableState<any>[] = [];
   readonly template: HTMLTemplate;
 
-  private children: VNode[] = [];
+  private children: Array<VNode | string> = [];
   private hookIndex = 0;
   private requestedRender = false;
 
@@ -30,19 +30,27 @@ export class ComponentRef {
     });
   }
 
+  dispose(): void {}
+
   nextHook(): number {
     return this.hookIndex++;
   }
 
-  patchChildren(children: VNode[]): void {
+  patchChildren(children: Array<VNode | string>): void {
+    // clear children
     while (children.length) {
       children.pop();
     }
+
+    // update data
     this.hookIndex = 0;
     this.children = children;
     ComponentRef.currentRef = this;
-    const fragment = buildTemplate(this.template);
-    fragment.children.forEach(child => children.push(child));
+
+    // update children
+    buildTemplate(this.template).children!.forEach(child =>
+      children.push(child)
+    );
   }
 
   patchProps(props: Record<string, any>): void {
@@ -69,9 +77,9 @@ export class ComponentRef {
   }
 
   private render(): void {
-    const oldTree = f([...this.children]);
+    const oldTree = fragment([...this.children]);
     this.patchChildren(this.children);
-    const newTree = f(this.children);
+    const newTree = fragment(this.children);
     patch(oldTree, newTree);
   }
 

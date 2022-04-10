@@ -1,4 +1,4 @@
-import { ComponentRef } from '../component-ref';
+import { ComponentRef } from '../../dom/component/component-ref';
 import { createObservable } from './mixins';
 import { Observable } from './observable';
 
