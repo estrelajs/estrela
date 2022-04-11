@@ -1,9 +1,9 @@
-import { VNode } from 'snabbdom';
 import { buildTemplate } from './builders/template-builder';
 import { HTMLTemplate } from './html';
+import { VirtualNode } from './virtual-node';
 import { patch } from './patch';
 
-const TEMPLATE_STORE = new WeakMap<Node, VNode>();
+const TEMPLATE_STORE = new WeakMap<Node, VirtualNode>();
 
 export function render(template: HTMLTemplate, parent: Node): void {
   const tree = TEMPLATE_STORE.get(parent);

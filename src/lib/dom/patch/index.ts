@@ -1,9 +1,14 @@
-import { attributesModule, classModule, init, styleModule } from 'snabbdom';
-
+import {
+  init,
+  attributesModule,
+  classModule,
+  styleModule,
+  propsModule,
+} from 'snabbdom';
 import { componentModule } from './component-module';
 
 export const patch = init(
-  [attributesModule, classModule, styleModule, componentModule],
+  [componentModule, attributesModule, classModule, styleModule, propsModule],
   undefined,
   {
     experimental: { fragments: true },

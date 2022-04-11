@@ -17,6 +17,7 @@ const Random: Component<RamdomProps> = ({ ms }) => {
   );
 
   return html`
+    <h3>Random</h3>
     <div>Random is ${random}</div>
     <ul>
       ${() =>

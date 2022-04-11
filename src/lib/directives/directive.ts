@@ -1,4 +1,4 @@
-import { ComponentRef } from '../dom/component/component-ref';
+import { ComponentRef } from '../dom/component-ref';
 
 export interface Directive {
   dispose?(): void;

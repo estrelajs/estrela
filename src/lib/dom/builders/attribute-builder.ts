@@ -1,7 +1,11 @@
 import { coerceArray, toCamelCase } from '../../utils';
-import { AttributeData } from './attribute-data';
+import { AttributeData } from '../virtual-node';
 
-export function getAttributeData(
+function valueOf(value: any): any {
+  return typeof value === 'function' ? value() : value;
+}
+
+export function buildAttributeData(
   attributes: string,
   tokens: unknown[],
   isComponent?: boolean
@@ -27,7 +31,7 @@ export function getAttributeData(
     const arg = regex.test(value)
       ? (tokens[Number(value.replace(regex, '$1'))] as any)
       : value;
-    const argValue = typeof arg === 'function' ? arg() : arg;
+    // const argValue = typeof arg === 'function' ? arg() : arg;
     const filters =
       rawFilters
         ?.split('|')
@@ -36,7 +40,7 @@ export function getAttributeData(
 
     // key
     if (attr === 'key') {
-      data.key = argValue;
+      data.key = valueOf(arg);
       continue;
     }
 
@@ -50,12 +54,12 @@ export function getAttributeData(
     if (attrName === 'class') {
       if (accessor) {
         // ex: class.foo={true}
-        data.class[accessor] = argValue;
+        data.class[accessor] = valueOf(arg);
         continue;
       }
 
       // get class object
-      const klass = parseClass(argValue);
+      const klass = parseClass(valueOf(arg));
       Object.keys(klass).forEach(key => {
         const value =
           typeof klass[key] === 'function' ? klass[key]() : klass[key];
@@ -76,12 +80,14 @@ export function getAttributeData(
       if (accessor) {
         // ex: style.max-width|px="{{0}}"
         // result: { maxWidth: '100px' }
-        data.style[toCamelCase(accessor)] = `${argValue}${filters[0] ?? ''}`;
+        data.style[toCamelCase(accessor)] = `${valueOf(arg)}${
+          filters[0] ?? ''
+        }`;
         continue;
       }
 
       // get style object
-      const style = parseStyle(argValue);
+      const style = parseStyle(valueOf(arg));
       Object.keys(style).forEach(k => {
         const value = typeof style[k] === 'function' ? style[k]() : style[k];
         const [key, filter] = k.split('|');
@@ -92,21 +98,24 @@ export function getAttributeData(
     }
 
     if (namespace === 'on') {
+      // to be implemented
       continue;
     }
 
     if (namespace === 'bind') {
+      // to be implemented
       continue;
     }
 
     if (namespace === 'use') {
+      // to be implemented
       continue;
     }
 
-    if (isComponent) {
-      data.props[attrName] = argValue;
+    if (isComponent || attr.startsWith('on')) {
+      data.props[attrName] = attr.startsWith('on') ? arg : valueOf(arg); // remove 'on' prefix
     } else {
-      data.attrs[attrName] = argValue;
+      data.attrs[attrName] = attr.startsWith('on') ? arg : valueOf(arg); // remove 'on' prefix
     }
   }
 

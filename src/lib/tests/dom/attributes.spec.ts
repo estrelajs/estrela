@@ -1,10 +1,10 @@
 import { state } from '../../core';
-import { getAttributeData } from '../../dom/attributes/attribute-data-handler';
+import { buildAttributeData } from '../../dom/builders/attribute-builder';
 
-describe('attribute-data-handler', () => {
+describe('buildAttributeData', () => {
   it('should get empty attribute data', () => {
     const tokens: unknown[] = [];
-    const data = getAttributeData('', tokens);
+    const data = buildAttributeData('', tokens);
 
     expect(data).toEqual({
       attrs: {},
@@ -19,7 +19,7 @@ describe('attribute-data-handler', () => {
   describe('class', () => {
     it('should get class', () => {
       const tokens: unknown[] = [];
-      const data = getAttributeData('class="foo bar"', tokens);
+      const data = buildAttributeData('class="foo bar"', tokens);
 
       expect(data).toEqual({
         attrs: {},
@@ -36,7 +36,7 @@ describe('attribute-data-handler', () => {
 
     it('should get class with bind', () => {
       const tokens: unknown[] = ['foo bar'];
-      const data = getAttributeData('class="{{0}}"', tokens);
+      const data = buildAttributeData('class="{{0}}"', tokens);
 
       expect(data).toEqual({
         attrs: {},
@@ -53,7 +53,7 @@ describe('attribute-data-handler', () => {
 
     it('should get class with state bind', () => {
       const tokens: unknown[] = [state('foo bar')];
-      const data = getAttributeData('class="{{0}}"', tokens);
+      const data = buildAttributeData('class="{{0}}"', tokens);
 
       expect(data).toEqual({
         attrs: {},
@@ -70,7 +70,7 @@ describe('attribute-data-handler', () => {
 
     it('should get accessed class', () => {
       const tokens: unknown[] = [true, state(false)];
-      const data = getAttributeData(
+      const data = buildAttributeData(
         'class.foo="{{0}}" class.bar="{{1}}"',
         tokens
       );
@@ -90,7 +90,7 @@ describe('attribute-data-handler', () => {
 
     it('should get class with object', () => {
       const tokens: unknown[] = [{ foo: true, bar: false, 'a b': state(true) }];
-      const data = getAttributeData('class="{{0}}"', tokens);
+      const data = buildAttributeData('class="{{0}}"', tokens);
 
       expect(data).toEqual({
         attrs: {},
@@ -111,7 +111,7 @@ describe('attribute-data-handler', () => {
   describe('style', () => {
     it('should get style', () => {
       const tokens: unknown[] = [];
-      const data = getAttributeData('style="foo:1; bar:2;"', tokens);
+      const data = buildAttributeData('style="foo:1; bar:2;"', tokens);
 
       expect(data).toEqual({
         attrs: {},
@@ -128,7 +128,7 @@ describe('attribute-data-handler', () => {
 
     it('should get accessed style', () => {
       const tokens: unknown[] = [1, state(2)];
-      const data = getAttributeData(
+      const data = buildAttributeData(
         'style.foo="{{0}}" style.bar="{{1}}"',
         tokens
       );
@@ -148,7 +148,7 @@ describe('attribute-data-handler', () => {
 
     it('should get accessed style with filter', () => {
       const tokens: unknown[] = [100];
-      const data = getAttributeData('style.max-width|px="{{0}}"', tokens);
+      const data = buildAttributeData('style.max-width|px="{{0}}"', tokens);
 
       expect(data).toEqual({
         attrs: {},
@@ -170,7 +170,7 @@ describe('attribute-data-handler', () => {
           'foo-bar': 'fooBar',
         },
       ];
-      const data = getAttributeData('style="{{0}}"', tokens);
+      const data = buildAttributeData('style="{{0}}"', tokens);
 
       expect(data).toEqual({
         attrs: {},

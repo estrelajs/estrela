@@ -1,19 +1,21 @@
 import { escape } from 'html-escaper';
-import { fragment, h, vnode, VNode } from 'snabbdom';
 import { Component } from '../../core';
 import { isFalsy } from '../../utils';
-import { getAttributeData } from '../attributes/attribute-data-handler';
-import { createComponentNode } from '../component/component-node';
+import { buildAttributeData } from './attribute-builder';
+import { createVirtualNode, VirtualNode } from '../virtual-node';
 import { HTMLTemplateResult } from './template-builder';
 
 // Token Regex
 const TOKEN_REGEX = /^{{(\d+)}}$/;
 
-export function buildVirtualTree({ html, tokens }: HTMLTemplateResult): VNode {
-  const elements: VNode[] = [fragment([])];
+export function buildVirtualTree({
+  html,
+  tokens,
+}: HTMLTemplateResult): VirtualNode {
+  const elements: VirtualNode[] = [createVirtualNode()];
 
   const getParent = () => {
-    return elements[elements.length - 1] as VNode;
+    return elements[elements.length - 1] as VirtualNode;
   };
 
   for (let index = 0; index < html.length; index++) {
@@ -31,10 +33,8 @@ export function buildVirtualTree({ html, tokens }: HTMLTemplateResult): VNode {
       // open tag
       if (!isClosingTag) {
         // push opened element
-        const data = getAttributeData(attrs, tokens, !!Component);
-        const node = Component
-          ? createComponentNode(Component, data)
-          : h(tagName, data, []);
+        const data = buildAttributeData(attrs, tokens, !!Component);
+        const node = createVirtualNode(Component ?? tagName, data, []);
         elements.push(node);
       }
 
@@ -68,9 +68,7 @@ export function buildVirtualTree({ html, tokens }: HTMLTemplateResult): VNode {
               const value = tokens[Number(index)];
               return parseValue(value);
             })
-            .map(token =>
-              vnode(undefined, undefined, undefined, token, undefined)
-            );
+            .map(token => createVirtualNode(token));
 
           // push tokens to parent
           getParent().children?.push(...content);

@@ -1,9 +1,8 @@
 import { fragment, VNode } from 'snabbdom';
-
-import { Component, ObservableState, state } from '../../core';
-import { buildTemplate } from '../builders/template-builder';
-import { HTMLTemplate } from '../html';
-import { patch } from '../patch';
+import { Component, ObservableState, state } from '../core';
+import { buildTemplate } from './builders/template-builder';
+import { HTMLTemplate } from './html';
+import { patch } from './patch';
 
 export class ComponentRef {
   readonly props: Record<string, ObservableState<any>> = {};
