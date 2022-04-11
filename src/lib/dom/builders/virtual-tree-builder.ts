@@ -1,7 +1,7 @@
 import { escape } from 'html-escaper';
 import { Component } from '../../core';
 import { isFalsy } from '../../utils';
-import { buildAttributeData } from './attribute-builder';
+import { buildDataFromAttributes } from './data-builder';
 import { createVirtualNode, VirtualNode } from '../virtual-node';
 import { HTMLTemplateResult } from './template-builder';
 
@@ -33,7 +33,7 @@ export function buildVirtualTree({
       // open tag
       if (!isClosingTag) {
         // push opened element
-        const data = buildAttributeData(attrs, tokens, !!Component);
+        const data = buildDataFromAttributes(attrs, tokens, !!Component);
         const node = createVirtualNode(Component ?? tagName, data, []);
         elements.push(node);
       }

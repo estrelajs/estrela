@@ -4,9 +4,20 @@ import { ComponentRef } from './component-ref';
 
 export type Ref = ((el: HTMLElement) => void) | ObservableState<HTMLElement>;
 
-export interface AttributeData {
+export type AttrEvents = Record<
+  string,
+  {
+    accessor?: string;
+    filters: string[];
+    handler: (e: Event) => void | ObservableState<Event>;
+  }
+>;
+
+export interface VirtualNodeData {
   attrs: Attrs;
+  binds: Props;
   class: Classes;
+  events: AttrEvents;
   key: Key | undefined;
   props: Props;
   ref: Ref | undefined;
@@ -14,7 +25,7 @@ export interface AttributeData {
 }
 
 export interface VirtualNode extends VNode {
-  data: AttributeData;
+  data: VirtualNodeData;
   children: VirtualNode[];
   Component?: Component;
   ref?: ComponentRef;
@@ -24,12 +35,12 @@ export function createVirtualNode(): VirtualNode;
 export function createVirtualNode(text: string): VirtualNode;
 export function createVirtualNode(
   element: string | Component,
-  data: AttributeData,
+  data: VirtualNodeData,
   children: VirtualNode[]
 ): VirtualNode;
 export function createVirtualNode(
   element?: string | Component,
-  data?: AttributeData,
+  data?: VirtualNodeData,
   children?: VirtualNode[]
 ): VirtualNode {
   if (!data && !children) {

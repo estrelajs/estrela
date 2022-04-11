@@ -3,6 +3,7 @@ import { Component, ObservableState, state } from '../core';
 import { buildTemplate } from './builders/template-builder';
 import { HTMLTemplate } from './html';
 import { patch } from './patch';
+import { VirtualNodeData } from './virtual-node';
 
 export class ComponentRef {
   readonly props: Record<string, ObservableState<any>> = {};
@@ -13,12 +14,9 @@ export class ComponentRef {
   private hookIndex = 0;
   private requestedRender = false;
 
-  private constructor(
-    readonly Component: Component,
-    props: Record<string, any>
-  ) {
-    Object.keys(props).forEach(key => {
-      this.props[key] = state(props[key]);
+  private constructor(readonly Component: Component, data: VirtualNodeData) {
+    Object.keys(data.props).forEach(key => {
+      this.props[key] = state(data.props[key]);
     });
 
     ComponentRef.currentRef = this;
@@ -52,11 +50,11 @@ export class ComponentRef {
     );
   }
 
-  patchProps(props: Record<string, any>): void {
-    Object.keys(props).forEach(key => {
+  patchData(data: VirtualNodeData): void {
+    Object.keys(data.props).forEach(key => {
       const prop = this.props[key];
-      if (prop && prop() !== props[key]) {
-        prop.next(props[key]);
+      if (prop && prop() !== data.props[key]) {
+        prop.next(data.props[key]);
       }
     });
   }
@@ -84,11 +82,8 @@ export class ComponentRef {
 
   static currentRef: ComponentRef | null = null;
 
-  static createRef(
-    Component: Component,
-    props: Record<string, any>
-  ): ComponentRef {
-    const ref = new ComponentRef(Component, props);
+  static createRef(Component: Component, data: VirtualNodeData): ComponentRef {
+    const ref = new ComponentRef(Component, data);
     ComponentRef.currentRef = ref;
     return ref;
   }

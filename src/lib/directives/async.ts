@@ -10,7 +10,6 @@ class AsyncDirective implements Directive {
   private onWaiting?: any;
   private onError?: any;
 
-  // TODO: create a Element ref that works for Component and direct template.
   constructor(private componentRef: ComponentRef) {}
 
   transform<T>(obj: Observable<T> | Promise<T>): T | null;

@@ -1,18 +1,17 @@
+import { isObservableState } from '../../core';
 import { coerceArray, toCamelCase } from '../../utils';
-import { AttributeData } from '../virtual-node';
+import { VirtualNodeData } from '../virtual-node';
 
-function valueOf(value: any): any {
-  return typeof value === 'function' ? value() : value;
-}
-
-export function buildAttributeData(
+export function buildDataFromAttributes(
   attributes: string,
   tokens: unknown[],
   isComponent?: boolean
-): AttributeData {
-  const data: AttributeData = {
+): VirtualNodeData {
+  const data: VirtualNodeData = {
     attrs: {},
+    binds: {},
     class: {},
+    events: {},
     props: {},
     style: {},
     key: undefined,
@@ -31,7 +30,6 @@ export function buildAttributeData(
     const arg = regex.test(value)
       ? (tokens[Number(value.replace(regex, '$1'))] as any)
       : value;
-    // const argValue = typeof arg === 'function' ? arg() : arg;
     const filters =
       rawFilters
         ?.split('|')
@@ -98,13 +96,17 @@ export function buildAttributeData(
     }
 
     if (namespace === 'on') {
+      data.events[attrName] = {
+        filters,
+        accessor: accessor ? toCamelCase(accessor) : undefined,
+        handler: arg,
+      };
       // to be implemented
       continue;
     }
 
-    if (namespace === 'bind') {
-      // to be implemented
-      continue;
+    if (namespace === 'bind' || attrName === 'bind') {
+      data.binds[attrName] = arg;
     }
 
     if (namespace === 'use') {
@@ -112,17 +114,22 @@ export function buildAttributeData(
       continue;
     }
 
-    if (isComponent || attr.startsWith('on')) {
-      data.props[attrName] = attr.startsWith('on') ? arg : valueOf(arg); // remove 'on' prefix
+    if (
+      isComponent ||
+      namespace === 'bind' ||
+      attrName === 'bind' ||
+      attr.startsWith('on')
+    ) {
+      data.props[attrName] = valueOf(arg);
     } else {
-      data.attrs[attrName] = attr.startsWith('on') ? arg : valueOf(arg); // remove 'on' prefix
+      data.attrs[attrName] = valueOf(arg);
     }
   }
 
   return data;
 }
 
-export function parseClass(
+function parseClass(
   klass: string | string[] | Record<string, any>
 ): Record<string, any> {
   if (typeof klass !== 'string' && !Array.isArray(klass)) {
@@ -136,9 +143,7 @@ export function parseClass(
   }, {} as Record<string, any>);
 }
 
-export function parseStyle(
-  style: string | Record<string, any>
-): Record<string, any> {
+function parseStyle(style: string | Record<string, any>): Record<string, any> {
   if (typeof style !== 'string') {
     return style;
   }
@@ -151,4 +156,8 @@ export function parseStyle(
       }
       return acc;
     }, {} as Record<string, any>);
+}
+
+function valueOf(value: any): any {
+  return isObservableState(value) ? value() : value;
 }
