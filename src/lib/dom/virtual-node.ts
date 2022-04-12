@@ -28,6 +28,7 @@ export interface VirtualNode extends VNode {
   data: VirtualNodeData;
   children: VirtualNode[];
   Component?: Component;
+  listener?: (e: Event) => void;
   ref?: ComponentRef;
 }
 
@@ -47,7 +48,7 @@ export function createVirtualNode(
     return vnode(
       undefined,
       {},
-      element ? undefined : [],
+      typeof element === 'string' ? undefined : [],
       element as string,
       undefined
     ) as VirtualNode;

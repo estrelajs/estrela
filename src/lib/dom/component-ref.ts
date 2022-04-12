@@ -1,62 +1,46 @@
-import { fragment, VNode } from 'snabbdom';
-import { Component, ObservableState, state } from '../core';
+import { fragment, htmlDomApi, vnode } from 'snabbdom';
+import { ObservableState, state, Subscription } from '../core';
 import { buildTemplate } from './builders/template-builder';
 import { HTMLTemplate } from './html';
 import { patch } from './patch';
-import { VirtualNodeData } from './virtual-node';
+import { VirtualNode, VirtualNodeData } from './virtual-node';
 
 export class ComponentRef {
   readonly props: Record<string, ObservableState<any>> = {};
   readonly states: ObservableState<any>[] = [];
   readonly template: HTMLTemplate;
-
-  private children: Array<VNode | string> = [];
   private hookIndex = 0;
   private requestedRender = false;
+  private subscriptions: Subscription[] = [];
 
-  private constructor(readonly Component: Component, data: VirtualNodeData) {
-    Object.keys(data.props).forEach(key => {
-      this.props[key] = state(data.props[key]);
+  private constructor(private vnode: VirtualNode) {
+    // create observable props
+    Object.keys(vnode.data.props).forEach(key => {
+      this.props[key] = state(vnode.data.props[key]);
     });
 
+    // set reference and get component template
     ComponentRef.currentRef = this;
-    this.template = Component(this.props);
+    this.template = vnode.Component!(this.props);
 
+    // subscribe to states
     this.states.forEach(state => {
-      state.subscribe(() => this.requestRender());
+      this.subscriptions.push(state.subscribe(() => this.requestRender()));
     });
   }
 
-  dispose(): void {}
+  dispose(): void {
+    this.subscriptions.forEach(subscription => subscription.unsubscribe());
+  }
 
   nextHook(): number {
     return this.hookIndex++;
   }
 
-  patchChildren(children: Array<VNode | string>): void {
-    // clear children
-    while (children.length) {
-      children.pop();
-    }
-
-    // update data
-    this.hookIndex = 0;
-    this.children = children;
-    ComponentRef.currentRef = this;
-
-    // update children
-    buildTemplate(this.template).children!.forEach(child =>
-      children.push(child)
-    );
-  }
-
-  patchData(data: VirtualNodeData): void {
-    Object.keys(data.props).forEach(key => {
-      const prop = this.props[key];
-      if (prop && prop() !== data.props[key]) {
-        prop.next(data.props[key]);
-      }
-    });
+  patchVNode(vnode: VirtualNode): void {
+    this.vnode = vnode;
+    this.patchData(vnode.data);
+    vnode.children = this.getChildren();
   }
 
   pushState(state: ObservableState<any>): void {
@@ -73,18 +57,44 @@ export class ComponentRef {
     }
   }
 
+  private getChildren(): VirtualNode[] {
+    this.hookIndex = 0;
+    ComponentRef.currentRef = this;
+    return buildTemplate(this.template).children;
+  }
+
+  private patchData(data: VirtualNodeData): void {
+    Object.keys(data.props).forEach(key => {
+      const prop = this.props[key];
+      if (prop && prop() !== data.props[key]) {
+        prop.next(data.props[key]);
+      }
+    });
+  }
+
   private render(): void {
-    const oldTree = fragment([...this.children]);
-    this.patchChildren(this.children);
-    const newTree = fragment(this.children);
-    patch(oldTree, newTree);
+    const parent = htmlDomApi.parentNode(this.vnode.elm!) as HTMLElement;
+    const oldVNode = vnode(
+      undefined,
+      {},
+      this.vnode.children,
+      undefined,
+      parent
+    );
+    const newVNode = vnode(
+      undefined,
+      {},
+      this.getChildren(),
+      undefined,
+      parent
+    );
+    const result = patch(oldVNode, newVNode);
+    this.vnode.children = result.children as any;
   }
 
   static currentRef: ComponentRef | null = null;
 
-  static createRef(Component: Component, data: VirtualNodeData): ComponentRef {
-    const ref = new ComponentRef(Component, data);
-    ComponentRef.currentRef = ref;
-    return ref;
+  static createRef(vnode: VirtualNode): ComponentRef {
+    return new ComponentRef(vnode);
   }
 }

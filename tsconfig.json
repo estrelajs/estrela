@@ -21,6 +21,7 @@
     "src"
   ],
   "exclude": [
+    "node_modules",
     "src/lib/tests"
   ]
 }
