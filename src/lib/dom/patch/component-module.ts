@@ -1,4 +1,4 @@
-import { Module } from 'snabbdom';
+import { Module } from '@estrelajs/snabbdom';
 import { ComponentRef } from '../component-ref';
 import { VirtualNode } from '../virtual-node';
 

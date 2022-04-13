@@ -1,4 +1,4 @@
-import { Module } from 'snabbdom';
+import { Module } from '@estrelajs/snabbdom';
 import {
   EventEmitter,
   isEventEmitter,

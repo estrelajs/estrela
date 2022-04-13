@@ -6,6 +6,8 @@ export interface ObservableState<T> extends Observable<T> {
   /** Current state value. */
   (): T;
 
+  value: T;
+
   /**
    * Updates the current state.
    * @param value next value.
@@ -26,6 +28,9 @@ export function state(initialValue?: any): ObservableState<any> {
   const [obsevable, subscriber] = createObservable();
   const descriptor = {
     ...obsevable,
+    get value() {
+      return value;
+    },
     next(next: any) {
       subscriber.next((value = next));
     },

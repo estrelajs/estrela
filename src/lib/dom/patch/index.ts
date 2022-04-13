@@ -4,7 +4,7 @@ import {
   classModule,
   styleModule,
   propsModule,
-} from 'snabbdom';
+} from '@estrelajs/snabbdom';
 import { componentModule } from './component-module';
 import { eventsModule } from './events-module';
 

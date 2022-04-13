@@ -1,4 +1,12 @@
-import { Attrs, Classes, Key, Props, vnode, VNode, VNodeStyle } from 'snabbdom';
+import {
+  Attrs,
+  Classes,
+  Key,
+  Props,
+  vnode,
+  VNode,
+  VNodeStyle,
+} from '@estrelajs/snabbdom';
 import { Component, EventEmitter, ObservableState } from '../core';
 import { ComponentRef } from './component-ref';
 

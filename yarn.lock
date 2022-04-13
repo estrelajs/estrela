@@ -297,6 +297,11 @@
   dependencies:
     "@cspotcode/source-map-consumer" "0.8.0"
 
+"@estrelajs/snabbdom@^3.4.0":
+  version "3.4.0"
+  resolved "https://registry.yarnpkg.com/@estrelajs/snabbdom/-/snabbdom-3.4.0.tgz#e14e4a540af8f500372a21453308bc97980f1671"
+  integrity sha512-YA+xNc/zw/uxLYbD5fiPl5imeP9LVhynjtyn7VQEPv2pJ8Ya6PwDuUvPrrOhMC05DtZqp7UoLL1gik6mTSaGWQ==
+
 "@istanbuljs/load-nyc-config@^1.0.0":
   version "1.1.0"
   resolved "https://registry.npmjs.org/@istanbuljs/load-nyc-config/-/load-nyc-config-1.1.0.tgz"
@@ -2429,11 +2434,6 @@ slash@^3.0.0:
   version "3.0.0"
   resolved "https://registry.npmjs.org/slash/-/slash-3.0.0.tgz"
   integrity sha512-g9Q1haeby36OSStwb4ntCGGGaKsaVSjQ68fBxoQcutl5fS1vuY18H3wSt3jFyFtrkx+Kz0V1G85A4MyAdDMi2Q==
-
-snabbdom@^3.4.0:
-  version "3.4.0"
-  resolved "https://registry.npmjs.org/snabbdom/-/snabbdom-3.4.0.tgz"
-  integrity sha512-Sr5H1l5QxJa0B/68ZtpWi7MuGIzLWS2Up64QqXe/wzvWOjXvM9rL7+C8GhMmDVtJ7dFWypvyWJHR3nmeZN8YIQ==
 
 source-map-js@^1.0.2:
   version "1.0.2"
