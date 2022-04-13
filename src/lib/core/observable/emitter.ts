@@ -1,3 +1,4 @@
+import { ComponentRef } from '../../directives';
 import { createObservable } from './mixins';
 import { Observable } from './observable';
 
@@ -8,9 +9,9 @@ export interface EventEmitter<T> extends Observable<T> {
   emit(value: T): void;
 }
 
-export function emitter<T>(async = false) {
+export function emitter<T>(eventName: string, async = false): EventEmitter<T> {
   const [obsevable, subscriber] = createObservable();
-  return {
+  const instance: EventEmitter<T> = {
     ...obsevable,
     emit(value: T) {
       if (async) {
@@ -20,4 +21,8 @@ export function emitter<T>(async = false) {
       }
     },
   };
+  if (ComponentRef.currentRef) {
+    ComponentRef.currentRef.pushEmitter(eventName, instance);
+  }
+  return instance;
 }

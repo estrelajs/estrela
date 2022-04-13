@@ -1,5 +1,5 @@
 import { Attrs, Classes, Key, Props, vnode, VNode, VNodeStyle } from 'snabbdom';
-import { Component, ObservableState } from '../core';
+import { Component, EventEmitter, ObservableState } from '../core';
 import { ComponentRef } from './component-ref';
 
 export type Ref = ((el: HTMLElement) => void) | ObservableState<HTMLElement>;
@@ -9,7 +9,7 @@ export type AttrEvents = Record<
   {
     accessor?: string;
     filters: string[];
-    handler: (e: Event) => void | ObservableState<Event>;
+    handler: (e: any) => void | EventEmitter<any> | ObservableState<any>;
   }
 >;
 

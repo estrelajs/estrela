@@ -1,4 +1,4 @@
-import { Component, observable, state } from '../lib';
+import { Component, emitter, observable, state } from '../lib';
 import { async } from '../lib/directives';
 import { html } from '../lib/dom';
 import classes from './Random.module.css';
@@ -8,14 +8,16 @@ interface RamdomProps {
 }
 
 const Random: Component<RamdomProps> = ({ ms }) => {
+  const complete = emitter<string>('complete');
   const random = state(Math.random());
 
-  const list$ = observable<string[]>(subscriber =>
+  const list$ = observable<string[]>(subscriber => {
     setTimeout(() => {
       subscriber.next(['a', 'b', 'c']);
       subscriber.complete();
-    }, ms())
-  );
+      complete.emit('ok');
+    }, ms());
+  });
 
   return html`
     <h3 class=${classes.title}>Random</h3>

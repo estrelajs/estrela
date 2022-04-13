@@ -1,27 +1,52 @@
-import { fragment, htmlDomApi, vnode } from 'snabbdom';
-import { ObservableState, state, StyledComponent, Subscription } from '../core';
+import { htmlDomApi, vnode } from 'snabbdom';
+import {
+  EventEmitter,
+  ObservableState,
+  state,
+  StyledComponent,
+  Subscription,
+} from '../core';
 import { buildTemplate } from './builders/template-builder';
 import { HTMLTemplate } from './html';
 import { patch } from './patch';
 import { VirtualNode, VirtualNodeData } from './virtual-node';
 
 export class ComponentRef {
-  readonly props: Record<string, ObservableState<any>> = {};
-  readonly states: ObservableState<any>[] = [];
-  readonly template: HTMLTemplate;
+  private readonly emitters: Record<string, EventEmitter<any>> = {};
+  private readonly states: ObservableState<any>[] = [];
+  private readonly props: Record<string, ObservableState<any>>;
+  private readonly template: HTMLTemplate;
   private hookIndex = 0;
   private requestedRender = false;
   private subscriptions: Subscription[] = [];
 
   private constructor(private vnode: VirtualNode) {
     // create observable props
-    Object.keys(vnode.data.props).forEach(key => {
-      this.props[key] = state(vnode.data.props[key]);
+    const props = Object.keys(vnode.data.props).reduce((acc, key) => {
+      acc[key] = state(vnode.data.props[key]);
+      return acc;
+    }, {} as Record<string, ObservableState<any>>);
+
+    // create props proxy to prevent null reference
+    this.props = new Proxy(props, {
+      get(target, prop: string) {
+        return prop in target ? target[prop] : state();
+      },
     });
 
     // set reference and get component template
     ComponentRef.currentRef = this;
     this.template = vnode.Component!(this.props);
+
+    // subscribe to emitters
+    Object.keys(this.emitters).forEach(key => {
+      const emitter = this.emitters[key];
+      this.subscriptions.push(
+        emitter.subscribe(e => {
+          this.vnode.elm?.dispatchEvent(new CustomEvent(key, { detail: e }));
+        })
+      );
+    });
 
     // subscribe to states
     this.states.forEach(state => {
@@ -41,6 +66,10 @@ export class ComponentRef {
     this.vnode = vnode;
     this.patchData(vnode.data);
     vnode.children = this.getChildren();
+  }
+
+  pushEmitter(key: string, emitter: EventEmitter<any>): void {
+    this.emitters[key] = emitter;
   }
 
   pushState(state: ObservableState<any>): void {
