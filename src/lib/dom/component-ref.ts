@@ -1,5 +1,5 @@
 import { fragment, htmlDomApi, vnode } from 'snabbdom';
-import { ObservableState, state, Subscription } from '../core';
+import { ObservableState, state, StyledComponent, Subscription } from '../core';
 import { buildTemplate } from './builders/template-builder';
 import { HTMLTemplate } from './html';
 import { patch } from './patch';
@@ -60,7 +60,19 @@ export class ComponentRef {
   private getChildren(): VirtualNode[] {
     this.hookIndex = 0;
     ComponentRef.currentRef = this;
-    return buildTemplate(this.template).children;
+    const vnode = buildTemplate(this.template);
+    const styledComponent = this.vnode.Component as StyledComponent<any>;
+
+    if (styledComponent?.styleId) {
+      const attr = `_host-${styledComponent.styleId}`;
+      this.walk(vnode, vnode => {
+        if (vnode.sel && vnode.data?.attrs) {
+          vnode.data.attrs[attr] = true;
+        }
+      });
+    }
+
+    return vnode.children;
   }
 
   private patchData(data: VirtualNodeData): void {
@@ -90,6 +102,13 @@ export class ComponentRef {
     );
     const result = patch(oldVNode, newVNode);
     this.vnode.children = result.children as any;
+  }
+
+  private walk(vnode: VirtualNode, cb: (vnode: VirtualNode) => void): void {
+    cb(vnode);
+    if (vnode.children) {
+      vnode.children.forEach(child => this.walk(child, cb));
+    }
   }
 
   static currentRef: ComponentRef | null = null;

@@ -7,8 +7,8 @@ export interface StyledComponent<T> extends Component<T> {
 }
 
 export const styled =
-  <T>(Component: Component<T>) =>
-  (template: TemplateStringsArray, ...args: any[]): void => {
+  <T extends Object = {}>(Component: Component<T>) =>
+  (template: TemplateStringsArray, ...args: any[]): StyledComponent<T> => {
     const styledComponent = Component as StyledComponent<T>;
     if (!styledComponent.styleId) {
       styledComponent.styleId = createStyleId();
@@ -32,6 +32,7 @@ export const styled =
       .process(styleSheet).css;
 
     document.head.append(style);
+    return styledComponent;
   };
 
 function createStyleId(): string {
