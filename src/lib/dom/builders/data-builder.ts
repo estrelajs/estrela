@@ -16,6 +16,7 @@ export function buildDataFromAttributes(
     style: {},
     key: undefined,
     ref: undefined,
+    slot: undefined,
   };
 
   let match: RegExpExecArray | null;
@@ -45,6 +46,12 @@ export function buildDataFromAttributes(
     // ref
     if (attr === 'ref') {
       data.ref = arg;
+      continue;
+    }
+
+    // slot
+    if (attr === 'slot') {
+      data.slot = valueOf(arg);
       continue;
     }
 

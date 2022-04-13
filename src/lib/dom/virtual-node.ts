@@ -21,6 +21,7 @@ export interface VirtualNodeData {
   key: Key | undefined;
   props: Props;
   ref: Ref | undefined;
+  slot: string | undefined;
   style: VNodeStyle;
 }
 

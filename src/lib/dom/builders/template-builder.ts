@@ -7,8 +7,10 @@ export interface HTMLTemplateResult {
   tokens: unknown[];
 }
 
-export function buildTemplate(template: HTMLTemplate) {
-  const result = buildTemplateResult(template);
+export function buildTemplate(template: HTMLTemplate | null) {
+  const result = template
+    ? buildTemplateResult(template)
+    : { html: '', tokens: [] };
   return buildVirtualTree(result);
 }
 

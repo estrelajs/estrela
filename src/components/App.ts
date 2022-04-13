@@ -1,4 +1,5 @@
 import { state, styled } from '../lib';
+import Show from '../lib/core/common/Show';
 import { html } from '../lib/dom';
 import Counter from './Counter';
 import Random from './Random';
@@ -7,21 +8,27 @@ const App = styled(() => {
   const count = state(0);
   const visible = state(true);
 
-  setInterval(() => count.update(v => v + 1), 1000);
+  // setInterval(() => count.update(v => v + 1), 1000);
 
   return html`
     <h1 class="title">Hello World</h1>
     <p>This is a simple example of a component</p>
 
-    <input
-      id="toggle"
-      type="checkbox"
-      checked=${visible}
-      onchange=${() => visible.update(v => !v)}
-    />
-    <label for="toggle">Show counter</label>
+    <div>
+      <input
+        id="toggle"
+        type="checkbox"
+        checked=${visible}
+        onchange=${() => visible.update(v => !v)}
+      />
+      <label for="toggle">Show First Random</label>
+    </div>
 
-    ${() => visible() && html`<${Random} ms=${1000} />`}
+    <${Show} when=${visible}>
+      <${Random} ms=${1000} />
+      <h3 slot="else">Random Hidden</h3>
+    <//>
+
     <${Random} ms=${2000} on:complete=${console.log} />
     <${Counter} count=${count} />
 

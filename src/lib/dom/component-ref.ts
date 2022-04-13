@@ -9,13 +9,17 @@ import {
 import { buildTemplate } from './builders/template-builder';
 import { HTMLTemplate } from './html';
 import { patch } from './patch';
-import { VirtualNode, VirtualNodeData } from './virtual-node';
+import {
+  createVirtualNode,
+  VirtualNode,
+  VirtualNodeData,
+} from './virtual-node';
 
 export class ComponentRef {
   private readonly emitters: Record<string, EventEmitter<any>> = {};
   private readonly states: ObservableState<any>[] = [];
   private readonly props: Record<string, ObservableState<any>>;
-  private readonly template: HTMLTemplate;
+  private readonly template: () => HTMLTemplate | null;
   private hookIndex = 0;
   private requestedRender = false;
   private subscriptions: Subscription[] = [];
@@ -36,7 +40,8 @@ export class ComponentRef {
 
     // set reference and get component template
     ComponentRef.currentRef = this;
-    this.template = vnode.Component!(this.props);
+    const template = vnode.Component!(this.props);
+    this.template = typeof template === 'function' ? template : () => template;
 
     // subscribe to emitters
     Object.keys(this.emitters).forEach(key => {
@@ -89,17 +94,24 @@ export class ComponentRef {
   private getChildren(): VirtualNode[] {
     this.hookIndex = 0;
     ComponentRef.currentRef = this;
-    const vnode = buildTemplate(this.template);
+    const vnode = buildTemplate(this.template());
     const styledComponent = this.vnode.Component as StyledComponent<any>;
 
-    if (styledComponent?.styleId) {
-      const attr = `_host-${styledComponent.styleId}`;
-      this.walk(vnode, vnode => {
-        if (vnode.sel && vnode.data?.attrs) {
-          vnode.data.attrs[attr] = true;
-        }
-      });
-    }
+    this.walk(vnode, vnode => {
+      if (vnode.sel === 'slot') {
+        const fragment = createVirtualNode();
+        const slot = vnode.data.attrs.name as string | undefined;
+        fragment.children = this.vnode.children.filter(
+          child => child.data.slot === slot
+        );
+        return fragment;
+      }
+      if (styledComponent?.styleId && vnode.sel && vnode.data?.attrs) {
+        const attr = `_host-${styledComponent.styleId}`;
+        vnode.data.attrs[attr] = true;
+      }
+      return vnode;
+    });
 
     return vnode.children;
   }
@@ -133,11 +145,15 @@ export class ComponentRef {
     this.vnode.children = result.children as any;
   }
 
-  private walk(vnode: VirtualNode, cb: (vnode: VirtualNode) => void): void {
-    cb(vnode);
-    if (vnode.children) {
-      vnode.children.forEach(child => this.walk(child, cb));
+  private walk(
+    vnode: VirtualNode,
+    cb: (vnode: VirtualNode) => VirtualNode
+  ): VirtualNode {
+    vnode = cb(vnode);
+    if (vnode.children?.length > 0) {
+      vnode.children = vnode.children.map(child => this.walk(child, cb));
     }
+    return vnode;
   }
 
   static currentRef: ComponentRef | null = null;

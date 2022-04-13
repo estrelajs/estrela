@@ -11,6 +11,7 @@ describe('buildAttributeData', () => {
     style: {},
     key: undefined,
     ref: undefined,
+    slot: undefined,
   };
 
   it('should get empty attribute data', () => {

@@ -18,24 +18,34 @@ export function buildVirtualTree({
     return elements[elements.length - 1] as VirtualNode;
   };
 
+  if (html.trim() === '') {
+    const parent = getParent();
+    parent.children.push(
+      createVirtualNode('!', buildDataFromAttributes('', []), [])
+    );
+    return parent;
+  }
+
   for (let index = 0; index < html.length; index++) {
     if (html[index] === '<') {
       let Component: Component | null = null;
       let [match, isClosingTag, tagName, attrs, isSelfClosing] =
-        /^<(\/)?([^\s\/>]+)([^\/>]*)(\/)?>/s.exec(html.substring(index)) ?? [];
+        /^<(\/)?([^\s\/>]*)([^\/>]*)(\/)?>/s.exec(html.substring(index)) ?? [];
 
-      // check tag function
-      if (TOKEN_REGEX.test(tagName)) {
-        const index = tagName.replace(TOKEN_REGEX, '$1');
-        Component = tokens[Number(index)] as Component;
-      }
+      if (tagName) {
+        // check tag function
+        if (TOKEN_REGEX.test(tagName)) {
+          const index = tagName.replace(TOKEN_REGEX, '$1');
+          Component = tokens[Number(index)] as Component;
+        }
 
-      // open tag
-      if (!isClosingTag) {
-        // push opened element
-        const data = buildDataFromAttributes(attrs, tokens, !!Component);
-        const node = createVirtualNode(Component ?? tagName, data, []);
-        elements.push(node);
+        // open tag
+        if (!isClosingTag) {
+          // push opened element
+          const data = buildDataFromAttributes(attrs, tokens, !!Component);
+          const node = createVirtualNode(Component ?? tagName, data, []);
+          elements.push(node);
+        }
       }
 
       // close tag
