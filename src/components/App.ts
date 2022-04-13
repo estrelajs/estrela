@@ -1,5 +1,4 @@
-import { state, styled } from '../lib';
-import Show from '../lib/core/common/Show';
+import { state, styled, Show } from '../lib';
 import { html } from '../lib/dom';
 import Counter from './Counter';
 import Random from './Random';
@@ -8,7 +7,7 @@ const App = styled(() => {
   const count = state(0);
   const visible = state(true);
 
-  // setInterval(() => count.update(v => v + 1), 1000);
+  setInterval(() => count.update(v => v + 1), 1000);
 
   return html`
     <h1 class="title">Hello World</h1>

@@ -6,6 +6,7 @@ import {
   StyledComponent,
   Subscription,
 } from '../core';
+import { coerceFunction } from '../utils';
 import { buildTemplate } from './builders/template-builder';
 import { HTMLTemplate } from './html';
 import { patch } from './patch';
@@ -40,8 +41,7 @@ export class ComponentRef {
 
     // set reference and get component template
     ComponentRef.currentRef = this;
-    const template = vnode.Component!(this.props);
-    this.template = typeof template === 'function' ? template : () => template;
+    this.template = coerceFunction(vnode.Component!(this.props));
 
     // subscribe to emitters
     Object.keys(this.emitters).forEach(key => {
