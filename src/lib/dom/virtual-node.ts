@@ -31,6 +31,7 @@ export interface VirtualNodeData {
   ref: Ref | undefined;
   slot: string | undefined;
   style: VNodeStyle;
+  [key: string]: any;
 }
 
 export interface VirtualNode extends VNode {

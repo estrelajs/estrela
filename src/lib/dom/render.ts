@@ -5,9 +5,13 @@ import { patch } from './patch';
 
 const TEMPLATE_STORE = new WeakMap<Node, VirtualNode>();
 
-export function render(template: HTMLTemplate, parent: Node): void {
+export function render(
+  template: HTMLTemplate | VirtualNode,
+  parent: Node
+): void {
   const tree = TEMPLATE_STORE.get(parent);
-  const newTree = buildTemplate(template);
+  const newTree =
+    template instanceof HTMLTemplate ? buildTemplate(template) : template;
 
   if (tree) {
     patch(tree, newTree);

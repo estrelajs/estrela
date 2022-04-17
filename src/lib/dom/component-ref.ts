@@ -20,7 +20,7 @@ export class ComponentRef {
   private readonly emitters: Record<string, EventEmitter<any>> = {};
   private readonly states: ObservableState<any>[] = [];
   private readonly props: Record<string, ObservableState<any>>;
-  private readonly template: () => HTMLTemplate | null;
+  private readonly template: () => HTMLTemplate | VirtualNode | null;
   private readonly lifeCycleHooks: Record<string, Function> = {};
   private hookIndex = 0;
   private requestedRender = false;
@@ -105,7 +105,12 @@ export class ComponentRef {
   private getChildren(): VirtualNode[] {
     this.hookIndex = 0;
     ComponentRef.currentRef = this;
-    const vnode = buildTemplate(this.template());
+
+    const result = this.template();
+    const vnode =
+      result instanceof HTMLTemplate
+        ? buildTemplate(result)
+        : result ?? buildTemplate({ args: [], template: [''] as any });
     const styledComponent = this.vnode.Component as StyledComponent<any>;
 
     this.walk(vnode, vnode => {

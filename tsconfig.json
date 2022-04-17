@@ -2,16 +2,20 @@
   "compilerOptions": {
     "target": "ESNext",
     "useDefineForClassFields": true,
+    "moduleResolution": "Node",
     "module": "ESNext",
     "lib": [
       "ESNext",
       "DOM"
     ],
-    "moduleResolution": "Node",
+    "jsx": "react",
+    "jsxFactory": "jsx",
+    "jsxFragmentFactory": "undefined",
     "strict": true,
     "sourceMap": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
+    "noImplicitAny": false,
     "noEmit": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
