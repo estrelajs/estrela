@@ -2,9 +2,7 @@ import { hooks } from '../hooks';
 import { VirtualNode } from '../virtual-node';
 import { walk } from './walk';
 
-const emptyNode: VirtualNode = {
-  sel: null,
-};
+const emptyNode: VirtualNode = {};
 
 interface NodeMetadata {
   parent: Node | null;

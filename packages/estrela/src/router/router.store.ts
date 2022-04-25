@@ -37,7 +37,7 @@ window.addEventListener('popstate', () => {
 });
 
 export function navigateTo(url: string, opts?: NavigateOptions) {
-  const oldState = store.getValue();
+  const oldState = store.getState();
   const { replace = false, state = oldState.state } = opts ?? {};
   const action = replace ? 'replaceState' : 'pushState';
   window.history[action](state, '', url);

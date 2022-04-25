@@ -19,12 +19,13 @@ export function coerceObservable<T>(
   }
   return createObservable(subscriber => {
     if (isPromise(promise)) {
-      promise
-        .then(value => {
-          subscriber.next(value);
-          subscriber.complete();
-        })
-        .catch(err => subscriber.error(err));
+      const then = promise.then(value => {
+        subscriber.next(value);
+        subscriber.complete();
+      });
+      if (then.catch) {
+        then.catch(err => subscriber.error(err));
+      }
     } else {
       subscriber.next(promise);
       subscriber.complete();

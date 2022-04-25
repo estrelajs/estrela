@@ -55,7 +55,7 @@ export interface State<T> extends Observable<T>, Completable {
 
 export interface Store<S extends Object> extends Observable<S> {
   /** Get the current state. */
-  getValue(): Readonly<S>;
+  getState(): Readonly<S>;
 
   /**
    * Update the state with the updater callback.

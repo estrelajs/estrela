@@ -96,7 +96,11 @@ export class ComponentRef {
     };
 
     const template = visitor(this.template!);
-    node.children = [template];
+    if (!template.sel && !template.Component && !template.observable) {
+      node.children = template.children;
+    } else {
+      node.children = [template];
+    }
   }
 
   static currentRef: ComponentRef | null = null;

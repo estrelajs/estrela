@@ -1,65 +1,72 @@
 import { symbol_observable } from './symbol';
 import { Observable, Observer, Subscribable } from './types';
-import { createSubscriber, coerceObserver, createSubscription } from './utils';
+import {
+  coerceObservable,
+  coerceObserver,
+  createSubscriber,
+  createSubscription,
+} from './utils';
+
+export type Selectable<T> = Promise<T> | Subscribable<T>;
 
 export function createSelector<S1, Result>(
-  s1: Subscribable<S1>,
+  s1: Selectable<S1>,
   selector: (s1: S1) => Result
 ): Observable<Result>;
 export function createSelector<S1, S2, Result>(
-  s1: Subscribable<S1>,
-  s2: Subscribable<S2>,
+  s1: Selectable<S1>,
+  s2: Selectable<S2>,
   selector: (s1: S1, s2: S2) => Result
 ): Observable<Result>;
 export function createSelector<S1, S2, S3, Result>(
-  s1: Subscribable<S1>,
-  s2: Subscribable<S2>,
-  s3: Subscribable<S3>,
+  s1: Selectable<S1>,
+  s2: Selectable<S2>,
+  s3: Selectable<S3>,
   selector: (s1: S1, s2: S2, s3: S3) => Result
 ): Observable<Result>;
 export function createSelector<S1, S2, S3, S4, Result>(
-  s1: Subscribable<S1>,
-  s2: Subscribable<S2>,
-  s3: Subscribable<S3>,
-  s4: Subscribable<S4>,
+  s1: Selectable<S1>,
+  s2: Selectable<S2>,
+  s3: Selectable<S3>,
+  s4: Selectable<S4>,
   selector: (s1: S1, s2: S2, s3: S3, s4: S4) => Result
 ): Observable<Result>;
 export function createSelector<S1, S2, S3, S4, S5, Result>(
-  s1: Subscribable<S1>,
-  s2: Subscribable<S2>,
-  s3: Subscribable<S3>,
-  s4: Subscribable<S4>,
-  s5: Subscribable<S5>,
+  s1: Selectable<S1>,
+  s2: Selectable<S2>,
+  s3: Selectable<S3>,
+  s4: Selectable<S4>,
+  s5: Selectable<S5>,
   selector: (s1: S1, s2: S2, s3: S3, s4: S4, s5: S5) => Result
 ): Observable<Result>;
 export function createSelector<S1, S2, S3, S4, S5, S6, Result>(
-  s1: Subscribable<S1>,
-  s2: Subscribable<S2>,
-  s3: Subscribable<S3>,
-  s4: Subscribable<S4>,
-  s5: Subscribable<S5>,
-  s6: Subscribable<S6>,
+  s1: Selectable<S1>,
+  s2: Selectable<S2>,
+  s3: Selectable<S3>,
+  s4: Selectable<S4>,
+  s5: Selectable<S5>,
+  s6: Selectable<S6>,
   selector: (s1: S1, s2: S2, s3: S3, s4: S4, s5: S5, s6: S6) => Result
 ): Observable<Result>;
 export function createSelector<S1, S2, S3, S4, S5, S6, S7, Result>(
-  s1: Subscribable<S1>,
-  s2: Subscribable<S2>,
-  s3: Subscribable<S3>,
-  s4: Subscribable<S4>,
-  s5: Subscribable<S5>,
-  s6: Subscribable<S6>,
-  s7: Subscribable<S7>,
+  s1: Selectable<S1>,
+  s2: Selectable<S2>,
+  s3: Selectable<S3>,
+  s4: Selectable<S4>,
+  s5: Selectable<S5>,
+  s6: Selectable<S6>,
+  s7: Selectable<S7>,
   selector: (s1: S1, s2: S2, s3: S3, s4: S4, s5: S5, s6: S6, s7: S7) => Result
 ): Observable<Result>;
 export function createSelector<S1, S2, S3, S4, S5, S6, S7, S8, Result>(
-  s1: Subscribable<S1>,
-  s2: Subscribable<S2>,
-  s3: Subscribable<S3>,
-  s4: Subscribable<S4>,
-  s5: Subscribable<S5>,
-  s6: Subscribable<S6>,
-  s7: Subscribable<S7>,
-  s8: Subscribable<S8>,
+  s1: Selectable<S1>,
+  s2: Selectable<S2>,
+  s3: Selectable<S3>,
+  s4: Selectable<S4>,
+  s5: Selectable<S5>,
+  s6: Selectable<S6>,
+  s7: Selectable<S7>,
+  s8: Selectable<S8>,
   selector: (
     s1: S1,
     s2: S2,
@@ -77,7 +84,7 @@ export function createSelector(
 
 export function createSelector(...args: any[]): Observable<any> {
   const selector = args.pop();
-  const states: Observable<any>[] = args;
+  const states: Observable<any>[] = args.map(coerceObservable);
   const observers = new Set<Observer<any>>();
   const subscriber = createSubscriber(observers);
 

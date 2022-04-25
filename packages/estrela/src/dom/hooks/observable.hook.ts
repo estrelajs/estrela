@@ -1,12 +1,12 @@
-import { isObservable, Observable, Subscription } from '../../core';
+import { coerceObservable, Subscription } from '../../core';
 import { coerceArray } from '../../utils';
 import { h } from '../h';
 import { patch } from '../virtual-dom/patch';
 import { VirtualNode } from '../virtual-node';
 import { Hook } from './types';
 
-const subscriptons = new WeakMap<Observable<any>, Subscription>();
-const results = new WeakMap<Observable<any>, any[]>();
+const subscriptons = new WeakMap<any, Subscription>();
+const results = new WeakMap<any, VirtualNode[]>();
 
 function hook(oldNode: VirtualNode, node?: VirtualNode): void {
   if (oldNode.observable !== node?.observable) {
@@ -14,8 +14,8 @@ function hook(oldNode: VirtualNode, node?: VirtualNode): void {
       subscriptons.get(oldNode.observable)?.unsubscribe();
     }
 
-    if (node && isObservable(node.observable)) {
-      const observable = node.observable;
+    if (node?.observable) {
+      const observable = coerceObservable(node.observable);
 
       // observe changes
       const subscription = observable.subscribe(value => {
@@ -36,11 +36,14 @@ function hook(oldNode: VirtualNode, node?: VirtualNode): void {
       oldNode = node;
     }
   } else if (node?.observable) {
-    node.children = results.get(node.observable);
+    const children = results.get(node.observable);
+    if (children) {
+      node.children = children;
+    }
   }
 }
 
-export const selectorHook: Hook = {
+export const observableHook: Hook = {
   create: hook,
   update: hook,
   remove: hook,

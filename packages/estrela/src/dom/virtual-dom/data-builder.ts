@@ -1,4 +1,4 @@
-import { isObservable, isState, createSelector } from '../../core';
+import { isObservable, isState, createSelector, isPromise } from '../../core';
 import { apply, coerceArray, toCamelCase } from '../../utils';
 import { VirtualNodeData } from '../virtual-node';
 
@@ -12,10 +12,13 @@ export function buildData(
 
   data = Object.entries(data).reduce((acc, [key, value]) => {
     // create selector
+    // TODO: move code to a shared file
     if (Array.isArray(value) && typeof value.at(-1) === 'function') {
-      const inputs = value.slice(0, -1) as any[];
-      const states = inputs.filter(isObservable);
-      const selectorFn = value.at(-1) as any;
+      const selectorFn = value.pop() as any;
+      const inputs = value as any[];
+      const states = inputs.filter(
+        input => isPromise(input) || isObservable(input)
+      );
 
       if (states.length === 0) {
         acc[key] = selectorFn(...inputs.map(apply));

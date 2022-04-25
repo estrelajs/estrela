@@ -36,13 +36,13 @@ export interface VirtualNodeData {
 }
 
 export interface VirtualNode {
-  sel: string | null;
+  sel?: string;
   data?: VirtualNodeData;
   children?: VirtualNode[];
   Component?: Component;
   componentRef?: ComponentRef;
   element?: Node;
   listener?: (e: Event) => void;
-  observable?: Observable<any>;
+  observable?: Promise<any> | Observable<any>;
   text?: string | null;
 }

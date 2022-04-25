@@ -11,7 +11,7 @@ export function createStore<S extends Object>(initialState: S): Store<S> {
     [symbol_observable]() {
       return this;
     },
-    getValue() {
+    getState() {
       return value;
     },
     subscribe(observer: any) {

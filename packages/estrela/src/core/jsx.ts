@@ -17,6 +17,7 @@ declare global {
       | Node
       | ArrayElement
       | VirtualNode
+      | Promise<any>
       | Observable<any>
       | Selector
       | string
@@ -25,7 +26,7 @@ declare global {
       | null
       | undefined;
     type Selector = [
-      ...args: Observable<any>[],
+      ...args: (Promise<any> | Observable<any>)[],
       selector: (...args: any[]) => JSX.ArrayElement
     ];
     interface ArrayElement extends Array<Element> {}

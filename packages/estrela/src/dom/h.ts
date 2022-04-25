@@ -1,7 +1,10 @@
-import { Component, isObservable, createSelector } from '../core';
+import { Component, isObservable, createSelector, isPromise } from '../core';
 import { apply, coerceArray, isTruthy } from '../utils';
 import { buildData } from './virtual-dom/data-builder';
+import { nodeApi } from './virtual-dom/node-api';
 import { VirtualNode } from './virtual-node';
+
+const emptyChildren = [h('#text', null, null)];
 
 export function h(): VirtualNode;
 export function h(sel: Node): VirtualNode;
@@ -11,7 +14,6 @@ export function h(
   data: Record<string, any> | null,
   ...children: JSX.ArrayElement
 ): VirtualNode;
-
 export function h(
   sel: string | Component | Node | null = null,
   data: Record<string, any> | null = null,
@@ -36,9 +38,11 @@ export function h(
   const vchildren = children.flatMap(child => {
     // create selector
     if (Array.isArray(child) && typeof child.at(-1) === 'function') {
-      const inputs = child.slice(0, -1) as any[];
-      const states = inputs.filter(isObservable);
-      const selectorFn = child.at(-1) as any;
+      const selectorFn = child.pop() as any;
+      const inputs = child as any[];
+      const states = inputs.filter(
+        input => isPromise(input) || isObservable(input)
+      );
 
       if (states.length === 0) {
         child = selectorFn(...inputs.map(apply));
@@ -55,10 +59,10 @@ export function h(
     // parse each child
     return coerceArray(child)
       .filter(isTruthy)
-      .map(c => {
-        if (isObservable(c)) {
+      .flatMap(c => {
+        if (isPromise(c) || isObservable(c)) {
           return {
-            sel: null,
+            children: emptyChildren,
             observable: c,
           } as VirtualNode;
         }
@@ -66,54 +70,62 @@ export function h(
           return node2vnode(c);
         }
         if (typeof c === 'object') {
-          return c as unknown as VirtualNode;
+          const node = c as VirtualNode;
+          if (!node.sel && !node.Component && !node.observable) {
+            return node.children ?? [];
+          }
+          return node;
         }
         return h('#text', null, String(c));
       });
   });
 
   const node: VirtualNode = {
-    sel: null,
     children: vchildren,
-    data: buildData(data ?? {}, typeof sel === 'function'),
   };
 
-  if (typeof sel === 'string') {
-    node.sel = sel;
-  } else if (sel) {
+  if (typeof sel === 'function') {
     node.Component = sel;
+  } else if (sel) {
+    node.sel = sel;
+  }
+
+  if (data) {
+    const isComponet = typeof sel === 'function';
+    node.data = buildData(data, isComponet);
   }
 
   if (!node.sel && !node.children?.length) {
-    node.children = [h('#text', null, '')];
+    node.children = emptyChildren;
   }
 
   return node;
 }
 
 function node2vnode(node: Node): VirtualNode {
-  if (node.nodeType === Node.TEXT_NODE) {
+  if (nodeApi.isText(node)) {
     return {
       sel: '#text',
       text: node.textContent,
+      element: node,
     };
   }
-  if (node.nodeType === Node.COMMENT_NODE) {
+  if (nodeApi.isComment(node)) {
     return {
       sel: '#comment',
       text: node.textContent,
+      element: node,
     };
   }
   const children = Array.from(node.childNodes ?? []).map(node2vnode);
-  if (node.nodeType === Node.ELEMENT_NODE) {
+  if (nodeApi.isDocumentFragment(node)) {
     return {
-      sel: node.nodeName.toLowerCase(),
       children,
       element: node,
     };
   }
   return {
-    sel: null,
+    sel: node.nodeName.toLowerCase(),
     children,
     element: node,
   };

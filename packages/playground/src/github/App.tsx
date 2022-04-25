@@ -34,6 +34,7 @@ const App: Component = () => {
   return (
     <>
       <h1 style:color="blue">Github Example</h1>
+
       <div>
         <label for="search">Search:</label>
         <input
@@ -42,10 +43,14 @@ const App: Component = () => {
           placeholder="Search for github repository..."
         />
       </div>
+
       <div>
         <span>{githubList()?.length ?? 0} repository results</span>
-        <Button on:click={shuffle}>Shuffle</Button>
+        <Button disabled={!githubList()?.length} on:click={shuffle}>
+          Shuffle
+        </Button>
       </div>
+
       <div class="list" class:has-items={githubList()?.length}>
         {githubList()?.map(item => (
           <GithubCard key={item.id} item={item} on:remove={onRemove} />

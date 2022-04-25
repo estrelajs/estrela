@@ -4,12 +4,13 @@ import { VirtualNode } from './virtual-node';
 
 const NODE_STORE = new WeakMap<Element, VirtualNode>();
 
-export function render(node: JSX.Element, element: Element): void {
-  const oldNode = NODE_STORE.get(element);
+export function render(node: JSX.Element, parent: Element): void {
+  const oldNode = NODE_STORE.get(parent);
   if (oldNode) {
     patch(oldNode, node as VirtualNode);
   } else {
-    element.appendChild(nodeApi.createElement(node as VirtualNode));
+    const element = nodeApi.createElement(node as VirtualNode);
+    parent.appendChild(element);
   }
-  NODE_STORE.set(element, node as VirtualNode);
+  NODE_STORE.set(parent, node as VirtualNode);
 }

@@ -1,6 +1,5 @@
-import { Component, state } from 'estrela';
-import { createRouter, withRoute, Router, Link } from 'estrela/router';
-
+import { Component } from 'estrela';
+import { createRouter, Link, Router, withRoute } from 'estrela/router';
 import ChildrenTest from './children-test/App';
 import GithubTest from './github/App';
 
@@ -27,9 +26,7 @@ const routes = createRouter(
 );
 
 const App: Component = () => {
-  const r = state(routes);
-
-  return <Router routes={r()} />;
+  return <Router routes={routes} />;
 };
 
 export default App;
