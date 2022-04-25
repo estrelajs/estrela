@@ -1,6 +1,6 @@
-import { Component, JSXProps } from './component';
 import { VirtualNode } from '../dom';
-import { Observable, State } from './observables';
+import { Component, JSXProps } from './component';
+import { State, Subscribable } from './observables';
 
 /**
  * Based on JSX types for Surplus, Inferno and dom-expressions and adapted for Estrela.
@@ -18,7 +18,7 @@ declare global {
       | ArrayElement
       | VirtualNode
       | Promise<any>
-      | Observable<any>
+      | Subscribable<any>
       | Selector
       | string
       | number
@@ -26,7 +26,7 @@ declare global {
       | null
       | undefined;
     type Selector = [
-      ...args: (Promise<any> | Observable<any>)[],
+      ...args: (Promise<any> | Subscribable<any>)[],
       selector: (...args: any[]) => JSX.ArrayElement
     ];
     interface ArrayElement extends Array<Element> {}

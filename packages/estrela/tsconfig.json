@@ -1,18 +1,5 @@
 {
-  "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "Node",
-    "jsx": "preserve",
-    "lib": [
-      "ESNext",
-      "DOM"
-    ],
-    "strict": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-  },
+  "extends": "../../tsconfig.json",
   "include": [
     "src"
   ]
