@@ -96,17 +96,18 @@ export function createSelector(...args: any[]): Observable<any> {
     state.subscribe(value => {
       if (memoizedValues[i] !== value) {
         memoizedValues[i] = value;
-      }
-      if (Object.keys(memoizedValues).length === states.length) {
-        const values = Array.from(
-          { length: states.length },
-          (_, i) => memoizedValues[i]
-        );
-        const result = selector(...values);
-        if (memoizedResult !== result) {
-          memoizedResult = result;
-          subscriber.next(result);
+
+        if (Object.keys(memoizedValues).length === states.length) {
           hasResult = true;
+          const values = Array.from(
+            { length: states.length },
+            (_, i) => memoizedValues[i]
+          );
+          const result = selector(...values);
+          if (memoizedResult !== result) {
+            memoizedResult = result;
+            subscriber.next(result);
+          }
         }
       }
     });
@@ -122,7 +123,7 @@ export function createSelector(...args: any[]): Observable<any> {
       if (hasResult) {
         obs.next(memoizedResult);
       }
-      return createSubscription(subscriber);
+      return createSubscription(() => observers.delete(obs));
     },
   };
 }

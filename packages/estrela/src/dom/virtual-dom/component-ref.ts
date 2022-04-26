@@ -85,9 +85,16 @@ export class ComponentRef {
     const visitor = (node: VirtualNode): VirtualNode => {
       node = { ...node };
       if (node.sel === 'slot') {
-        const fragment = h();
         const slot = node.data?.attrs?.name as string | undefined;
-        fragment.children = children.filter(child => child.data?.slot === slot);
+        const content = children.filter(child => child.data?.slot === slot);
+        if (content.length === 0) {
+          return h('#', null, null);
+        }
+        if (content.length === 1) {
+          return content[0];
+        }
+        const fragment = h();
+        fragment.children = content;
         return fragment;
       } else if (node.children) {
         node.children = node.children.map(visitor);

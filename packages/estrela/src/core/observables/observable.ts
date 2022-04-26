@@ -13,7 +13,10 @@ export function createObservable<T>(
       const observers = new Set([coerceObserver(observer)]);
       const subscriber = createSubscriber(observers);
       subscribe?.(subscriber);
-      return createSubscription(subscriber);
+      return createSubscription(() => {
+        subscriber.complete();
+        observers.clear();
+      });
     },
   };
 }

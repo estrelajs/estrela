@@ -5,7 +5,6 @@ import { Hook } from './types';
 function hook(oldNode: VirtualNode, node?: VirtualNode): void {
   if (oldNode.Component !== node?.Component) {
     oldNode.componentRef?.dispose();
-    delete oldNode.componentRef;
   }
   if (node?.Component) {
     node.componentRef =

@@ -81,8 +81,9 @@ export const nodeApi = {
     parent.insertBefore(child, parent.childNodes[index]);
   },
   removeElement(node: VirtualNode): void {
-    // TODO: add fragment checks
+    // dispatch remove for each node in the tree.
     walk(node, node => hooks.forEach(hook => hook.remove?.(node)));
+
     const element = node.element;
     if (element) {
       if (nodeApi.isDocumentFragment(element)) {
@@ -96,7 +97,9 @@ export const nodeApi = {
     }
   },
   replaceElement(newNode: VirtualNode, node: VirtualNode): void {
-    // TODO: add fragment checks
+    // dispatch remove for each node in the tree.
+    walk(node, node => hooks.forEach(hook => hook.remove?.(node)));
+
     const meta = nodeApi.getMetadata(node);
     const element = newNode?.element ?? nodeApi.createElement(newNode);
     if (meta.parent) {

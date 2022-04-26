@@ -28,7 +28,7 @@ const App: Component = () => {
   }
 
   function shuffle(): void {
-    githubList.update(list => list?.sort(() => Math.random() - 0.5));
+    githubList.update(list => list?.sort(() => Math.random() - 0.5).slice());
   }
 
   return (

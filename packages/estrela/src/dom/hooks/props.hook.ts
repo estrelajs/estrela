@@ -2,29 +2,28 @@ import { coerceObservable, Subscription } from '../../core';
 import { VirtualNode } from '../virtual-node';
 import { Hook } from './types';
 
-const subscriptons = new WeakMap<any, Subscription>();
+const subscriptons = new Map<any, Subscription>();
 
-function hook(oldNode: VirtualNode, node: VirtualNode): void {
-  const element = node.element;
+function hook(oldNode: VirtualNode, node?: VirtualNode): void {
+  const element = node?.element ?? oldNode.element;
   let oldProps = oldNode.data?.props;
-  let props = node.data?.props;
+  let props = node?.data?.props;
 
   if (!element || oldProps === props) return;
+  if (oldProps === props) return;
   oldProps = oldProps ?? {};
   props = props ?? {};
 
+  for (let key in oldProps) {
+    const prop = oldProps[key];
+    subscriptons.get(prop)?.unsubscribe();
+  }
+
   for (let key in props) {
-    const cur = props[key];
-    const old = oldProps[key];
+    const prop = props[key];
 
-    if (old === cur) {
-      continue;
-    }
-
-    subscriptons.get(old)?.unsubscribe();
-
-    const subscription = coerceObservable(cur).subscribe(value => {
-      if (node.componentRef) {
+    const subscription = coerceObservable(prop).subscribe(value => {
+      if (node?.componentRef) {
         if (node.componentRef.getProp(key) !== value) {
           node.componentRef.setProp(key, value);
         }
@@ -33,19 +32,12 @@ function hook(oldNode: VirtualNode, node: VirtualNode): void {
       }
     });
 
-    if (typeof cur === 'object') {
-      subscriptons.set(cur, subscription);
-    }
-  }
-
-  for (let key in oldProps) {
-    if (!(key in props)) {
-      subscriptons.get(oldProps[key])?.unsubscribe();
-    }
+    subscriptons.set(prop, subscription);
   }
 }
 
 export const propsHook: Hook = {
   create: hook,
   update: hook,
+  remove: hook,
 };

@@ -23,8 +23,9 @@ export function createEventEmitter<T>(async = false): EventEmitter<T> {
       }
     },
     subscribe(observer: any) {
-      observers.add(coerceObserver(observer));
-      return createSubscription(subscriber);
+      const obs = coerceObserver(observer);
+      observers.add(obs);
+      return createSubscription(() => observers.delete(obs));
     },
   };
   return descriptor;

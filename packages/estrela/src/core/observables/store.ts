@@ -18,7 +18,7 @@ export function createStore<S extends Object>(initialState: S): Store<S> {
       const obs = coerceObserver(observer);
       observers.add(obs);
       obs.next(value);
-      return createSubscription(subscriber);
+      return createSubscription(() => observers.delete(obs));
     },
     update(setter: (value: any) => any) {
       value = Object.freeze(setter(value));

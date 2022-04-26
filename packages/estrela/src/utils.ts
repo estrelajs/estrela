@@ -17,6 +17,27 @@ export function coerceFunction<T>(value: T | (() => T)): () => T {
   return typeof value === 'function' ? (value as () => T) : () => value;
 }
 
+/** Check if objects are deep equal. */
+export function deepEqual(obj1: any, obj2: any): boolean {
+  if (!obj1 || !obj2 || (isPrimitive(obj1) && isPrimitive(obj2))) {
+    // compare primitives
+    return obj1 === obj2;
+  }
+  if (Object.keys(obj1).length !== Object.keys(obj2).length) {
+    return false;
+  }
+  // compare objects with same number of keys
+  for (let key in obj1) {
+    if (!(key in obj2)) {
+      return false; //other object doesn't have this prop
+    }
+    if (!deepEqual(obj1[key], obj2[key])) {
+      return false;
+    }
+  }
+  return true;
+}
+
 /** Check if value is false, null or undefined. */
 export function isFalsy(x: any): x is false | null | undefined {
   return x === false || x === null || x === undefined;
@@ -25,6 +46,13 @@ export function isFalsy(x: any): x is false | null | undefined {
 /** Check if value is null or undefined. */
 export function isNil(x: any): x is null | undefined {
   return x === null || x === undefined;
+}
+
+/** Check if value is primitive. */
+export function isPrimitive(
+  x: any
+): x is string | number | boolean | symbol | null | undefined {
+  return typeof x !== 'function' && typeof x !== 'object';
 }
 
 /** Check if value is truthy. */

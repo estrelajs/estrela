@@ -4,8 +4,6 @@ import { buildData } from './virtual-dom/data-builder';
 import { nodeApi } from './virtual-dom/node-api';
 import { VirtualNode } from './virtual-node';
 
-const emptyChildren = [h('#text', null, null)];
-
 export function h(): VirtualNode;
 export function h(sel: Node): VirtualNode;
 export function h(sel: '#' | '!', data: null, text: string): VirtualNode;
@@ -62,7 +60,7 @@ export function h(
       .flatMap(c => {
         if (isPromise(c) || isObservable(c)) {
           return {
-            children: emptyChildren,
+            children: [h('#text', null, null)],
             observable: c,
           } as VirtualNode;
         }
@@ -96,7 +94,7 @@ export function h(
   }
 
   if (!node.sel && !node.children?.length) {
-    node.children = emptyChildren;
+    node.children = [h('#text', null, null)];
   }
 
   return node;

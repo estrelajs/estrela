@@ -76,7 +76,10 @@ export interface Subscriber<T> extends Observer<T> {
   thrownError?: any;
 }
 
-export interface Subscription {
-  add(subscription: Subscription): void;
+export interface Unsubscribable {
   unsubscribe(): void;
+}
+
+export interface Subscription extends Unsubscribable {
+  add(subscription: Subscription): void;
 }

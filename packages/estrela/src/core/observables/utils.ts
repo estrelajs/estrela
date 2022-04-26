@@ -7,6 +7,7 @@ import {
   State,
   Subscriber,
   Subscription,
+  Unsubscribable,
 } from './types';
 
 const noop = () => {};
@@ -73,15 +74,12 @@ export function createSubscriber<T>(
 }
 
 export function createSubscription(
-  subscription?: Subscriber<any> | Subscription
+  subscription?: (() => void) | Unsubscribable
 ): Subscription {
-  const subscriptions = new Set<Subscription>();
+  const subscriptions = new Set<Unsubscribable>();
   if (subscription) {
-    if (isSubscriber(subscription)) {
-      const subscriber = subscription;
-      subscription = {
-        unsubscribe: () => subscriber.complete(),
-      } as Subscription;
+    if (typeof subscription === 'function') {
+      subscription = { unsubscribe: subscription };
     }
     subscriptions.add(subscription);
   }

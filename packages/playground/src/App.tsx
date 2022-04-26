@@ -20,9 +20,9 @@ const Menu: Component = () => {
 };
 
 const routes = createRouter(
-  withRoute('/', <Menu />),
-  withRoute('/test', <ChildrenTest />),
-  withRoute('/github', <GithubTest />)
+  withRoute('/', () => <Menu />),
+  withRoute('/test', () => <ChildrenTest />),
+  withRoute('/github', () => <GithubTest />)
 );
 
 const App: Component = () => {
