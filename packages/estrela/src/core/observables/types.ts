@@ -81,5 +81,5 @@ export interface Unsubscribable {
 }
 
 export interface Subscription extends Unsubscribable {
-  add(subscription: Subscription): void;
+  add(subscription: Unsubscribable): void;
 }

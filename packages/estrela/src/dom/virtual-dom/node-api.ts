@@ -116,6 +116,9 @@ export const nodeApi = {
   isElement(node: Node): node is Element {
     return node.nodeType === 1;
   },
+  isHTMLElement(node: Node): node is HTMLElement {
+    return nodeApi.isElement(node) && (node as any).style;
+  },
   isText(node: Node): node is Text {
     return node.nodeType === 3;
   },

@@ -100,7 +100,6 @@ function hook(oldNode: VirtualNode, node?: VirtualNode): void {
         oldelement.removeEventListener(name, oldListener);
       }
     }
-    delete oldNode.listener;
   }
 
   // add new listeners which has not already attached
@@ -108,20 +107,16 @@ function hook(oldNode: VirtualNode, node?: VirtualNode): void {
     // reuse existing listener or create new
     const listener = (node.listener = oldNode.listener || createListener(node));
 
-    const addEventListener = (name: string) => {
-      const event = events[name];
-      element.addEventListener(name, listener, {
-        capture: event.filters.includes('capture'),
-        once: event.filters.includes('once'),
-        passive: event.filters.includes('passive'),
-      });
-    };
-
     // if element changed or added we add all needed listeners unconditionally
     for (name in events) {
       // add listener if new listener added
       if (!oldEvents?.[name]) {
-        addEventListener(name);
+        const event = events[name];
+        element.addEventListener(name, listener, {
+          capture: event.filters.includes('capture'),
+          once: event.filters.includes('once'),
+          passive: event.filters.includes('passive'),
+        });
       }
     }
   }

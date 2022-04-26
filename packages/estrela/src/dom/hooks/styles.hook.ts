@@ -1,124 +1,80 @@
+import { coerceObservable, Subscription } from '../../core';
 import { nodeApi } from '../virtual-dom/node-api';
-import { VirtualNode } from '../virtual-node';
+import { Styles, VirtualNode } from '../virtual-node';
 import { Hook } from './types';
 
-// Bindig `requestAnimationFrame` like this fixes a bug in IE/Edge. See #360 and #409.
-const raf =
-  (typeof window !== 'undefined' &&
-    window.requestAnimationFrame.bind(window)) ||
-  setTimeout;
-const nextFrame = function (fn: any) {
-  raf(function () {
-    raf(fn);
-  });
-};
-let reflowForced = false;
+const subscriptons = new Map<any, Subscription>();
 
-function setNextFrame(obj: any, prop: string, val: any): void {
-  nextFrame(function () {
-    obj[prop] = val;
-  });
-}
+function hook(oldNode: VirtualNode, node?: VirtualNode) {
+  const element = node?.element ?? oldNode.element;
+  const oldStyles = oldNode.data?.styles;
+  const styles = node?.data?.styles;
+  const oldStyle = oldNode.data?.style;
+  const style = node?.data?.style;
 
-function updateStyle(oldnode: VirtualNode, node: VirtualNode): void {
-  const element = node.element;
-  let oldStyles = oldnode.data?.styles;
-  let styles = node.data?.styles;
-
-  if (!element || !nodeApi.isElement(element)) return;
-  if (oldStyles === styles) return;
-  oldStyles = oldStyles ?? {};
-  styles = styles ?? {};
-  const oldHasDel = 'delayed' in oldStyles;
-
-  for (let name in oldStyles) {
-    if (!styles[name]) {
-      if (name[0] === '-' && name[1] === '-') {
-        (element as any).style.removeProperty(name);
-      } else {
-        (element as any).style[name] = '';
-      }
-    }
-  }
-  for (let name in styles) {
-    let cur = styles[name];
-    if (name === 'delayed' && styles.delayed) {
-      for (const name2 in styles.delayed) {
-        cur = styles.delayed[name2];
-        if (!oldHasDel || cur !== (oldStyles.delayed as any)[name2]) {
-          setNextFrame((element as any).style, name2, cur);
-        }
-      }
-    } else if (name !== 'remove' && cur !== oldStyles[name]) {
-      if (name[0] === '-' && name[1] === '-') {
-        (element as any).style.setProperty(name, cur);
-      } else {
-        (element as any).style[name] = cur;
-      }
-    }
-  }
-}
-
-function applyDestroyStyle(node: VirtualNode): void {
-  let style: any;
-  let name: string;
-  const elm = node.element;
-  const s = node.data?.styles;
-  if (!s || !(style = s.destroy)) return;
-  for (name in style) {
-    (elm as any).style[name] = style[name];
-  }
-}
-
-function applyRemoveStyle(node: VirtualNode): void {
-  applyDestroyStyle(node);
-
-  const s = node.data?.styles;
-  if (!s || !s.remove) {
-    // rm();
+  if (!element || !nodeApi.isHTMLElement(element)) {
     return;
   }
-  if (!reflowForced) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    (node.element as any).offsetLeft;
-    reflowForced = true;
+
+  if (oldStyles !== styles) {
+    bindStyles(oldStyles ?? {}, styles ?? {}, element);
   }
 
-  const element = node.element;
-  let i = 0;
-  const style = s.remove;
-  let amount = 0;
-  const applied: string[] = [];
+  if (oldStyle !== style) {
+    let oldStyles: Styles = {};
+    subscriptons.get(element)?.unsubscribe();
+    subscriptons.delete(element);
 
-  for (let name in style) {
-    applied.push(name);
-    (element as any).style[name] = style[name];
-  }
-
-  const compStyle = getComputedStyle(element as Element);
-  const props = (compStyle as any)['transition-property'].split(', ');
-
-  for (; i < props.length; ++i) {
-    if (applied.indexOf(props[i]) !== -1) amount++;
-  }
-
-  (element as Element).addEventListener(
-    'transitionend' as any,
-    function (ev: TransitionEvent) {
-      if (ev.target === element) --amount;
-      // if (amount === 0) rm();
+    if (style) {
+      const subscription = coerceObservable(style).subscribe(value => {
+        const styles = parseStyle(value);
+        bindStyles(oldStyles, styles, element);
+        oldStyles = styles;
+      });
+      subscriptons.set(element, subscription);
     }
-  );
+  }
 }
 
-function forceReflow() {
-  reflowForced = false;
+function bindStyles(oldStyles: Styles, styles: Styles, element: HTMLElement) {
+  for (let key in oldStyles) {
+    const style = oldStyles[key];
+    if (style !== styles[key]) {
+      subscriptons.get(key)?.unsubscribe();
+      subscriptons.delete(key);
+      element.style[key as any] = '';
+    }
+  }
+
+  for (let key in styles) {
+    const cur = styles[key];
+    const old = oldStyles[key];
+    if (cur !== old) {
+      const subscription = coerceObservable(cur).subscribe(value => {
+        element.style[key as any] = value;
+      });
+      subscriptons.set(key, subscription);
+    }
+  }
+}
+
+function parseStyle(style: string | Styles): Styles {
+  if (typeof style !== 'string') {
+    return style;
+  }
+  return String(style)
+    .split(';')
+    .reduce((acc, rule) => {
+      const [key, value] = rule.split(':').map(s => s.trim());
+      if (key.length > 0 && value.length > 0) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {} as Styles);
 }
 
 export const stylesHook: Hook = {
-  // pre: forceReflow,
-  // destroy: applyDestroyStyle,
-  create: updateStyle,
-  update: updateStyle,
-  remove: applyRemoveStyle,
+  create: hook,
+  update: hook,
+  remove: hook,
 };

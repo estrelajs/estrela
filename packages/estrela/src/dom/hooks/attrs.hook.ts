@@ -11,45 +11,49 @@ const colonChar = 58;
 const xChar = 120;
 
 function hook(oldNode: VirtualNode, node?: VirtualNode): void {
+  // element will always be the same, if both exists
   const element = node?.element ?? oldNode.element;
-  let oldAttrs = oldNode.data?.attrs;
-  let attrs = node?.data?.attrs;
+  const oldAttrs = oldNode.data?.attrs ?? {};
+  const attrs = node?.data?.attrs ?? {};
 
-  if (!element || !nodeApi.isElement(element)) return;
-  if (oldAttrs === attrs) return;
-  oldAttrs = oldAttrs ?? {};
-  attrs = attrs ?? {};
+  if (!element || !nodeApi.isElement(element) || oldAttrs === attrs) {
+    return;
+  }
 
   for (let key in oldAttrs) {
     const attr = oldAttrs[key];
-    subscriptons.get(attr)?.unsubscribe();
-    subscriptons.delete(attr);
+    if (attr !== attrs[key]) {
+      subscriptons.get(attr)?.unsubscribe();
+      subscriptons.delete(attr);
+      element.removeAttribute(key);
+    }
   }
 
   for (let key in attrs) {
-    const attr = attrs[key];
-
-    const subscription = coerceObservable(attr).subscribe(value => {
-      if (value === true) {
-        element.setAttribute(key, '');
-      } else if (value === false) {
-        element.removeAttribute(key);
-      } else {
-        if (key.charCodeAt(0) !== xChar) {
-          element.setAttribute(key, value as any);
-        } else if (key.charCodeAt(3) === colonChar) {
-          // Assume xml namespace
-          element.setAttributeNS(xmlNS, key, value as any);
-        } else if (key.charCodeAt(5) === colonChar) {
-          // Assume xlink namespace
-          element.setAttributeNS(xlinkNS, key, value as any);
+    const cur = attrs[key];
+    const old = oldAttrs[key];
+    if (cur !== old) {
+      const subscription = coerceObservable(cur).subscribe(value => {
+        if (value === true) {
+          element.setAttribute(key, '');
+        } else if (value === false) {
+          element.removeAttribute(key);
         } else {
-          element.setAttribute(key, value as any);
+          if (key.charCodeAt(0) !== xChar) {
+            element.setAttribute(key, value as any);
+          } else if (key.charCodeAt(3) === colonChar) {
+            // Assume xml namespace
+            element.setAttributeNS(xmlNS, key, value as any);
+          } else if (key.charCodeAt(5) === colonChar) {
+            // Assume xlink namespace
+            element.setAttributeNS(xlinkNS, key, value as any);
+          } else {
+            element.setAttribute(key, value as any);
+          }
         }
-      }
-    });
-
-    subscriptons.set(attr, subscription);
+      });
+      subscriptons.set(cur, subscription);
+    }
   }
 }
 

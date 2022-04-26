@@ -5,10 +5,12 @@ import { Hook } from './types';
 function hook(oldNode: VirtualNode, node?: VirtualNode): void {
   if (oldNode.Component !== node?.Component) {
     oldNode.componentRef?.dispose();
+    if (node?.Component) {
+      node.componentRef = new ComponentRef(node.element as Element);
+    }
   }
   if (node?.Component) {
-    node.componentRef =
-      oldNode.componentRef ?? new ComponentRef(node.element as Element);
+    node.componentRef ??= oldNode.componentRef;
   }
 }
 

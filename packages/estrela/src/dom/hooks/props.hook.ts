@@ -1,38 +1,62 @@
 import { coerceObservable, Subscription } from '../../core';
+import { ComponentRef } from '../virtual-dom/component-ref';
 import { VirtualNode } from '../virtual-node';
 import { Hook } from './types';
 
 const subscriptons = new Map<any, Subscription>();
+const componentRefs = new WeakMap<Node, ComponentRef>();
 
 function hook(oldNode: VirtualNode, node?: VirtualNode): void {
+  // element will always be the same, if both exists
   const element = node?.element ?? oldNode.element;
-  let oldProps = oldNode.data?.props;
-  let props = node?.data?.props;
+  const oldProps = oldNode.data?.props ?? {};
+  const props = node?.data?.props ?? {};
 
-  if (!element || oldProps === props) return;
-  if (oldProps === props) return;
-  oldProps = oldProps ?? {};
-  props = props ?? {};
+  if (!element || oldProps === props) {
+    return;
+  }
+
+  if (element && node?.componentRef) {
+    componentRefs.set(element, node.componentRef);
+  }
 
   for (let key in oldProps) {
     const prop = oldProps[key];
-    subscriptons.get(prop)?.unsubscribe();
+    if (prop !== props[key]) {
+      subscriptons.get(prop)?.unsubscribe();
+      subscriptons.delete(prop);
+    }
   }
 
   for (let key in props) {
-    const prop = props[key];
+    const cur = props[key];
+    const old = oldProps[key];
 
-    const subscription = coerceObservable(prop).subscribe(value => {
-      if (node?.componentRef) {
-        if (node.componentRef.getProp(key) !== value) {
-          node.componentRef.setProp(key, value);
-        }
-      } else if ((element as any)[key] !== value) {
-        (element as any)[key] = value;
+    if (cur === old) {
+      const curRef = node?.componentRef;
+      const oldRef = oldNode.componentRef;
+      if (oldRef && curRef !== oldRef) {
+        const oldValue = oldRef.getProp(key);
+        curRef?.setProp(key, oldValue);
       }
-    });
-
-    subscriptons.set(prop, subscription);
+    } else {
+      const defaultValue = (element as any)[key];
+      const unsubscribe = () => {
+        (element as any)[key] = defaultValue;
+      };
+      const subscription = coerceObservable(cur).subscribe(value => {
+        if (componentRefs.has(element)) {
+          const compRef = componentRefs.get(element)!;
+          if (compRef.getProp(key) !== value) {
+            compRef.setProp(key, value);
+          }
+        } else if ((element as any)[key] !== value) {
+          (element as any)[key] = value;
+        }
+      });
+      subscription.add({ unsubscribe });
+      subscriptons.set(cur, subscription);
+    }
   }
 }
 

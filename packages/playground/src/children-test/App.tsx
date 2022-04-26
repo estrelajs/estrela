@@ -19,7 +19,7 @@ const App: Component = () => {
   }
 
   function shuffleList() {
-    items.update(list => list.sort(() => Math.random() - 0.5));
+    items.update(list => list.sort(() => Math.random() - 0.5).slice());
   }
 
   function toggleOdds() {
