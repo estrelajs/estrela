@@ -16,15 +16,15 @@ function hook(oldNode: VirtualNode, node?: VirtualNode): void {
     return;
   }
 
-  if (element && node?.componentRef) {
+  if (node?.componentRef) {
     componentRefs.set(element, node.componentRef);
   }
 
   for (let key in oldProps) {
     const prop = oldProps[key];
     if (prop !== props[key]) {
-      subscriptons.get(prop)?.unsubscribe();
-      subscriptons.delete(prop);
+      subscriptons.get(key)?.unsubscribe();
+      subscriptons.delete(key);
     }
   }
 
@@ -55,7 +55,7 @@ function hook(oldNode: VirtualNode, node?: VirtualNode): void {
         }
       });
       subscription.add({ unsubscribe });
-      subscriptons.set(cur, subscription);
+      subscriptons.set(key, subscription);
     }
   }
 }

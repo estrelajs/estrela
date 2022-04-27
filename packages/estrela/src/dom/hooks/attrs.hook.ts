@@ -3,7 +3,7 @@ import { nodeApi } from '../virtual-dom/node-api';
 import { VirtualNode } from '../virtual-node';
 import { Hook } from './types';
 
-const subscriptons = new Map<any, Subscription>();
+const subscriptons = new Map<string, Subscription>();
 
 const xlinkNS = 'http://www.w3.org/1999/xlink';
 const xmlNS = 'http://www.w3.org/XML/1998/namespace';
@@ -23,8 +23,8 @@ function hook(oldNode: VirtualNode, node?: VirtualNode): void {
   for (let key in oldAttrs) {
     const attr = oldAttrs[key];
     if (attr !== attrs[key]) {
-      subscriptons.get(attr)?.unsubscribe();
-      subscriptons.delete(attr);
+      subscriptons.get(key)?.unsubscribe();
+      subscriptons.delete(key);
       element.removeAttribute(key);
     }
   }
@@ -52,7 +52,7 @@ function hook(oldNode: VirtualNode, node?: VirtualNode): void {
           }
         }
       });
-      subscriptons.set(cur, subscription);
+      subscriptons.set(key, subscription);
     }
   }
 }
