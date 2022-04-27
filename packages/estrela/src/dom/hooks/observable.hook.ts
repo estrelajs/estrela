@@ -6,8 +6,8 @@ import { patch } from '../virtual-dom/patch';
 import { VirtualNode } from '../virtual-node';
 import { Hook } from './types';
 
-const subscriptons = new WeakMap<Node, Subscription>();
-const results = new WeakMap<Node, VirtualNode[]>();
+const subscriptonMap = new WeakMap<Node, Subscription>();
+const lastNodeMap = new WeakMap<Node, VirtualNode>();
 
 function hook(oldNode: VirtualNode, node?: VirtualNode): void {
   const element = node?.element ?? oldNode.element;
@@ -16,42 +16,55 @@ function hook(oldNode: VirtualNode, node?: VirtualNode): void {
   }
 
   if (oldNode.observable !== node?.observable) {
-    if (oldNode.observable) {
-      subscriptons.get(element)?.unsubscribe();
-      subscriptons.delete(element);
-      results.delete(element);
-    }
+    subscriptonMap.get(element)?.unsubscribe();
+    subscriptonMap.delete(element);
 
     if (node?.observable) {
-      const observable = node.observable;
-      let refNode = node;
-      let isAsync = false;
-
       // observe changes
       const subscription = coerceObservable(node.observable).subscribe(
         value => {
+          let lastNode = lastNodeMap.get(element);
           const patchNode = h(null, null, ...coerceArray(value));
-          results.set(element, patchNode.children!);
-          patchNode.observable = observable;
+          patchNode.element = element;
 
-          if (isAsync) {
-            refNode = patch(refNode, patchNode);
-          } else {
-            refNode.children = patchNode.children;
+          if (!patchNode.children?.length) {
+            setEmptyText(patchNode);
           }
+
+          if (lastNode) {
+            lastNode = patch(lastNode, patchNode);
+          } else {
+            lastNode = patchNode;
+            nodeApi.createElement(patchNode);
+          }
+
+          lastNodeMap.set(element, lastNode);
         }
       );
 
+      if (!lastNodeMap.has(element)) {
+        const lastNode = h();
+        lastNode.element = element;
+        lastNodeMap.set(element, lastNode);
+        setEmptyText(lastNode);
+      }
+
       // add subscription to the map
-      subscriptons.set(element, subscription);
-      isAsync = true;
-    }
-  } else if (node?.observable) {
-    const children = results.get(element);
-    if (children) {
-      node.children = children;
+      subscriptonMap.set(element, subscription);
+    } else {
+      const lastNode = lastNodeMap.get(element);
+      if (lastNode) {
+        oldNode.children = lastNode.children;
+      }
     }
   }
+}
+
+function setEmptyText(node: VirtualNode): void {
+  const text = h('#');
+  const element = nodeApi.createElement(text);
+  node.element?.appendChild(element);
+  node.children = [text];
 }
 
 export const observableHook: Hook = {

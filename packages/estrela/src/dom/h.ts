@@ -6,7 +6,11 @@ import { VirtualNode } from './virtual-node';
 
 export function h(): VirtualNode;
 export function h(sel: Node): VirtualNode;
-export function h(sel: '#' | '!', data: null, text: string): VirtualNode;
+export function h(
+  sel: '#' | '!',
+  data?: null,
+  text?: string | null
+): VirtualNode;
 export function h(
   sel: string | Component | null,
   data: Record<string, any> | null,
@@ -26,7 +30,7 @@ export function h(
   if (sel === '#text' || sel === '!#comment') {
     return {
       sel: sel,
-      text: children[0] as string,
+      text: (children[0] as string) ?? null,
     };
   }
   if (sel instanceof Node) {
@@ -59,10 +63,7 @@ export function h(
       .filter(isTruthy)
       .flatMap(c => {
         if (isPromise(c) || isObservable(c)) {
-          return {
-            children: [h('#text', null, null)],
-            observable: c,
-          } as VirtualNode;
+          return { observable: c };
         }
         if (c instanceof Node) {
           return node2vnode(c);
@@ -78,26 +79,22 @@ export function h(
       });
   });
 
-  const node: VirtualNode = {
-    children: vchildren,
-  };
-
   if (typeof sel === 'function') {
-    node.Component = sel;
+    return {
+      Component: sel,
+      data: buildData(data ?? {}, true),
+      children: vchildren,
+    };
   } else if (sel) {
-    node.sel = sel;
+    return {
+      sel,
+      data: buildData(data ?? {}, true),
+      children: vchildren,
+    };
   }
-
-  if (data) {
-    const isComponet = typeof sel === 'function';
-    node.data = buildData(data, isComponet);
-  }
-
-  if (!node.sel && !node.children?.length) {
-    node.children = [h('#text', null, null)];
-  }
-
-  return node;
+  return {
+    children: vchildren.length === 0 ? [h('#')] : vchildren,
+  };
 }
 
 function node2vnode(node: Node): VirtualNode {

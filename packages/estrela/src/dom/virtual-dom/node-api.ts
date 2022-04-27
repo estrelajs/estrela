@@ -15,19 +15,23 @@ interface NodeMetadata {
 export const nodeApi = {
   getMetadata(node: VirtualNode): NodeMetadata {
     const children =
+      node.componentRef?.getChildren() ??
       node.children?.flatMap(child => {
         if (!child.element || nodeApi.isDocumentFragment(child.element)) {
           const meta = nodeApi.getMetadata(child);
           return meta.children ?? [];
         }
         return child.element;
-      }) ?? [];
+      }) ??
+      [];
+
     let element = node.element ?? null;
     let parent = element?.parentNode ?? null;
     let childIndex =
       element && parent
         ? Array.from(parent.childNodes).indexOf(element as ChildNode)
         : -1;
+
     const isFragment = !!element && nodeApi.isDocumentFragment(element);
     if (isFragment) {
       const firstChild = children?.[0] as ChildNode | undefined;
@@ -36,7 +40,7 @@ export const nodeApi = {
         childIndex = Array.from(parent.childNodes).indexOf(firstChild);
       }
     }
-    element?.nextSibling;
+
     return {
       parent,
       element,
@@ -47,24 +51,33 @@ export const nodeApi = {
   },
   createElement(node: VirtualNode): Node {
     let element: Node;
-    if (node.sel === '#text') {
-      element = document.createTextNode(node.text ?? '');
-    } else if (node.sel === '#comment') {
-      element = document.createComment(node.text ?? '');
-    } else if (node.sel) {
-      element = document.createElement(node.sel);
+
+    if (node.element) {
+      element = node.element;
     } else {
-      element = document.createDocumentFragment();
+      if (node.sel === '#text') {
+        element = document.createTextNode(node.text ?? '');
+      } else if (node.sel === '#comment') {
+        element = document.createComment(node.text ?? '');
+      } else if (node.sel) {
+        element = document.createElement(node.sel);
+      } else {
+        element = document.createDocumentFragment();
+      }
+      node.element = element as any;
+      hooks.forEach(hook => hook.create?.(emptyNode, node));
     }
 
-    node.element = element as any;
-    hooks.forEach(hook => hook.create?.(emptyNode, node));
-    node.componentRef?.patch(emptyNode, node);
+    node.children?.forEach(child => {
+      const childElement = nodeApi.createElement(child);
+      if (!node.componentRef) {
+        element.appendChild(childElement);
+      }
+    });
 
-    if (node.children) {
-      node.children.forEach(child =>
-        element.appendChild(nodeApi.createElement(child))
-      );
+    if (node.componentRef) {
+      const componentElement = node.componentRef?.create(node);
+      element.appendChild(componentElement);
     }
 
     return element;
@@ -82,7 +95,9 @@ export const nodeApi = {
   },
   removeElement(node: VirtualNode): void {
     // dispatch remove for each node in the tree.
-    walk(node, node => hooks.forEach(hook => hook.remove?.(node)));
+    walk(node, node => hooks.forEach(hook => hook.remove?.(node)), {
+      on: 'enter',
+    });
 
     const element = node.element;
     if (element) {
@@ -96,12 +111,15 @@ export const nodeApi = {
       }
     }
   },
-  replaceElement(newNode: VirtualNode, node: VirtualNode): void {
+  replaceElement(oldNode: VirtualNode, node: VirtualNode): void {
     // dispatch remove for each node in the tree.
-    walk(node, node => hooks.forEach(hook => hook.remove?.(node)));
+    walk(oldNode, node => hooks.forEach(hook => hook.remove?.(node)), {
+      on: 'enter',
+    });
 
-    const meta = nodeApi.getMetadata(node);
-    const element = newNode?.element ?? nodeApi.createElement(newNode);
+    const meta = nodeApi.getMetadata(oldNode);
+    const element = node?.element ?? nodeApi.createElement(node);
+
     if (meta.parent) {
       if (meta.isFragment) {
         meta.parent.replaceChild(element, meta.children[0]);
@@ -112,6 +130,15 @@ export const nodeApi = {
         meta.parent.replaceChild(element, meta.element);
       }
     }
+  },
+  isSame(node: VirtualNode, other: VirtualNode): boolean {
+    if (!node.sel) {
+      return (
+        node.Component === other.Component &&
+        node.observable === other.observable
+      );
+    }
+    return node.sel === other.sel;
   },
   isElement(node: Node): node is Element {
     return node.nodeType === 1;

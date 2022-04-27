@@ -4,7 +4,7 @@ import { Hook } from './types';
 
 function hook(oldNode: VirtualNode, node?: VirtualNode): void {
   if (oldNode.Component !== node?.Component) {
-    oldNode.componentRef?.dispose();
+    oldNode.componentRef?.dispose(oldNode);
     if (node?.Component) {
       node.componentRef = new ComponentRef(node.element as Element);
     }

@@ -6,6 +6,7 @@ import {
 } from '../../core';
 import { h } from '../h';
 import { VirtualNode } from '../virtual-node';
+import { nodeApi } from './node-api';
 
 export class ComponentRef {
   private readonly lifecycleHooks: Record<string, () => void> = {};
@@ -42,22 +43,35 @@ export class ComponentRef {
     });
   }
 
-  dispose(): void {
+  dispose(node: VirtualNode): void {
+    if (this.template) {
+      node.children = [this.template];
+    }
+
     this.lifecycleHooks['destroy']?.();
     this.states.forEach(state => state.complete());
     Object.values(this.props).forEach(state => state.complete());
     this.subscription.unsubscribe();
   }
 
-  patch(oldNode: VirtualNode, node: VirtualNode): void {
-    if (oldNode.Component !== node.Component) {
-      // set reference and get component template
-      ComponentRef.currentRef = this;
-      this.template = node.Component!(this.props) as VirtualNode | null;
-      ComponentRef.currentRef = null;
-    }
+  create(node: VirtualNode): Node {
+    // set reference and get component template
+    ComponentRef.currentRef = this;
+    const template = (node.Component!(this.props) as VirtualNode) ?? h('#');
+    this.template = this.bildTemplate(template, node.children);
+    ComponentRef.currentRef = null;
+    return nodeApi.createElement(this.template);
+  }
 
-    this.hydrateNode(node);
+  getChildren(): Node[] {
+    if (!this.template) {
+      return [];
+    }
+    if (this.template.sel) {
+      return [this.template.element!];
+    }
+    const meta = nodeApi.getMetadata(this.template);
+    return meta.children;
   }
 
   pushLifecycleHook(key: string, hook: () => void): void {
@@ -78,9 +92,10 @@ export class ComponentRef {
     prop.next(value);
   }
 
-  private hydrateNode(node: VirtualNode): void {
-    const children = node.children ?? [];
-
+  private bildTemplate(
+    template: VirtualNode,
+    children: VirtualNode[] = []
+  ): VirtualNode {
     // hydrate template
     const visitor = (node: VirtualNode): VirtualNode => {
       node = { ...node };
@@ -88,7 +103,7 @@ export class ComponentRef {
         const slot = node.data?.attrs?.name as string | undefined;
         const content = children.filter(child => child.data?.slot === slot);
         if (content.length === 0) {
-          return h('#', null, null);
+          return null as any;
         }
         if (content.length === 1) {
           return content[0];
@@ -96,18 +111,13 @@ export class ComponentRef {
         const fragment = h();
         fragment.children = content;
         return fragment;
-      } else if (node.children) {
+      }
+      if (node.children) {
         node.children = node.children.map(visitor);
       }
       return node;
     };
-
-    const template = visitor(this.template!);
-    if (!template.sel && !template.Component && !template.observable) {
-      node.children = template.children;
-    } else {
-      node.children = [template];
-    }
+    return visitor(template);
   }
 
   static currentRef: ComponentRef | null = null;

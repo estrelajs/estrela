@@ -8,10 +8,9 @@ export function patch(oldNode: VirtualNode, node: VirtualNode): VirtualNode {
     throw new Error('Cannot patch a node without an element');
   }
 
-  if (oldNode.sel === node.sel) {
+  if (nodeApi.isSame(oldNode, node)) {
     node.element = oldNode.element;
     hooks.forEach(hook => hook.update?.(oldNode, node));
-    node.componentRef?.patch(oldNode, node);
 
     if (oldNode.sel === '#text' || oldNode.sel === '#comment') {
       if (oldNode.text !== node.text) {
@@ -21,7 +20,7 @@ export function patch(oldNode: VirtualNode, node: VirtualNode): VirtualNode {
       patchChildren(oldNode, node);
     }
   } else {
-    nodeApi.replaceElement(node, oldNode);
+    nodeApi.replaceElement(oldNode, node);
   }
 
   return node;
