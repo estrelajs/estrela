@@ -1,4 +1,6 @@
-import { createSelector } from './selector';
+import { Subscription } from './subscription';
+
+/** Following patterns from RxJs. */
 
 declare global {
   interface SymbolConstructor {
@@ -6,80 +8,47 @@ declare global {
   }
 }
 
-export interface Completable {
-  complete: () => void;
-}
-
-export interface Subscribable<T> {
-  subscribe(
-    observer?: ((value: T) => void) | Partial<Observer<T>>
-  ): Subscription;
-}
-
-export interface Observable<T> extends Subscribable<T> {
-  [Symbol.observable](): Observable<T>;
-
-  subscribe(
-    observer?: ((value: T) => void) | Partial<Observer<T>>
-  ): Subscription;
-}
-
-export interface EventEmitter<T> extends Observable<T>, Completable {
-  /** Return true when emitter is being observed. */
-  get observed(): boolean;
-
-  /** Emit event with the given value. */
-  next(value: T): void;
-}
-
-export type SelectorLike<T> = Observable<T> | Parameters<typeof createSelector>;
-
-export interface State<T> extends Observable<T>, Completable {
-  /** Get the current state value. */
-  (): T;
-
-  asObserver(): Observer<T>;
-
-  /**
-   * Update the current state.
-   * @param value next value.
-   */
-  next(value: T): void;
-
-  /**
-   * Update the current state based on the last value.
-   * @param updater callback function to update current state.
-   */
-  update(updater: (value: T) => T): void;
-}
-
-export interface Store<S extends Object> extends Observable<S> {
-  /** Get the current state. */
-  getState(): Readonly<S>;
-
-  /**
-   * Update the state with the updater callback.
-   * @param updater callback function to update current state.
-   */
-  update(updater: (state: Readonly<S>) => S): void;
-}
-
-export interface Observer<T> extends Completable {
-  next: (value: T) => void;
-  error: (err: any) => void;
-  complete: () => void;
-}
-
-export interface Subscriber<T> extends Observer<T> {
-  completed: boolean;
-  hasError: boolean;
-  thrownError?: any;
-}
+// SUBSCRIPTION INTERFACES
 
 export interface Unsubscribable {
   unsubscribe(): void;
 }
 
-export interface Subscription extends Unsubscribable {
-  add(subscription: Unsubscribable): void;
+export type TeardownLogic = Subscription | Unsubscribable | (() => void);
+
+export interface SubscriptionLike extends Unsubscribable {
+  unsubscribe(): void;
+  readonly closed: boolean;
+}
+
+// OBSERVABLE INTERFACES
+
+export interface Subscribable<T> {
+  subscribe(observer: Partial<Observer<T>>): Unsubscribable;
+}
+
+/**
+ * An object that implements the `Symbol.observable` interface.
+ */
+export interface ObservableLike<T> extends Subscribable<T> {
+  [Symbol.observable]: () => Subscribable<T>;
+  subscribe(
+    observer?: ((value: T) => void) | Partial<Observer<T>>
+  ): Subscription;
+}
+
+// OBSERVER INTERFACES
+
+export interface Observer<T> {
+  next: (value: T) => void;
+  error: (err: any) => void;
+  complete: () => void;
+}
+
+export interface SubjectObserver<T> {
+  readonly closed: boolean;
+  readonly observed: boolean;
+  next: (value: T) => void;
+  error: (err: any) => void;
+  complete: () => void;
 }

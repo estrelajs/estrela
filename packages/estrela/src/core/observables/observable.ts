@@ -1,6 +1,10 @@
+import { createSubscriber } from './subscriber';
+import { createSubscription } from './subscription';
 import { symbol_observable } from './symbol';
-import { Observable, Observer } from './types';
-import { coerceObserver, createSubscriber, createSubscription } from './utils';
+import { ObservableLike, Observer } from './types';
+import { coerceObserver } from './utils';
+
+export interface Observable<T> extends ObservableLike<T> {}
 
 export function createObservable<T>(
   subscribe?: (subscriber: Observer<T>) => void
@@ -19,4 +23,8 @@ export function createObservable<T>(
       });
     },
   };
+}
+
+export function isObservable<T>(x: any): x is Observable<T> {
+  return x && typeof x[symbol_observable] === 'function';
 }

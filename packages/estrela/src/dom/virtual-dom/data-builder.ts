@@ -1,5 +1,6 @@
-import { createSelector, isObservable, isPromise } from '../../core';
-import { apply, coerceArray, toCamelCase } from '../../utils';
+import { isPromise, isSubscribable } from '../../core';
+import { createSelector } from '../../store';
+import { apply, toCamelCase } from '../../utils';
 import { VirtualNodeData } from '../virtual-node';
 
 export function buildData(
@@ -17,7 +18,7 @@ export function buildData(
       const selectorFn = value.pop() as any;
       const inputs = value as any[];
       const states = inputs.filter(
-        input => isPromise(input) || isObservable(input)
+        input => isPromise(input) || isSubscribable(input)
       );
 
       if (states.length === 0) {
@@ -26,7 +27,7 @@ export function buildData(
         acc[key] = createSelector(...states, (...args: any): any => {
           let index = 0;
           return selectorFn(
-            ...inputs.map(arg => (isObservable(arg) ? args[index++] : arg()))
+            ...inputs.map(arg => (isSubscribable(arg) ? args[index++] : arg()))
           );
         });
       }

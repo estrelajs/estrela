@@ -1,19 +1,26 @@
+import { createSubscriber } from './subscriber';
+import { createSubscription } from './subscription';
 import { symbol_observable } from './symbol';
-import { EventEmitter, Observer } from './types';
-import { createSubscriber, coerceObserver, createSubscription } from './utils';
+import { ObservableLike, Observer, SubjectObserver } from './types';
+import { coerceObserver } from './utils';
+
+export interface EventEmitter<T> extends ObservableLike<T>, SubjectObserver<T> {
+  /** Emit event with the given value. */
+  next(value: T): void;
+}
 
 export function createEventEmitter<T>(async = false): EventEmitter<T> {
   const observers = new Set<Observer<T>>();
   const subscriber = createSubscriber(observers);
-  const descriptor = {
+  return {
     [symbol_observable]() {
       return this;
     },
+    get closed() {
+      return subscriber.closed;
+    },
     get observed() {
       return observers.size > 0;
-    },
-    complete() {
-      subscriber.complete();
     },
     next(value: any) {
       if (async) {
@@ -22,11 +29,24 @@ export function createEventEmitter<T>(async = false): EventEmitter<T> {
         subscriber.next(value);
       }
     },
+    error(err: any) {
+      subscriber.error(err);
+    },
+    complete() {
+      subscriber.complete();
+    },
     subscribe(observer: any) {
       const obs = coerceObserver(observer);
       observers.add(obs);
       return createSubscription(() => observers.delete(obs));
     },
   };
-  return descriptor;
+}
+
+export function isEventEmitter<T>(x: any): x is EventEmitter<T> {
+  return (
+    x &&
+    typeof x[symbol_observable] === 'function' &&
+    typeof x.emit === 'function'
+  );
 }

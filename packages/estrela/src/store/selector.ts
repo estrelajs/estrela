@@ -1,14 +1,23 @@
-import { symbol_observable } from './symbol';
-import { Observable, Observer, Subscribable } from './types';
 import {
   coerceObservable,
   coerceObserver,
   createSubscriber,
   createSubscription,
-} from './utils';
+  Observable,
+  Observer,
+  Subscribable,
+} from '../core';
+import { symbol_observable } from '../core/observables/symbol';
 
 export type Selectable<T> = Promise<T> | Subscribable<T>;
+export type SelectorLike<T> =
+  | Subscribable<T>
+  | Parameters<typeof createSelector>;
 
+/**
+ * Create a new observable by combining the given observables
+ * and applying to the selector function.
+ */
 export function createSelector<S1, Result>(
   s1: Selectable<S1>,
   selector: (s1: S1) => Result

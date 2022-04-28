@@ -1,5 +1,6 @@
-import { Component, createObservable, createSelector, state } from 'estrela';
+import { Component, createObservable, state } from 'estrela';
 import { render } from 'estrela/dom';
+import { createSelector } from 'estrela/store';
 
 // count state
 const count = state(0);

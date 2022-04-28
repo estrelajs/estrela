@@ -1,4 +1,5 @@
-import { Component, isObservable, createSelector, isPromise } from '../core';
+import { Component, isSubscribable, isPromise } from '../core';
+import { createSelector } from '../store';
 import { apply, coerceArray, isTruthy } from '../utils';
 import { buildData } from './virtual-dom/data-builder';
 import { nodeApi } from './virtual-dom/node-api';
@@ -43,7 +44,7 @@ export function h(
       const selectorFn = child.pop() as any;
       const inputs = child as any[];
       const states = inputs.filter(
-        input => isPromise(input) || isObservable(input)
+        input => isPromise(input) || isSubscribable(input)
       );
 
       if (states.length === 0) {
@@ -52,7 +53,7 @@ export function h(
         child = createSelector(...states, (...args: any): any => {
           let index = 0;
           return selectorFn(
-            ...inputs.map(arg => (isObservable(arg) ? args[index++] : arg()))
+            ...inputs.map(arg => (isSubscribable(arg) ? args[index++] : arg()))
           );
         });
       }
@@ -62,7 +63,7 @@ export function h(
     return coerceArray(child)
       .filter(isTruthy)
       .flatMap(c => {
-        if (isPromise(c) || isObservable(c)) {
+        if (isPromise(c) || isSubscribable(c)) {
           return { observable: c };
         }
         if (c instanceof Node) {

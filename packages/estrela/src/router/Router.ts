@@ -1,5 +1,6 @@
-import { Component, createSelector } from '../core';
+import { Component } from '../core';
 import { h } from '../dom';
+import { createSelector } from '../store';
 import { Routes } from './route';
 import { routeUrl } from './router.store';
 

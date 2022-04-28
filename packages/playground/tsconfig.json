@@ -10,11 +10,8 @@
       "estrela": [
         "../estrela/src/core/index.ts"
       ],
-      "estrela/dom": [
-        "../estrela/src/dom/index.ts"
-      ],
-      "estrela/router": [
-        "../estrela/src/router/index.ts"
+      "estrela/*": [
+        "../estrela/src/*/index.ts"
       ],
     }
   },

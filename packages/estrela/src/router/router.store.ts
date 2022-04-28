@@ -1,4 +1,4 @@
-import { createSelector, createStore } from '../core';
+import { createSelector, createStore } from '../store';
 
 export interface RouterState {
   url: string;

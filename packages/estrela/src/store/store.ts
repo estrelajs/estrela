@@ -1,6 +1,22 @@
-import { symbol_observable } from './symbol';
-import { Observer, Store } from './types';
-import { coerceObserver, createSubscriber, createSubscription } from './utils';
+import {
+  coerceObserver,
+  createSubscriber,
+  createSubscription,
+  ObservableLike,
+  Observer,
+} from '../core';
+import { symbol_observable } from '../core/observables/symbol';
+
+export interface Store<S extends Object> extends ObservableLike<S> {
+  /** Get the current state. */
+  getState(): Readonly<S>;
+
+  /**
+   * Update the state with the updater callback.
+   * @param updater callback function to update current state.
+   */
+  update(updater: (state: Readonly<S>) => S): void;
+}
 
 export function createStore<S extends Object>(initialState: S): Store<S> {
   let value = Object.freeze(initialState ?? {});

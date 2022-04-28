@@ -1,7 +1,7 @@
-import { Component, EventEmitter, Observable, State } from '../core';
+import { Component, EventEmitter, State, Subscribable } from '../core';
 import { ComponentRef } from './virtual-dom/component-ref';
 
-type SyncOrAsync<T> = T | Promise<T> | Observable<T>;
+type SyncOrAsync<T> = T | Promise<T> | Subscribable<T>;
 
 export type Attrs = Record<string, SyncOrAsync<string | number | boolean>>;
 export type Binds = Record<string, State<any>>;
@@ -42,6 +42,6 @@ export interface VirtualNode {
   componentRef?: ComponentRef;
   element?: Node;
   listener?: (e: Event) => void;
-  observable?: Promise<any> | Observable<any>;
+  observable?: Promise<any> | Subscribable<any>;
   text?: string | null;
 }
