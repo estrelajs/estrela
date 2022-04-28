@@ -5,6 +5,7 @@ import {
   Observable,
   Observer,
   State,
+  Subscribable,
   Subscriber,
   Subscription,
   Unsubscribable,
@@ -13,13 +14,15 @@ import {
 const noop = () => {};
 
 export function coerceObservable<T>(
-  promise: T | Promise<T> | Observable<T>
+  promise: T | Promise<T> | Subscribable<T>
 ): Observable<T> {
   if (isObservable(promise)) {
     return promise;
   }
   return createObservable(subscriber => {
-    if (isPromise(promise)) {
+    if (isSubscribable(promise)) {
+      promise.subscribe(subscriber);
+    } else if (isPromise(promise)) {
       const then = promise.then(value => {
         subscriber.next(value);
         subscriber.complete();
@@ -128,4 +131,8 @@ export function isSubscriber<T>(x: any): x is Subscriber<T> {
     typeof x.error === 'function' &&
     typeof x.complete === 'function'
   );
+}
+
+export function isSubscribable<T>(x: any): x is Subscribable<T> {
+  return x && typeof x.subscribe === 'function';
 }

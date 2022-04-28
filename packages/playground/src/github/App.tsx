@@ -1,4 +1,4 @@
-import { Component, state } from 'estrela';
+import { Component, onDestroy, state } from 'estrela';
 import { debounceTime, filter, from, switchMap, tap } from 'rxjs';
 import Button from './Button';
 import GithubCard from './GithubCard';
@@ -10,7 +10,7 @@ const App: Component = () => {
   const searchQuery = state('');
   const githubList = state<Repositories | undefined>([]);
 
-  from(searchQuery)
+  const subscription = from(searchQuery)
     .pipe(
       filter(query => query.length > 2),
       debounceTime(500),
@@ -22,6 +22,10 @@ const App: Component = () => {
       )
     )
     .subscribe(data => githubList.next(data));
+
+  onDestroy(() => {
+    subscription.unsubscribe();
+  });
 
   function onRemove(item: Repository): void {
     githubList.update(list => list?.filter(x => x !== item));

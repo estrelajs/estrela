@@ -1,3 +1,5 @@
-export * from './component';
+export * from './lifecycle-hooks';
 export * from './observables';
-export * from './jsx';
+export * from './sync';
+export * from './types/component';
+export * from './types/jsx';

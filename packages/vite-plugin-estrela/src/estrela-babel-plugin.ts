@@ -38,6 +38,12 @@ export default function estrelaPlugin() {
           path.unshiftContainer('body', importDeclaration);
         },
 
+        JSXAttribute(path) {
+          if (t.isJSXElement(path.node.value)) {
+            path.node.value = t.jsxExpressionContainer(path.node.value);
+          }
+        },
+
         JSXElement: {
           exit(path, file) {
             const callExpr = buildCreateElementCall(path, file);
@@ -48,65 +54,84 @@ export default function estrelaPlugin() {
         JSXFragment: {
           exit(path, file) {
             const callExpr = buildCreateElementFragmentCall(path, file);
-            path.replaceWith(t.inherits(callExpr, path.node)!);
+            if (callExpr) {
+              path.replaceWith(t.inherits(callExpr, path.node));
+            }
           },
         },
 
-        JSXAttribute(path) {
-          if (t.isJSXElement(path.node.value)) {
-            path.node.value = t.jsxExpressionContainer(path.node.value);
-          }
-        },
+        JSXExpressionContainer: {
+          exit(path) {
+            if (t.isExpression(path.node.expression)) {
+              const selectors = getSelectors(path);
 
-        JSXExpressionContainer(path) {
-          const names: t.Identifier[] = [];
-          const expNode = path.node;
-
-          function addUndeline(node: t.Identifier): t.Identifier {
-            return t.identifier(`_${node.name}`);
-          }
-
-          if (t.isExpression(path.node.expression)) {
-            path.traverse({
-              ArrowFunctionExpression(path) {
-                if (path.parent === expNode) {
-                  path.skip();
-                }
-              },
-              CallExpression(path) {
-                if (
-                  t.isIdentifier(path.node.callee) &&
-                  path.node.arguments.length === 0
-                ) {
-                  const includes = names.find(
-                    name => name.name === (path.node.callee as any).name
-                  );
-                  if (!includes) {
-                    names.push(path.node.callee);
-                  }
-                  path.replaceWith(addUndeline(path.node.callee));
-                }
-              },
-              FunctionExpression(path) {
-                if (path.parent === expNode) {
-                  path.skip();
-                }
-              },
-            });
-
-            if (names.length > 0) {
-              const arrow = t.arrowFunctionExpression(
-                names.map(addUndeline),
-                path.node.expression
-              );
-              const array = t.arrayExpression([...names, arrow]);
-              const expression = t.jsxExpressionContainer(array);
-              path.replaceWith(expression);
+              if (selectors.length > 0) {
+                const arrow = t.arrowFunctionExpression(
+                  selectors.map(x => x.param),
+                  path.node.expression
+                );
+                const array = t.arrayExpression([
+                  ...selectors.map(x => x.sel),
+                  arrow,
+                ]);
+                const expression = t.jsxExpressionContainer(array);
+                path.replaceWith(t.inherits(expression, path.node));
+                path.skip();
+              }
             }
-          }
+          },
         },
       },
     };
+
+    function getSelectors(path: NodePath<t.JSXExpressionContainer>) {
+      const node = path.node;
+      const selectors: {
+        sel: t.Identifier | t.CallExpression;
+        param: t.Identifier;
+      }[] = [];
+
+      path.traverse({
+        CallExpression(path) {
+          if (
+            t.isIdentifier(path.node.callee) &&
+            (!path.node.arguments[0] || t.isIdentifier(path.node.arguments[0]))
+          ) {
+            const isState = path.node.arguments.length === 0;
+            const isSync = path.node.arguments.length === 1;
+
+            if (isState || (isSync && path.node.callee.name === 'sync')) {
+              const sel = isSync ? path.node : path.node.callee;
+              let selector = selectors.find(selector => {
+                return t.isNodesEquivalent(selector.sel, sel);
+              });
+              if (!selector) {
+                const param = t.identifier(
+                  `${isSync ? '_sync' : ''}_${
+                    path.node.arguments[0]?.name ?? path.node.callee.name
+                  }`
+                );
+                selector = { sel, param };
+                selectors.push(selector);
+              }
+              path.replaceWith(selector.param);
+            }
+          }
+        },
+        ArrowFunctionExpression(path) {
+          if (path.parent === node) {
+            path.skip();
+          }
+        },
+        FunctionExpression(path) {
+          if (path.parent === node) {
+            path.skip();
+          }
+        },
+      });
+
+      return selectors;
+    }
 
     function buildVirtualNode(args: any[]) {
       const node = t.callExpression(t.identifier('_jsx'), args);

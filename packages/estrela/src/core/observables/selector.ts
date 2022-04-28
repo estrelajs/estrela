@@ -94,7 +94,7 @@ export function createSelector(...args: any[]): Observable<any> {
 
   states.forEach((state, i) => {
     state.subscribe(value => {
-      if (memoizedValues[i] !== value) {
+      if (!memoizedValues.hasOwnProperty(i) || memoizedValues[i] !== value) {
         memoizedValues[i] = value;
 
         if (Object.keys(memoizedValues).length === states.length) {

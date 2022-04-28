@@ -1,4 +1,4 @@
-import { EventEmitter, State } from './observables';
+import { EventEmitter, State } from '../observables';
 
 export interface Component<P = {}> {
   (props: Props<P>): JSX.Element;

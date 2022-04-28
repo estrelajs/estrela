@@ -1,6 +1,6 @@
-import { VirtualNode } from '../dom';
-import { Component, JSXProps } from './component';
-import { State, Subscribable } from './observables';
+import { VirtualNode } from '../../dom';
+import { Component, JSXProps } from '../types/component';
+import { State, Subscribable } from '../observables';
 
 /**
  * Based on JSX types for Surplus, Inferno and dom-expressions and adapted for Estrela.
