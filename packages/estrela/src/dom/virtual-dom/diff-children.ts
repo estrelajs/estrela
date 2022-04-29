@@ -1,4 +1,4 @@
-import { VirtualNode } from '../virtual-node';
+import { VirtualNode } from './/virtual-node';
 
 export enum MoveType {
   Remove,

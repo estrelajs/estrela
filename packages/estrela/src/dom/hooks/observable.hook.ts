@@ -1,9 +1,9 @@
 import { coerceObservable, Subscription } from '../../core';
 import { coerceArray } from '../../utils';
 import { h } from '../h';
-import { nodeApi } from '../virtual-dom/node-api';
+import { domApi } from '../domapi';
 import { patch } from '../virtual-dom/patch';
-import { VirtualNode } from '../virtual-node';
+import { VirtualNode } from '../virtual-dom/virtual-node';
 import { Hook } from './types';
 
 const subscriptonMap = new WeakMap<Node, Subscription>();
@@ -11,7 +11,7 @@ const lastNodeMap = new WeakMap<Node, VirtualNode>();
 
 function hook(oldNode: VirtualNode, node?: VirtualNode): void {
   const element = node?.element ?? oldNode.element;
-  if (!element || !nodeApi.isDocumentFragment(element)) {
+  if (!element || !domApi.isDocumentFragment(element)) {
     return;
   }
 
@@ -35,7 +35,7 @@ function hook(oldNode: VirtualNode, node?: VirtualNode): void {
             lastNode = patch(lastNode, patchNode);
           } else {
             lastNode = patchNode;
-            nodeApi.createElement(patchNode);
+            patchNode.createElement();
           }
 
           lastNodeMap.set(element, lastNode);
@@ -62,7 +62,7 @@ function hook(oldNode: VirtualNode, node?: VirtualNode): void {
 
 function setEmptyText(node: VirtualNode): void {
   const text = h('#');
-  const element = nodeApi.createElement(text);
+  const element = text.createElement();
   node.element?.appendChild(element);
   node.children = [text];
 }

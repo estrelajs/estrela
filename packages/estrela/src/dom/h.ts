@@ -2,8 +2,8 @@ import { Component, isSubscribable, isPromise } from '../core';
 import { createSelector } from '../store';
 import { apply, coerceArray, isTruthy } from '../utils';
 import { buildData } from './virtual-dom/data-builder';
-import { nodeApi } from './virtual-dom/node-api';
-import { VirtualNode } from './virtual-node';
+import { domApi } from './domapi';
+import { VirtualNode } from './virtual-dom/virtual-node';
 
 export function h(): VirtualNode;
 export function h(sel: Node): VirtualNode;
@@ -29,10 +29,10 @@ export function h(
     sel = '#comment';
   }
   if (sel === '#text' || sel === '!#comment') {
-    return {
+    return new VirtualNode({
       sel: sel,
       text: (children[0] as string) ?? null,
-    };
+    });
   }
   if (sel instanceof Node) {
     return node2vnode(sel);
@@ -64,13 +64,13 @@ export function h(
       .filter(isTruthy)
       .flatMap(c => {
         if (isPromise(c) || isSubscribable(c)) {
-          return { observable: c };
+          return new VirtualNode({ observable: c });
         }
         if (c instanceof Node) {
           return node2vnode(c);
         }
-        if (typeof c === 'object') {
-          const node = c as VirtualNode;
+        if (c instanceof VirtualNode) {
+          const node = c.clone();
           if (!node.sel && !node.Component && !node.observable) {
             return node.children ?? [];
           }
@@ -81,48 +81,48 @@ export function h(
   });
 
   if (typeof sel === 'function') {
-    return {
+    return new VirtualNode({
       Component: sel,
       data: buildData(data ?? {}, true),
       children: vchildren,
-    };
+    });
   } else if (sel) {
-    return {
+    return new VirtualNode({
       sel,
       data: buildData(data ?? {}, true),
       children: vchildren,
-    };
+    });
   }
-  return {
+  return new VirtualNode({
     children: vchildren.length === 0 ? [h('#')] : vchildren,
-  };
+  });
 }
 
 function node2vnode(node: Node): VirtualNode {
-  if (nodeApi.isText(node)) {
-    return {
+  if (domApi.isText(node)) {
+    return new VirtualNode({
       sel: '#text',
       text: node.textContent,
       element: node,
-    };
+    });
   }
-  if (nodeApi.isComment(node)) {
-    return {
+  if (domApi.isComment(node)) {
+    return new VirtualNode({
       sel: '#comment',
       text: node.textContent,
       element: node,
-    };
+    });
   }
   const children = Array.from(node.childNodes ?? []).map(node2vnode);
-  if (nodeApi.isDocumentFragment(node)) {
-    return {
+  if (domApi.isDocumentFragment(node)) {
+    return new VirtualNode({
       children,
       element: node,
-    };
+    });
   }
-  return {
+  return new VirtualNode({
     sel: node.nodeName.toLowerCase(),
     children,
     element: node,
-  };
+  });
 }

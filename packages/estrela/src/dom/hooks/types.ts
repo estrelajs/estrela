@@ -1,4 +1,4 @@
-import { VirtualNode } from '../virtual-node';
+import { VirtualNode } from '../virtual-dom/virtual-node';
 
 export interface Hook {
   create?: (emptyNode: VirtualNode, newNode: VirtualNode) => void;

@@ -1,6 +1,6 @@
 import { EventEmitter, isEventEmitter, isState, State } from '../../core';
 import { toCamelCase } from '../../utils';
-import { VirtualNode } from '../virtual-node';
+import { VirtualNode } from '../virtual-dom/virtual-node';
 import { Hook } from './types';
 
 type EventFilter = (event: Event, element: HTMLElement) => boolean;

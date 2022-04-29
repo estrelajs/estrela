@@ -1,7 +1,6 @@
-import { nodeApi } from './virtual-dom/node-api';
-import { VirtualNode } from './virtual-node';
+import { VirtualNode } from './virtual-dom/virtual-node';
 
 export function render(node: JSX.Element, parent: Element): void {
-  const element = nodeApi.createElement(node as VirtualNode);
+  const element = (node as VirtualNode).createElement();
   parent.appendChild(element);
 }

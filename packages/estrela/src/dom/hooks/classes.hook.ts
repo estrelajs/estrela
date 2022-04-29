@@ -1,7 +1,8 @@
 import { coerceObservable, Subscription } from '../../core';
 import { coerceArray } from '../../utils';
-import { nodeApi } from '../virtual-dom/node-api';
-import { Classes, VirtualNode } from '../virtual-node';
+import { Classes } from '../types';
+import { domApi } from '../domapi';
+import { VirtualNode } from '../virtual-dom/virtual-node';
 import { Hook } from './types';
 
 const subscriptons = new Map<any, Subscription>();
@@ -13,7 +14,7 @@ function hook(oldNode: VirtualNode, node?: VirtualNode): void {
   const oldKlass = oldNode.data?.class;
   const klass = node?.data?.class;
 
-  if (!element || !nodeApi.isElement(element)) {
+  if (!element || !domApi.isElement(element)) {
     return;
   }
 

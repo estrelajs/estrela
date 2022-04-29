@@ -1,6 +1,6 @@
 import { coerceObservable, Subscription } from '../../core';
 import { ComponentRef } from '../virtual-dom/component-ref';
-import { VirtualNode } from '../virtual-node';
+import { VirtualNode } from '../virtual-dom/virtual-node';
 import { Hook } from './types';
 
 const subscriptons = new Map<any, Subscription>();

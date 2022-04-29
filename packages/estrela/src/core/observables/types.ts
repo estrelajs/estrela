@@ -1,6 +1,6 @@
 import { Subscription } from './subscription';
 
-/** Following patterns from RxJs. */
+/** Followed RxJs pattern. */
 
 declare global {
   interface SymbolConstructor {

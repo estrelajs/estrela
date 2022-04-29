@@ -1,7 +1,6 @@
-import { Component, EventEmitter, State, Subscribable } from '../core';
-import { ComponentRef } from './virtual-dom/component-ref';
+import { EventEmitter, State, Subscribable } from '../core';
 
-type SyncOrAsync<T> = T | Promise<T> | Subscribable<T>;
+export type SyncOrAsync<T> = T | Promise<T> | Subscribable<T>;
 
 export type Attrs = Record<string, SyncOrAsync<string | number | boolean>>;
 export type Binds = Record<string, State<any>>;
@@ -17,7 +16,7 @@ export type Events = Record<
 export type Key = string | number | symbol;
 export type Props = Record<string, SyncOrAsync<any>>;
 export type Ref = ((el: HTMLElement) => void) | State<HTMLElement>;
-export declare type Styles = Record<string, SyncOrAsync<string>>;
+export type Styles = Record<string, SyncOrAsync<string>>;
 
 export interface VirtualNodeData {
   attrs?: Attrs;
@@ -34,14 +33,21 @@ export interface VirtualNodeData {
   styles?: Styles;
 }
 
-export interface VirtualNode {
-  sel?: string;
-  data?: VirtualNodeData;
-  children?: VirtualNode[];
-  Component?: Component;
-  componentRef?: ComponentRef;
-  element?: Node;
-  listener?: (e: Event) => void;
-  observable?: Promise<any> | Subscribable<any>;
-  text?: string | null;
+export interface NodeMetadata {
+  parent: Node | null;
+  element: Node | null;
+  children: Node[];
+  childIndex: number;
+  isFragment: boolean;
 }
+
+export interface WalkOptions {
+  on: 'enter' | 'exit';
+}
+
+export type WithoutMethods<T> = Pick<
+  T,
+  {
+    [K in keyof T]: T[K] extends Function ? never : K;
+  }[keyof T]
+>;

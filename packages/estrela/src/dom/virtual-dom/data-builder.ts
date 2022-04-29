@@ -1,7 +1,7 @@
 import { isPromise, isSubscribable } from '../../core';
 import { createSelector } from '../../store';
 import { apply, toCamelCase } from '../../utils';
-import { VirtualNodeData } from '../virtual-node';
+import { VirtualNodeData } from '../types';
 
 export function buildData(
   data: Record<string, any>,

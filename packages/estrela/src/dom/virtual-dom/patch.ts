@@ -1,26 +1,26 @@
 import { hooks } from '../hooks';
-import { VirtualNode } from '../virtual-node';
+import { VirtualNode } from './/virtual-node';
 import { diffChildren, MoveType } from './diff-children';
-import { nodeApi } from './node-api';
+import { domApi } from '../domapi';
 
 export function patch(oldNode: VirtualNode, node: VirtualNode): VirtualNode {
   if (!oldNode.element) {
     throw new Error('Cannot patch a node without an element');
   }
 
-  if (nodeApi.isSame(oldNode, node)) {
+  if (oldNode.isSame(node)) {
     node.element = oldNode.element;
     hooks.forEach(hook => hook.update?.(oldNode, node));
 
     if (oldNode.sel === '#text' || oldNode.sel === '#comment') {
       if (oldNode.text !== node.text) {
-        nodeApi.setTextContent(oldNode.element, node.text ?? '');
+        domApi.setTextContent(oldNode.element, node.text ?? '');
       }
     } else if (oldNode.children || node.children) {
       patchChildren(oldNode, node);
     }
   } else {
-    nodeApi.replaceElement(oldNode, node);
+    oldNode.replaceElement(node);
   }
 
   return node;
@@ -29,7 +29,7 @@ export function patch(oldNode: VirtualNode, node: VirtualNode): VirtualNode {
 export function patchChildren(oldNode: VirtualNode, node: VirtualNode): void {
   const oldChildren = oldNode.children ?? [];
   const children = node.children ?? [];
-  const meta = nodeApi.getMetadata(oldNode);
+  const meta = oldNode.getMetadata();
   const diff = diffChildren(oldChildren, children);
 
   for (let i = 0; i < oldChildren.length; i++) {
@@ -42,7 +42,7 @@ export function patchChildren(oldNode: VirtualNode, node: VirtualNode): void {
 
   diff.moves.forEach(move => {
     if (move.type === MoveType.Remove) {
-      nodeApi.removeElement(move.item);
+      move.item.removeElement();
     }
     if (move.type === MoveType.Insert) {
       let parent = meta.element;
@@ -51,7 +51,7 @@ export function patchChildren(oldNode: VirtualNode, node: VirtualNode): void {
         move.index += meta.childIndex;
       }
       if (parent) {
-        nodeApi.insertAtIndex(parent, move.item, move.index);
+        move.item.insertAtIndex(parent, move.index);
       }
     }
   });

@@ -1,6 +1,6 @@
 import { coerceObservable, Subscription } from '../../core';
-import { nodeApi } from '../virtual-dom/node-api';
-import { VirtualNode } from '../virtual-node';
+import { domApi } from '../domapi';
+import { VirtualNode } from '../virtual-dom/virtual-node';
 import { Hook } from './types';
 
 const subscriptons = new Map<string, Subscription>();
@@ -16,7 +16,7 @@ function hook(oldNode: VirtualNode, node?: VirtualNode): void {
   const oldAttrs = oldNode.data?.attrs ?? {};
   const attrs = node?.data?.attrs ?? {};
 
-  if (!element || !nodeApi.isElement(element) || oldAttrs === attrs) {
+  if (!element || !domApi.isElement(element) || oldAttrs === attrs) {
     return;
   }
 

@@ -5,8 +5,7 @@ import {
   State,
 } from '../../core';
 import { h } from '../h';
-import { VirtualNode } from '../virtual-node';
-import { nodeApi } from './node-api';
+import { VirtualNode } from './/virtual-node';
 
 export class ComponentRef {
   private readonly lifecycleHooks: Record<string, () => void> = {};
@@ -60,7 +59,7 @@ export class ComponentRef {
     const template = (node.Component!(this.props) as VirtualNode) ?? h('#');
     this.template = this.bildTemplate(template, node.children);
     ComponentRef.currentRef = null;
-    return nodeApi.createElement(this.template);
+    return this.template.createElement();
   }
 
   getChildren(): Node[] {
@@ -70,7 +69,7 @@ export class ComponentRef {
     if (this.template.sel) {
       return [this.template.element!];
     }
-    const meta = nodeApi.getMetadata(this.template);
+    const meta = this.template.getMetadata();
     return meta.children;
   }
 
@@ -98,12 +97,13 @@ export class ComponentRef {
   ): VirtualNode {
     // hydrate template
     const visitor = (node: VirtualNode): VirtualNode => {
-      node = { ...node };
       if (node.sel === 'slot') {
         const slot = node.data?.attrs?.name as string | undefined;
-        const content = children.filter(child => child.data?.slot === slot);
+        const content = children
+          .filter(child => child.data?.slot === slot)
+          .map(child => child.clone());
         if (content.length === 0) {
-          return null as any;
+          return h('#');
         }
         if (content.length === 1) {
           return content[0];

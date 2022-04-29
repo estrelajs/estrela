@@ -1,7 +1,7 @@
 import { isState, State, Subscription } from '../../core';
 import { ComponentRef } from '../virtual-dom/component-ref';
-import { nodeApi } from '../virtual-dom/node-api';
-import { VirtualNode } from '../virtual-node';
+import { domApi } from '../domapi';
+import { VirtualNode } from '../virtual-dom/virtual-node';
 import { Hook } from './types';
 
 const subscriptons = new Map<any, Subscription>();
@@ -13,7 +13,7 @@ function bindData(
   state: any,
   event?: Event
 ): void {
-  if (nodeApi.isDocumentFragment(element)) {
+  if (domApi.isDocumentFragment(element)) {
     if (event && isState(state)) {
       const customEvent = event as CustomEvent;
       state.next(customEvent.detail);

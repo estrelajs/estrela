@@ -1,6 +1,7 @@
 import { coerceObservable, Subscription } from '../../core';
-import { nodeApi } from '../virtual-dom/node-api';
-import { Styles, VirtualNode } from '../virtual-node';
+import { Styles } from '../types';
+import { domApi } from '../domapi';
+import { VirtualNode } from '../virtual-dom/virtual-node';
 import { Hook } from './types';
 
 const subscriptons = new Map<any, Subscription>();
@@ -12,7 +13,7 @@ function hook(oldNode: VirtualNode, node?: VirtualNode) {
   const oldStyle = oldNode.data?.style;
   const style = node?.data?.style;
 
-  if (!element || !nodeApi.isHTMLElement(element)) {
+  if (!element || !domApi.isHTMLElement(element)) {
     return;
   }
 
