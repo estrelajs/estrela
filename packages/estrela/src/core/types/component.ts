@@ -1,24 +1,24 @@
 import { EventEmitter, State } from '../observables';
 
-export interface Component<P = {}> {
-  (props: Props<P>): JSX.Element;
+export interface Component<Props = {}, Children = JSX.Children> {
+  (props: PropsOf<Props>): JSX.Element | null;
 }
 
-export type Props<P> = {
+export type PropsOf<P> = {
   [K in keyof P]-?: P[K] extends EventEmitter<infer E> | undefined
     ? EventEmitter<E>
     : State<P[K]>;
 };
 
-export type JSXProps<P> = {
+export type JSXProps<P, C> = { children?: C } & {
   [K in keyof ExcludeEmitters<P>]: ExcludeEmitters<P>[K];
 } & Emitters<{
-  [K in keyof IncludeEmitters<P>]: IncludeEmitters<P>[K] extends
-    | EventEmitter<infer E>
-    | undefined
-    ? E
-    : never;
-}>;
+    [K in keyof IncludeEmitters<P>]: IncludeEmitters<P>[K] extends
+      | EventEmitter<infer E>
+      | undefined
+      ? E
+      : never;
+  }>;
 
 type ExcludeEmitters<T> = Pick<
   T,

@@ -1,5 +1,5 @@
 import { hooks } from '../hooks';
-import { VirtualNode } from './/virtual-node';
+import { VirtualNode } from './virtual-node';
 import { diffChildren, MoveType } from './diff-children';
 import { domApi } from '../domapi';
 

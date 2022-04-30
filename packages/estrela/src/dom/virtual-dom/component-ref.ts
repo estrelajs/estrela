@@ -5,7 +5,7 @@ import {
   State,
 } from '../../core';
 import { h } from '../h';
-import { VirtualNode } from './/virtual-node';
+import { VirtualNode } from './virtual-node';
 
 export class ComponentRef {
   private readonly lifecycleHooks: Record<string, () => void> = {};
@@ -99,18 +99,28 @@ export class ComponentRef {
     const visitor = (node: VirtualNode): VirtualNode => {
       if (node.sel === 'slot') {
         const slot = node.data?.attrs?.name as string | undefined;
-        const content = children
-          .filter(child => child.data?.slot === slot)
-          .map(child => child.clone());
+        const select = node.data?.attrs?.select as string | undefined;
+
+        let content: VirtualNode[] = [];
+        if (select) {
+          content = children.filter(child =>
+            typeof select === 'string'
+              ? child.sel === select
+              : child.Component === select
+          );
+        } else if (slot) {
+          content = children
+            .filter(child => child.data?.slot === slot)
+            .map(child => child.clone());
+        }
+
         if (content.length === 0) {
-          return h('#');
+          return h(null, null, ...node.children);
         }
         if (content.length === 1) {
           return content[0];
         }
-        const fragment = h();
-        fragment.children = content;
-        return fragment;
+        return h(null, null, ...content);
       }
       if (node.children) {
         node.children = node.children.map(visitor);

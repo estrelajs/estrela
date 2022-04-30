@@ -5,7 +5,7 @@ import { VirtualNodeData } from '../types';
 
 export function buildData(
   data: Record<string, any>,
-  isComponent?: boolean
+  isComponent: boolean
 ): VirtualNodeData {
   if (!data) {
     return {};

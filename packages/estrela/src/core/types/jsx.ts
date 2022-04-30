@@ -1,4 +1,4 @@
-import { VirtualNode } from '../../dom';
+import { VirtualNode } from '../../dom/virtual-dom/virtual-node';
 import { Component, JSXProps } from '../types/component';
 import { State, Subscribable } from '../observables';
 
@@ -13,10 +13,11 @@ type DOMElement = Element;
 
 declare global {
   namespace JSX {
-    type Element =
+    type Element = VirtualNode;
+    type Children =
       | Node
-      | ArrayElement
-      | VirtualNode
+      | Element
+      | Array<Children>
       | Promise<any>
       | Subscribable<any>
       | Selector
@@ -27,14 +28,10 @@ declare global {
       | undefined;
     type Selector = [
       ...args: (Promise<any> | Subscribable<any>)[],
-      selector: (...args: any[]) => JSX.ArrayElement
+      selector: (...args: any[]) => Children
     ];
-    interface ArrayElement extends Array<Element> {}
-    interface ElementClass {
-      // empty, libs can define requirements downstream
-    }
-    type LibraryManagedAttributes<C, P> = C extends Component<infer P>
-      ? JSXProps<P>
+    type LibraryManagedAttributes<C, P> = C extends Component<infer P, infer C>
+      ? JSXProps<P, C>
       : never;
     interface ElementChildrenAttribute {
       children: {};
@@ -61,7 +58,6 @@ declare global {
       | EventHandler<T, E>
       | BoundEventHandler<T, E>;
     interface IntrinsicAttributes {
-      children?: JSX.Element;
       key?: string | number | symbol;
     }
     interface Directives {}
@@ -90,7 +86,7 @@ declare global {
         AttrAttributes {
       ref?: T | ((el: T) => void);
       key?: string | number | symbol;
-      children?: Element;
+      children?: Children;
       innerHTML?: string;
       innerText?: string | number;
       textContent?: string | number;
@@ -2327,6 +2323,7 @@ declare global {
     interface HTMLSlotElementAttributes<T = HTMLSlotElement>
       extends HTMLAttributes<T> {
       name?: string;
+      select?: string | Component;
     }
     interface SourceHTMLAttributes<T> extends HTMLAttributes<T> {
       media?: string;

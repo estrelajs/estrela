@@ -41,11 +41,7 @@ export interface NodeMetadata {
   isFragment: boolean;
 }
 
-export interface WalkOptions {
-  on: 'enter' | 'exit';
-}
-
-export type WithoutMethods<T> = Pick<
+export type PropertiesOf<T> = Pick<
   T,
   {
     [K in keyof T]: T[K] extends Function ? never : K;

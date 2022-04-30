@@ -15,12 +15,12 @@ export function h(
 export function h(
   sel: string | Component | null,
   data: Record<string, any> | null,
-  ...children: JSX.ArrayElement
+  ...children: JSX.Children[]
 ): VirtualNode;
 export function h(
   sel: string | Component | Node | null = null,
   data: Record<string, any> | null = null,
-  ...children: JSX.ArrayElement
+  ...children: JSX.Children[]
 ): VirtualNode {
   if (sel === '#') {
     sel = '#text';
@@ -89,7 +89,7 @@ export function h(
   } else if (sel) {
     return new VirtualNode({
       sel,
-      data: buildData(data ?? {}, true),
+      data: buildData(data ?? {}, false),
       children: vchildren,
     });
   }

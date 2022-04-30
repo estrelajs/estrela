@@ -1,12 +1,7 @@
 import { Component, Subscribable } from '../../core';
 import { domApi } from '../domapi';
 import { hooks } from '../hooks';
-import {
-  VirtualNodeData,
-  WithoutMethods,
-  NodeMetadata,
-  WalkOptions,
-} from '../types';
+import { VirtualNodeData, PropertiesOf, NodeMetadata } from '../types';
 import { ComponentRef } from './component-ref';
 
 export class VirtualNode {
@@ -22,7 +17,7 @@ export class VirtualNode {
 
   static empty = new VirtualNode();
 
-  constructor(data?: WithoutMethods<VirtualNode>) {
+  constructor(data?: PropertiesOf<VirtualNode>) {
     Object.assign(this, data ?? {});
   }
 
@@ -170,7 +165,7 @@ export class VirtualNode {
     }
   }
 
-  walk(cb: (node: VirtualNode) => void, opts?: WalkOptions): void {
+  walk(cb: (node: VirtualNode) => void, opts?: { on: 'enter' | 'exit' }): void {
     const { on = 'exit' } = opts || {};
     if (on === 'enter') {
       cb(this);
