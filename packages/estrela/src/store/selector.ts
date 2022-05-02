@@ -10,9 +10,6 @@ import {
 import { symbol_observable } from '../core/observables/symbol';
 
 export type Selectable<T> = Promise<T> | Subscribable<T>;
-export type SelectorLike<T> =
-  | Subscribable<T>
-  | Parameters<typeof createSelector>;
 
 /**
  * Create a new observable by combining the given observables

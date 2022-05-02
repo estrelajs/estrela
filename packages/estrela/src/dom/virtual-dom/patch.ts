@@ -12,9 +12,9 @@ export function patch(oldNode: VirtualNode, node: VirtualNode): VirtualNode {
     node.element = oldNode.element;
     hooks.forEach(hook => hook.update?.(oldNode, node));
 
-    if (oldNode.sel === '#text' || oldNode.sel === '#comment') {
-      if (oldNode.text !== node.text) {
-        domApi.setTextContent(oldNode.element, node.text ?? '');
+    if (oldNode.kind === '#text' || oldNode.kind === '#comment') {
+      if (oldNode.content !== node.content) {
+        domApi.setTextContent(oldNode.element, node.content ?? '');
       }
     } else if (oldNode.children || node.children) {
       patchChildren(oldNode, node);

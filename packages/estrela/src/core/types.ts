@@ -1,15 +1,36 @@
-import { VirtualNode } from '../../dom/virtual-dom/virtual-node';
-import { Component, JSXProps } from '../types/component';
-import { State, Subscribable } from '../observables';
+import { VirtualNode } from '../dom/virtual-dom/virtual-node';
+import { createSelector } from '../store';
+import { EventEmitter, State, Subscribable } from './observables';
+export { VirtualNode } from '../dom/virtual-dom/virtual-node';
 
 /**
- * Based on JSX types for Surplus, Inferno and dom-expressions and adapted for Estrela.
+ * Based on JSX types for Surplus, Inferno and dom-expressions, adapted for Estrela.
  *
  * https://github.com/adamhaile/surplus/blob/master/index.d.ts
  * https://github.com/infernojs/inferno/blob/master/packages/inferno/src/core/types.ts
  * https://github.com/ryansolid/dom-expressions/blob/main/packages/dom-expressions/src/jsx.d.ts
  */
-type DOMElement = Element;
+
+export interface Component<P = {}> {
+  (props: Props<P>): JSX.Element | null;
+}
+
+export type Props<T> = {
+  [P in keyof T]-?: T[P] extends State<any> | undefined
+    ? T[P]
+    : T[P] extends EventEmitter<infer E> | undefined
+    ? EventEmitter<E>
+    : State<T[P]>;
+};
+
+export interface EventHandler<T, E extends Event> {
+  (e: E & { target: T }): void;
+}
+
+export type EventEmitterHandler<T> =
+  | ((value: T) => void)
+  | EventEmitter<T>
+  | State<T>;
 
 declare global {
   namespace JSX {
@@ -18,165 +39,135 @@ declare global {
       | Node
       | Element
       | Array<Children>
-      | Promise<any>
-      | Subscribable<any>
-      | Selector
+      | SelectorLike<any>
       | string
       | number
       | boolean
       | null
       | undefined;
-    type Selector = [
-      ...args: (Promise<any> | Subscribable<any>)[],
-      selector: (...args: any[]) => Children
-    ];
-    type LibraryManagedAttributes<C, P> = C extends Component<infer P, infer C>
-      ? JSXProps<P, C>
-      : never;
+    type SelectorLike<T> =
+      | Promise<T>
+      | Subscribable<T>
+      | Parameters<typeof createSelector>;
+    type LibraryManagedAttributes<C, P> = P extends Props<infer T>
+      ? (T extends { children: any } ? {} : { children?: Children }) & {
+          [P in keyof T as PropName<T, P>]: T[P] extends State<any> | undefined
+            ? T[P]
+            : T[P] extends EventEmitter<infer E> | undefined
+            ? EventEmitterHandler<E>
+            : T[P];
+        }
+      : { children?: Children };
+    type PropName<T, P extends keyof T> = `${T[P] extends State<any> | undefined
+      ? ''
+      : T[P] extends EventEmitter<any> | undefined
+      ? 'on:'
+      : ''}${P & string}`;
     interface ElementChildrenAttribute {
       children: {};
     }
-    interface EventHandler<T, E extends Event> {
-      (
-        e: E & {
-          currentTarget: T;
-          target: DOMElement;
-        }
-      ): void;
-    }
-    interface BoundEventHandler<T, E extends Event> {
-      0: (
-        data: any,
-        e: E & {
-          currentTarget: T;
-          target: DOMElement;
-        }
-      ) => void;
-      1: any;
-    }
-    type EventHandlerUnion<T, E extends Event> =
-      | EventHandler<T, E>
-      | BoundEventHandler<T, E>;
     interface IntrinsicAttributes {
       key?: string | number | symbol;
     }
     interface Directives {}
-    interface ExplicitProperties {}
-    interface ExplicitAttributes {}
-    interface CustomEvents {}
-    interface CustomCaptureEvents {}
     type DirectiveAttributes = {
       [Key in keyof Directives as `use:${Key}`]?: Directives[Key];
-    };
-    type PropAttributes = {
-      [Key in keyof ExplicitProperties as `prop:${Key}`]?: ExplicitProperties[Key];
-    };
-    type AttrAttributes = {
-      [Key in keyof ExplicitAttributes as `attr:${Key}`]?: ExplicitAttributes[Key];
     };
     type CSSAttributes = {
       [Key in keyof CSSProperties as `style:${Key}`]?: CSSProperties[Key];
     };
     type ClassAttributes = {
-      [K in `style:${string}`]?: boolean;
+      [K in `class:${string}`]?: boolean;
     };
-    interface DOMAttributes<T>
-      extends DirectiveAttributes,
-        PropAttributes,
-        AttrAttributes {
+    interface DOMAttributes<T> extends DirectiveAttributes {
       ref?: T | ((el: T) => void);
       key?: string | number | symbol;
       children?: Children;
       innerHTML?: string;
       innerText?: string | number;
       textContent?: string | number;
-      'on:copy'?: EventHandlerUnion<T, ClipboardEvent>;
-      'on:cut'?: EventHandlerUnion<T, ClipboardEvent>;
-      'on:paste'?: EventHandlerUnion<T, ClipboardEvent>;
-      'on:compositionend'?: EventHandlerUnion<T, CompositionEvent>;
-      'on:compositionstart'?: EventHandlerUnion<T, CompositionEvent>;
-      'on:compositionupdate'?: EventHandlerUnion<T, CompositionEvent>;
-      'on:focus'?: EventHandlerUnion<T, FocusEvent>;
-      'on:focusout'?: EventHandlerUnion<T, FocusEvent>;
-      'on:focusin'?: EventHandlerUnion<T, FocusEvent>;
-      'on:blur'?: EventHandlerUnion<T, FocusEvent>;
-      'on:change'?: EventHandlerUnion<T, Event>;
-      'on:invalid'?: EventHandlerUnion<T, Event>;
-      'on:input'?: EventHandlerUnion<T, InputEvent>;
-      'on:beforeinput'?: EventHandlerUnion<T, InputEvent>;
-      'on:reset'?: EventHandlerUnion<T, Event>;
-      'on:submit'?: EventHandlerUnion<
-        T,
-        Event & {
-          submitter: HTMLElement;
-        }
-      >;
-      'on:load'?: EventHandlerUnion<T, Event>;
-      'on:error'?: EventHandlerUnion<T, Event>;
-      'on:keydown'?: EventHandlerUnion<T, KeyboardEvent>;
-      'on:keypress'?: EventHandlerUnion<T, KeyboardEvent>;
-      'on:keyup'?: EventHandlerUnion<T, KeyboardEvent>;
-      'on:gotpointercapture'?: EventHandlerUnion<T, PointerEvent>;
-      'on:lostpointercapture'?: EventHandlerUnion<T, PointerEvent>;
-      'on:pointercancel'?: EventHandlerUnion<T, PointerEvent>;
-      'on:pointerdown'?: EventHandlerUnion<T, PointerEvent>;
-      'on:pointerenter'?: EventHandlerUnion<T, PointerEvent>;
-      'on:pointerleave'?: EventHandlerUnion<T, PointerEvent>;
-      'on:pointermove'?: EventHandlerUnion<T, PointerEvent>;
-      'on:pointerover'?: EventHandlerUnion<T, PointerEvent>;
-      'on:pointerout'?: EventHandlerUnion<T, PointerEvent>;
-      'on:pointerup'?: EventHandlerUnion<T, PointerEvent>;
-      'on:abort'?: EventHandlerUnion<T, Event>;
-      'on:canplay'?: EventHandlerUnion<T, Event>;
-      'on:canplaythrough'?: EventHandlerUnion<T, Event>;
-      'on:durationchange'?: EventHandlerUnion<T, Event>;
-      'on:emptied'?: EventHandlerUnion<T, Event>;
-      'on:encrypted'?: EventHandlerUnion<T, Event>;
-      'on:ended'?: EventHandlerUnion<T, Event>;
-      'on:loadeddata'?: EventHandlerUnion<T, Event>;
-      'on:loadedmetadata'?: EventHandlerUnion<T, Event>;
-      'on:loadstart'?: EventHandlerUnion<T, Event>;
-      'on:pause'?: EventHandlerUnion<T, Event>;
-      'on:play'?: EventHandlerUnion<T, Event>;
-      'on:playing'?: EventHandlerUnion<T, Event>;
-      'on:progress'?: EventHandlerUnion<T, Event>;
-      'on:ratechange'?: EventHandlerUnion<T, Event>;
-      'on:seeked'?: EventHandlerUnion<T, Event>;
-      'on:seeking'?: EventHandlerUnion<T, Event>;
-      'on:stalled'?: EventHandlerUnion<T, Event>;
-      'on:suspend'?: EventHandlerUnion<T, Event>;
-      'on:timeupdate'?: EventHandlerUnion<T, Event>;
-      'on:volumechange'?: EventHandlerUnion<T, Event>;
-      'on:waiting'?: EventHandlerUnion<T, Event>;
-      'on:click'?: EventHandlerUnion<T, MouseEvent>;
-      'on:contextmenu'?: EventHandlerUnion<T, MouseEvent>;
-      'on:dblclick'?: EventHandlerUnion<T, MouseEvent>;
-      'on:drag'?: EventHandlerUnion<T, DragEvent>;
-      'on:dragend'?: EventHandlerUnion<T, DragEvent>;
-      'on:dragenter'?: EventHandlerUnion<T, DragEvent>;
-      'on:dragexit'?: EventHandlerUnion<T, DragEvent>;
-      'on:dragleave'?: EventHandlerUnion<T, DragEvent>;
-      'on:dragover'?: EventHandlerUnion<T, DragEvent>;
-      'on:dragstart'?: EventHandlerUnion<T, DragEvent>;
-      'on:drop'?: EventHandlerUnion<T, DragEvent>;
-      'on:mousedown'?: EventHandlerUnion<T, MouseEvent>;
-      'on:mouseenter'?: EventHandlerUnion<T, MouseEvent>;
-      'on:mouseleave'?: EventHandlerUnion<T, MouseEvent>;
-      'on:mousemove'?: EventHandlerUnion<T, MouseEvent>;
-      'on:mouseout'?: EventHandlerUnion<T, MouseEvent>;
-      'on:mouseover'?: EventHandlerUnion<T, MouseEvent>;
-      'on:mouseup'?: EventHandlerUnion<T, MouseEvent>;
-      'on:select'?: EventHandlerUnion<T, UIEvent>;
-      'on:touchcancel'?: EventHandlerUnion<T, TouchEvent>;
-      'on:touchend'?: EventHandlerUnion<T, TouchEvent>;
-      'on:touchmove'?: EventHandlerUnion<T, TouchEvent>;
-      'on:touchstart'?: EventHandlerUnion<T, TouchEvent>;
-      'on:scroll'?: EventHandlerUnion<T, UIEvent>;
-      'on:wheel'?: EventHandlerUnion<T, WheelEvent>;
-      'on:animationstart'?: EventHandlerUnion<T, AnimationEvent>;
-      'on:animationend'?: EventHandlerUnion<T, AnimationEvent>;
-      'on:animationiteration'?: EventHandlerUnion<T, AnimationEvent>;
-      'on:transitionend'?: EventHandlerUnion<T, TransitionEvent>;
+      'on:copy'?: EventHandler<T, ClipboardEvent>;
+      'on:cut'?: EventHandler<T, ClipboardEvent>;
+      'on:paste'?: EventHandler<T, ClipboardEvent>;
+      'on:compositionend'?: EventHandler<T, CompositionEvent>;
+      'on:compositionstart'?: EventHandler<T, CompositionEvent>;
+      'on:compositionupdate'?: EventHandler<T, CompositionEvent>;
+      'on:focus'?: EventHandler<T, FocusEvent>;
+      'on:focusout'?: EventHandler<T, FocusEvent>;
+      'on:focusin'?: EventHandler<T, FocusEvent>;
+      'on:blur'?: EventHandler<T, FocusEvent>;
+      'on:change'?: EventHandler<T, Event>;
+      'on:invalid'?: EventHandler<T, Event>;
+      'on:input'?: EventHandler<T, InputEvent>;
+      'on:beforeinput'?: EventHandler<T, InputEvent>;
+      'on:reset'?: EventHandler<T, Event>;
+      'on:submit'?: EventHandler<T, Event & { submitter: HTMLElement }>;
+      'on:load'?: EventHandler<T, Event>;
+      'on:error'?: EventHandler<T, Event>;
+      'on:keydown'?: EventHandler<T, KeyboardEvent>;
+      'on:keypress'?: EventHandler<T, KeyboardEvent>;
+      'on:keyup'?: EventHandler<T, KeyboardEvent>;
+      'on:gotpointercapture'?: EventHandler<T, PointerEvent>;
+      'on:lostpointercapture'?: EventHandler<T, PointerEvent>;
+      'on:pointercancel'?: EventHandler<T, PointerEvent>;
+      'on:pointerdown'?: EventHandler<T, PointerEvent>;
+      'on:pointerenter'?: EventHandler<T, PointerEvent>;
+      'on:pointerleave'?: EventHandler<T, PointerEvent>;
+      'on:pointermove'?: EventHandler<T, PointerEvent>;
+      'on:pointerover'?: EventHandler<T, PointerEvent>;
+      'on:pointerout'?: EventHandler<T, PointerEvent>;
+      'on:pointerup'?: EventHandler<T, PointerEvent>;
+      'on:abort'?: EventHandler<T, Event>;
+      'on:canplay'?: EventHandler<T, Event>;
+      'on:canplaythrough'?: EventHandler<T, Event>;
+      'on:durationchange'?: EventHandler<T, Event>;
+      'on:emptied'?: EventHandler<T, Event>;
+      'on:encrypted'?: EventHandler<T, Event>;
+      'on:ended'?: EventHandler<T, Event>;
+      'on:loadeddata'?: EventHandler<T, Event>;
+      'on:loadedmetadata'?: EventHandler<T, Event>;
+      'on:loadstart'?: EventHandler<T, Event>;
+      'on:pause'?: EventHandler<T, Event>;
+      'on:play'?: EventHandler<T, Event>;
+      'on:playing'?: EventHandler<T, Event>;
+      'on:progress'?: EventHandler<T, Event>;
+      'on:ratechange'?: EventHandler<T, Event>;
+      'on:seeked'?: EventHandler<T, Event>;
+      'on:seeking'?: EventHandler<T, Event>;
+      'on:stalled'?: EventHandler<T, Event>;
+      'on:suspend'?: EventHandler<T, Event>;
+      'on:timeupdate'?: EventHandler<T, Event>;
+      'on:volumechange'?: EventHandler<T, Event>;
+      'on:waiting'?: EventHandler<T, Event>;
+      'on:click'?: EventHandler<T, MouseEvent>;
+      'on:contextmenu'?: EventHandler<T, MouseEvent>;
+      'on:dblclick'?: EventHandler<T, MouseEvent>;
+      'on:drag'?: EventHandler<T, DragEvent>;
+      'on:dragend'?: EventHandler<T, DragEvent>;
+      'on:dragenter'?: EventHandler<T, DragEvent>;
+      'on:dragexit'?: EventHandler<T, DragEvent>;
+      'on:dragleave'?: EventHandler<T, DragEvent>;
+      'on:dragover'?: EventHandler<T, DragEvent>;
+      'on:dragstart'?: EventHandler<T, DragEvent>;
+      'on:drop'?: EventHandler<T, DragEvent>;
+      'on:mousedown'?: EventHandler<T, MouseEvent>;
+      'on:mouseenter'?: EventHandler<T, MouseEvent>;
+      'on:mouseleave'?: EventHandler<T, MouseEvent>;
+      'on:mousemove'?: EventHandler<T, MouseEvent>;
+      'on:mouseout'?: EventHandler<T, MouseEvent>;
+      'on:mouseover'?: EventHandler<T, MouseEvent>;
+      'on:mouseup'?: EventHandler<T, MouseEvent>;
+      'on:select'?: EventHandler<T, UIEvent>;
+      'on:touchcancel'?: EventHandler<T, TouchEvent>;
+      'on:touchend'?: EventHandler<T, TouchEvent>;
+      'on:touchmove'?: EventHandler<T, TouchEvent>;
+      'on:touchstart'?: EventHandler<T, TouchEvent>;
+      'on:scroll'?: EventHandler<T, UIEvent>;
+      'on:wheel'?: EventHandler<T, WheelEvent>;
+      'on:animationstart'?: EventHandler<T, AnimationEvent>;
+      'on:animationend'?: EventHandler<T, AnimationEvent>;
+      'on:animationiteration'?: EventHandler<T, AnimationEvent>;
+      'on:transitionend'?: EventHandler<T, TransitionEvent>;
     }
     type CSSWideKeyword = 'initial' | 'inherit' | 'unset';
     type CSSPercentage = string;
@@ -2079,8 +2070,7 @@ declare global {
     }
     interface DetailsHtmlAttributes<T> extends HTMLAttributes<T> {
       open?: boolean;
-      onToggle?: EventHandlerUnion<T, Event>;
-      ontoggle?: EventHandlerUnion<T, Event>;
+      'on:toggle'?: EventHandler<T, Event>;
     }
     interface DialogHtmlAttributes<T> extends HTMLAttributes<T> {
       open?: boolean;

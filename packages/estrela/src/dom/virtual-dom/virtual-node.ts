@@ -1,19 +1,18 @@
 import { Component, Subscribable } from '../../core';
 import { domApi } from '../domapi';
 import { hooks } from '../hooks';
-import { VirtualNodeData, PropertiesOf, NodeMetadata } from '../types';
+import { NodeMetadata, PropertiesOf, VirtualNodeData } from '../types';
 import { ComponentRef } from './component-ref';
 
 export class VirtualNode {
-  sel?: string;
+  kind?: string | Component;
   data?: VirtualNodeData;
   children?: VirtualNode[];
-  Component?: Component;
   componentRef?: ComponentRef;
+  content?: any;
   element?: Node;
   listener?: (e: Event) => void;
   observable?: Promise<any> | Subscribable<any>;
-  text?: string | null;
 
   static empty = new VirtualNode();
 
@@ -23,20 +22,17 @@ export class VirtualNode {
 
   clone(): VirtualNode {
     const node = new VirtualNode();
-    if (this.sel) {
-      node.sel = this.sel;
+    if (this.kind) {
+      node.kind = this.kind;
     }
     if (this.data) {
       node.data = this.data;
     }
-    if (this.Component) {
-      node.Component = this.Component;
-    }
     if (this.observable) {
       node.observable = this.observable;
     }
-    if (this.text) {
-      node.text = this.text;
+    if (this.content) {
+      node.content = this.content;
     }
     if (this.children) {
       node.children = this.children.map(child => child.clone());
@@ -50,12 +46,12 @@ export class VirtualNode {
     if (this.element) {
       element = this.element;
     } else {
-      if (this.sel === '#text') {
-        element = document.createTextNode(this.text ?? '');
-      } else if (this.sel === '#comment') {
-        element = document.createComment(this.text ?? '');
-      } else if (this.sel) {
-        element = document.createElement(this.sel);
+      if (this.kind === '#text') {
+        element = document.createTextNode(this.content ?? '');
+      } else if (this.kind === '#comment') {
+        element = document.createComment(this.content ?? '');
+      } else if (typeof this.kind === 'string') {
+        element = document.createElement(this.kind);
       } else {
         element = document.createDocumentFragment();
       }
@@ -64,7 +60,7 @@ export class VirtualNode {
     }
 
     if (this.componentRef) {
-      element.appendChild(this.componentRef.create(this));
+      element.appendChild(this.componentRef.createElement());
     } else {
       this.children?.forEach(child => {
         element.appendChild(child.createElement());
@@ -76,7 +72,7 @@ export class VirtualNode {
 
   getMetadata(): NodeMetadata {
     const children =
-      this.componentRef?.getChildren() ??
+      this.componentRef?.getChildrenElements() ??
       this.children?.flatMap(child => {
         if (!child.element || domApi.isDocumentFragment(child.element)) {
           const meta = child.getMetadata();
@@ -112,13 +108,7 @@ export class VirtualNode {
   }
 
   isSame(other: VirtualNode): boolean {
-    if (!this.sel) {
-      return (
-        this.Component === other.Component &&
-        this.observable === other.observable
-      );
-    }
-    return this.sel === other.sel;
+    return this.kind === other.kind && this.observable === other.observable;
   }
 
   insertAtIndex(parent: Node, index: number): void {

@@ -1,16 +1,15 @@
-import { EventEmitter, State, Subscribable } from '../core';
+import { EventEmitterHandler, State, Subscribable } from '../core';
 
 export type SyncOrAsync<T> = T | Promise<T> | Subscribable<T>;
 
 export type Attrs = Record<string, SyncOrAsync<string | number | boolean>>;
-export type Binds = Record<string, State<any>>;
 export type Classes = Record<string, SyncOrAsync<boolean>>;
 export type Events = Record<
   string,
   {
     accessor?: string;
     filters: string[];
-    handler: ((e: any) => void) | EventEmitter<any> | State<any>;
+    handler: EventEmitterHandler<any>;
   }
 >;
 export type Key = string | number | symbol;
@@ -21,7 +20,6 @@ export type Styles = Record<string, SyncOrAsync<string>>;
 export interface VirtualNodeData {
   attrs?: Attrs;
   bind?: State<any>;
-  binds?: Binds;
   class?: SyncOrAsync<string | string[] | Classes>;
   classes?: Classes;
   events?: Events;

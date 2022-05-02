@@ -3,14 +3,15 @@ import { VirtualNode } from '../virtual-dom/virtual-node';
 import { Hook } from './types';
 
 function hook(oldNode: VirtualNode, node?: VirtualNode): void {
-  if (oldNode.Component !== node?.Component) {
-    oldNode.componentRef?.dispose(oldNode);
-    if (node?.Component) {
-      node.componentRef = new ComponentRef(node.element as Element);
+  const isComponent = typeof node?.kind === 'function';
+  if (oldNode.kind !== node?.kind) {
+    oldNode.componentRef?.dispose();
+    if (isComponent) {
+      node.componentRef = new ComponentRef(node);
     }
-  }
-  if (node?.Component) {
-    node.componentRef ??= oldNode.componentRef;
+  } else if (isComponent) {
+    node.componentRef = oldNode.componentRef;
+    node.componentRef?.patch(oldNode, node);
   }
 }
 

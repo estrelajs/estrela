@@ -40,16 +40,14 @@ export function buildData(
   return Object.entries(data).reduce((data, [attr, arg]) => {
     // declarations
     const [, , namespace, attrName, , accessor, rawFilters] =
-      /((on|bind|use|class|style|attr|prop):)?([\w-]+)(\.([\w-]+))?(.*)/.exec(
-        attr
-      ) ?? [];
-
+      /((on|use|class|style):)?([\w-]+)(\.([\w-]+))?(.*)/.exec(attr) ?? [];
     const filters =
       rawFilters
         ?.split('|')
         .slice(1)
         .map(s => s.trim()) ?? [];
 
+    // bind
     if (attr === 'bind') {
       data.bind = arg;
       return data;
@@ -98,18 +96,6 @@ export function buildData(
       return data;
     }
 
-    if (namespace === 'attrs') {
-      data.attrs ??= {};
-      data.attrs[attrName] = arg;
-      return data;
-    }
-
-    if (namespace === 'prop') {
-      data.props ??= {};
-      data.props[attrName] = arg;
-      return data;
-    }
-
     if (namespace === 'on') {
       data.events ??= {};
       data.events[attrName] = {
@@ -120,22 +106,12 @@ export function buildData(
       return data;
     }
 
-    if (namespace === 'bind') {
-      data.binds ??= {};
-      data.binds[attrName] = arg;
-    }
-
     if (namespace === 'use') {
       // to be implemented
       return data;
     }
 
-    if (
-      isComponent ||
-      namespace === 'bind' ||
-      attrName === 'bind' ||
-      attr.startsWith('on')
-    ) {
+    if (isComponent) {
       data.props ??= {};
       data.props[attrName] = arg;
     } else {

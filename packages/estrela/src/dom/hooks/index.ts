@@ -1,7 +1,6 @@
 import { componentHook } from './component.hook';
 import { Hook } from './types';
 import { observableHook } from './observable.hook';
-import { propsHook } from './props.hook';
 import { eventsHook } from './events.hook';
 import { attrsHook } from './attrs.hook';
 import { bindHook } from './bind.hook';
@@ -14,7 +13,6 @@ export const hooks: Hook[] = [
   classesHook,
   stylesHook,
   attrsHook,
-  eventsHook,
-  propsHook,
   bindHook,
+  eventsHook,
 ];
