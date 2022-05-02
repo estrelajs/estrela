@@ -11,31 +11,36 @@ export { VirtualNode } from '../dom/virtual-dom/virtual-node';
  * https://github.com/ryansolid/dom-expressions/blob/main/packages/dom-expressions/src/jsx.d.ts
  */
 
-export interface Component<P = {}> {
-  (props: Props<P>): JSX.Element | null;
+export interface Component<P = {}, C = JSX.Children> {
+  (props: Props<P, C>): JSX.Element | null;
 }
 
-export type Props<T> = {
-  [P in keyof T]-?: T[P] extends State<any> | undefined
-    ? T[P]
-    : T[P] extends EventEmitter<infer E> | undefined
-    ? EventEmitter<E>
-    : State<T[P]>;
-};
+export type Props<T, C = undefined> = Omit<
+  { [P in keyof T]-?: State<T[P]> } & (T extends { emitters: infer E }
+    ? { [P in keyof E]-?: EventEmitter<E[P]> }
+    : { emitters: {} }),
+  'emitters'
+>;
 
-export interface EventHandler<T, E extends Event> {
-  (e: E & { target: T }): void;
-}
+type PropsOf<T, C> = {
+  [K in keyof Omit<T, 'emitters'>]: T[K] | State<T[K]>;
+} & EmittersOf<T> &
+  (C extends undefined ? {} : { children: C });
 
-export type EventEmitterHandler<T> =
-  | ((value: T) => void)
-  | EventEmitter<T>
-  | State<T>;
+type EmittersOf<T> = T extends { emitters: infer E }
+  ? { [K in keyof E as `on:${K & string}`]?: EventHandler<E[K]> }
+  : {};
+
+export type EventHandler<T> = ((value: T) => void) | EventEmitter<T> | State<T>;
+
+export type HTMLEventHandler<T, E extends Event> = EventHandler<
+  E & { target: T }
+>;
 
 declare global {
   namespace JSX {
     type Element = VirtualNode;
-    type Children =
+    type Child =
       | Node
       | Element
       | Array<Children>
@@ -45,26 +50,16 @@ declare global {
       | boolean
       | null
       | undefined;
+    type Children = Child | Array<Child>;
     type SelectorLike<T> =
       | Promise<T>
       | Subscribable<T>
       | Parameters<typeof createSelector>;
-    type LibraryManagedAttributes<C, P> = P extends Props<infer T>
-      ? (T extends { children: any } ? {} : { children?: Children }) & {
-          [P in keyof T as PropName<T, P>]: T[P] extends State<any> | undefined
-            ? T[P]
-            : T[P] extends EventEmitter<infer E> | undefined
-            ? EventEmitterHandler<E>
-            : T[P];
-        }
-      : { children?: Children };
-    type PropName<T, P extends keyof T> = `${T[P] extends State<any> | undefined
-      ? ''
-      : T[P] extends EventEmitter<any> | undefined
-      ? 'on:'
-      : ''}${P & string}`;
+    type LibraryManagedAttributes<C, P> = P extends Props<infer T, infer C>
+      ? PropsOf<T, C>
+      : {};
     interface ElementChildrenAttribute {
-      children: {};
+      children: any;
     }
     interface IntrinsicAttributes {
       key?: string | number | symbol;
@@ -86,88 +81,88 @@ declare global {
       innerHTML?: string;
       innerText?: string | number;
       textContent?: string | number;
-      'on:copy'?: EventHandler<T, ClipboardEvent>;
-      'on:cut'?: EventHandler<T, ClipboardEvent>;
-      'on:paste'?: EventHandler<T, ClipboardEvent>;
-      'on:compositionend'?: EventHandler<T, CompositionEvent>;
-      'on:compositionstart'?: EventHandler<T, CompositionEvent>;
-      'on:compositionupdate'?: EventHandler<T, CompositionEvent>;
-      'on:focus'?: EventHandler<T, FocusEvent>;
-      'on:focusout'?: EventHandler<T, FocusEvent>;
-      'on:focusin'?: EventHandler<T, FocusEvent>;
-      'on:blur'?: EventHandler<T, FocusEvent>;
-      'on:change'?: EventHandler<T, Event>;
-      'on:invalid'?: EventHandler<T, Event>;
-      'on:input'?: EventHandler<T, InputEvent>;
-      'on:beforeinput'?: EventHandler<T, InputEvent>;
-      'on:reset'?: EventHandler<T, Event>;
-      'on:submit'?: EventHandler<T, Event & { submitter: HTMLElement }>;
-      'on:load'?: EventHandler<T, Event>;
-      'on:error'?: EventHandler<T, Event>;
-      'on:keydown'?: EventHandler<T, KeyboardEvent>;
-      'on:keypress'?: EventHandler<T, KeyboardEvent>;
-      'on:keyup'?: EventHandler<T, KeyboardEvent>;
-      'on:gotpointercapture'?: EventHandler<T, PointerEvent>;
-      'on:lostpointercapture'?: EventHandler<T, PointerEvent>;
-      'on:pointercancel'?: EventHandler<T, PointerEvent>;
-      'on:pointerdown'?: EventHandler<T, PointerEvent>;
-      'on:pointerenter'?: EventHandler<T, PointerEvent>;
-      'on:pointerleave'?: EventHandler<T, PointerEvent>;
-      'on:pointermove'?: EventHandler<T, PointerEvent>;
-      'on:pointerover'?: EventHandler<T, PointerEvent>;
-      'on:pointerout'?: EventHandler<T, PointerEvent>;
-      'on:pointerup'?: EventHandler<T, PointerEvent>;
-      'on:abort'?: EventHandler<T, Event>;
-      'on:canplay'?: EventHandler<T, Event>;
-      'on:canplaythrough'?: EventHandler<T, Event>;
-      'on:durationchange'?: EventHandler<T, Event>;
-      'on:emptied'?: EventHandler<T, Event>;
-      'on:encrypted'?: EventHandler<T, Event>;
-      'on:ended'?: EventHandler<T, Event>;
-      'on:loadeddata'?: EventHandler<T, Event>;
-      'on:loadedmetadata'?: EventHandler<T, Event>;
-      'on:loadstart'?: EventHandler<T, Event>;
-      'on:pause'?: EventHandler<T, Event>;
-      'on:play'?: EventHandler<T, Event>;
-      'on:playing'?: EventHandler<T, Event>;
-      'on:progress'?: EventHandler<T, Event>;
-      'on:ratechange'?: EventHandler<T, Event>;
-      'on:seeked'?: EventHandler<T, Event>;
-      'on:seeking'?: EventHandler<T, Event>;
-      'on:stalled'?: EventHandler<T, Event>;
-      'on:suspend'?: EventHandler<T, Event>;
-      'on:timeupdate'?: EventHandler<T, Event>;
-      'on:volumechange'?: EventHandler<T, Event>;
-      'on:waiting'?: EventHandler<T, Event>;
-      'on:click'?: EventHandler<T, MouseEvent>;
-      'on:contextmenu'?: EventHandler<T, MouseEvent>;
-      'on:dblclick'?: EventHandler<T, MouseEvent>;
-      'on:drag'?: EventHandler<T, DragEvent>;
-      'on:dragend'?: EventHandler<T, DragEvent>;
-      'on:dragenter'?: EventHandler<T, DragEvent>;
-      'on:dragexit'?: EventHandler<T, DragEvent>;
-      'on:dragleave'?: EventHandler<T, DragEvent>;
-      'on:dragover'?: EventHandler<T, DragEvent>;
-      'on:dragstart'?: EventHandler<T, DragEvent>;
-      'on:drop'?: EventHandler<T, DragEvent>;
-      'on:mousedown'?: EventHandler<T, MouseEvent>;
-      'on:mouseenter'?: EventHandler<T, MouseEvent>;
-      'on:mouseleave'?: EventHandler<T, MouseEvent>;
-      'on:mousemove'?: EventHandler<T, MouseEvent>;
-      'on:mouseout'?: EventHandler<T, MouseEvent>;
-      'on:mouseover'?: EventHandler<T, MouseEvent>;
-      'on:mouseup'?: EventHandler<T, MouseEvent>;
-      'on:select'?: EventHandler<T, UIEvent>;
-      'on:touchcancel'?: EventHandler<T, TouchEvent>;
-      'on:touchend'?: EventHandler<T, TouchEvent>;
-      'on:touchmove'?: EventHandler<T, TouchEvent>;
-      'on:touchstart'?: EventHandler<T, TouchEvent>;
-      'on:scroll'?: EventHandler<T, UIEvent>;
-      'on:wheel'?: EventHandler<T, WheelEvent>;
-      'on:animationstart'?: EventHandler<T, AnimationEvent>;
-      'on:animationend'?: EventHandler<T, AnimationEvent>;
-      'on:animationiteration'?: EventHandler<T, AnimationEvent>;
-      'on:transitionend'?: EventHandler<T, TransitionEvent>;
+      'on:copy'?: HTMLEventHandler<T, ClipboardEvent>;
+      'on:cut'?: HTMLEventHandler<T, ClipboardEvent>;
+      'on:paste'?: HTMLEventHandler<T, ClipboardEvent>;
+      'on:compositionend'?: HTMLEventHandler<T, CompositionEvent>;
+      'on:compositionstart'?: HTMLEventHandler<T, CompositionEvent>;
+      'on:compositionupdate'?: HTMLEventHandler<T, CompositionEvent>;
+      'on:focus'?: HTMLEventHandler<T, FocusEvent>;
+      'on:focusout'?: HTMLEventHandler<T, FocusEvent>;
+      'on:focusin'?: HTMLEventHandler<T, FocusEvent>;
+      'on:blur'?: HTMLEventHandler<T, FocusEvent>;
+      'on:change'?: HTMLEventHandler<T, Event>;
+      'on:invalid'?: HTMLEventHandler<T, Event>;
+      'on:input'?: HTMLEventHandler<T, InputEvent>;
+      'on:beforeinput'?: HTMLEventHandler<T, InputEvent>;
+      'on:reset'?: HTMLEventHandler<T, Event>;
+      'on:submit'?: HTMLEventHandler<T, Event & { submitter: HTMLElement }>;
+      'on:load'?: HTMLEventHandler<T, Event>;
+      'on:error'?: HTMLEventHandler<T, Event>;
+      'on:keydown'?: HTMLEventHandler<T, KeyboardEvent>;
+      'on:keypress'?: HTMLEventHandler<T, KeyboardEvent>;
+      'on:keyup'?: HTMLEventHandler<T, KeyboardEvent>;
+      'on:gotpointercapture'?: HTMLEventHandler<T, PointerEvent>;
+      'on:lostpointercapture'?: HTMLEventHandler<T, PointerEvent>;
+      'on:pointercancel'?: HTMLEventHandler<T, PointerEvent>;
+      'on:pointerdown'?: HTMLEventHandler<T, PointerEvent>;
+      'on:pointerenter'?: HTMLEventHandler<T, PointerEvent>;
+      'on:pointerleave'?: HTMLEventHandler<T, PointerEvent>;
+      'on:pointermove'?: HTMLEventHandler<T, PointerEvent>;
+      'on:pointerover'?: HTMLEventHandler<T, PointerEvent>;
+      'on:pointerout'?: HTMLEventHandler<T, PointerEvent>;
+      'on:pointerup'?: HTMLEventHandler<T, PointerEvent>;
+      'on:abort'?: HTMLEventHandler<T, Event>;
+      'on:canplay'?: HTMLEventHandler<T, Event>;
+      'on:canplaythrough'?: HTMLEventHandler<T, Event>;
+      'on:durationchange'?: HTMLEventHandler<T, Event>;
+      'on:emptied'?: HTMLEventHandler<T, Event>;
+      'on:encrypted'?: HTMLEventHandler<T, Event>;
+      'on:ended'?: HTMLEventHandler<T, Event>;
+      'on:loadeddata'?: HTMLEventHandler<T, Event>;
+      'on:loadedmetadata'?: HTMLEventHandler<T, Event>;
+      'on:loadstart'?: HTMLEventHandler<T, Event>;
+      'on:pause'?: HTMLEventHandler<T, Event>;
+      'on:play'?: HTMLEventHandler<T, Event>;
+      'on:playing'?: HTMLEventHandler<T, Event>;
+      'on:progress'?: HTMLEventHandler<T, Event>;
+      'on:ratechange'?: HTMLEventHandler<T, Event>;
+      'on:seeked'?: HTMLEventHandler<T, Event>;
+      'on:seeking'?: HTMLEventHandler<T, Event>;
+      'on:stalled'?: HTMLEventHandler<T, Event>;
+      'on:suspend'?: HTMLEventHandler<T, Event>;
+      'on:timeupdate'?: HTMLEventHandler<T, Event>;
+      'on:volumechange'?: HTMLEventHandler<T, Event>;
+      'on:waiting'?: HTMLEventHandler<T, Event>;
+      'on:click'?: HTMLEventHandler<T, MouseEvent>;
+      'on:contextmenu'?: HTMLEventHandler<T, MouseEvent>;
+      'on:dblclick'?: HTMLEventHandler<T, MouseEvent>;
+      'on:drag'?: HTMLEventHandler<T, DragEvent>;
+      'on:dragend'?: HTMLEventHandler<T, DragEvent>;
+      'on:dragenter'?: HTMLEventHandler<T, DragEvent>;
+      'on:dragexit'?: HTMLEventHandler<T, DragEvent>;
+      'on:dragleave'?: HTMLEventHandler<T, DragEvent>;
+      'on:dragover'?: HTMLEventHandler<T, DragEvent>;
+      'on:dragstart'?: HTMLEventHandler<T, DragEvent>;
+      'on:drop'?: HTMLEventHandler<T, DragEvent>;
+      'on:mousedown'?: HTMLEventHandler<T, MouseEvent>;
+      'on:mouseenter'?: HTMLEventHandler<T, MouseEvent>;
+      'on:mouseleave'?: HTMLEventHandler<T, MouseEvent>;
+      'on:mousemove'?: HTMLEventHandler<T, MouseEvent>;
+      'on:mouseout'?: HTMLEventHandler<T, MouseEvent>;
+      'on:mouseover'?: HTMLEventHandler<T, MouseEvent>;
+      'on:mouseup'?: HTMLEventHandler<T, MouseEvent>;
+      'on:select'?: HTMLEventHandler<T, UIEvent>;
+      'on:touchcancel'?: HTMLEventHandler<T, TouchEvent>;
+      'on:touchend'?: HTMLEventHandler<T, TouchEvent>;
+      'on:touchmove'?: HTMLEventHandler<T, TouchEvent>;
+      'on:touchstart'?: HTMLEventHandler<T, TouchEvent>;
+      'on:scroll'?: HTMLEventHandler<T, UIEvent>;
+      'on:wheel'?: HTMLEventHandler<T, WheelEvent>;
+      'on:animationstart'?: HTMLEventHandler<T, AnimationEvent>;
+      'on:animationend'?: HTMLEventHandler<T, AnimationEvent>;
+      'on:animationiteration'?: HTMLEventHandler<T, AnimationEvent>;
+      'on:transitionend'?: HTMLEventHandler<T, TransitionEvent>;
     }
     type CSSWideKeyword = 'initial' | 'inherit' | 'unset';
     type CSSPercentage = string;
@@ -2070,7 +2065,7 @@ declare global {
     }
     interface DetailsHtmlAttributes<T> extends HTMLAttributes<T> {
       open?: boolean;
-      'on:toggle'?: EventHandler<T, Event>;
+      'on:toggle'?: HTMLEventHandler<T, Event>;
     }
     interface DialogHtmlAttributes<T> extends HTMLAttributes<T> {
       open?: boolean;

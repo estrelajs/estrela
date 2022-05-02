@@ -1,4 +1,4 @@
-import { EventEmitterHandler, State, Subscribable } from '../core';
+import { EventHandler, State, Subscribable } from '../core';
 
 export type SyncOrAsync<T> = T | Promise<T> | Subscribable<T>;
 
@@ -9,7 +9,7 @@ export type Events = Record<
   {
     accessor?: string;
     filters: string[];
-    handler: EventEmitterHandler<any>;
+    handler: EventHandler<any>;
   }
 >;
 export type Key = string | number | symbol;
