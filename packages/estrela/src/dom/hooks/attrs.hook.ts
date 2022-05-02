@@ -36,7 +36,7 @@ function hook(oldNode: VirtualNode, node?: VirtualNode): void {
       const subscription = coerceObservable(cur).subscribe(value => {
         if (value === true) {
           element.setAttribute(key, '');
-        } else if (value === false) {
+        } else if (value === false || value === undefined) {
           element.removeAttribute(key);
         } else {
           if (key.charCodeAt(0) !== xChar) {

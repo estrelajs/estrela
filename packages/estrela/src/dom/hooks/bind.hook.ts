@@ -1,126 +1,119 @@
 import { isState, State, Subscription } from '../../core';
-import { ComponentRef } from '../virtual-dom/component-ref';
 import { domApi } from '../domapi';
 import { VirtualNode } from '../virtual-dom/virtual-node';
 import { Hook } from './types';
 
-const subscriptons = new Map<any, Subscription>();
-const componentRefs = new WeakMap<Node, ComponentRef>();
+const subscriptons = new Map<Node, Subscription>();
 
-function bindData(
-  element: Node,
-  target: string | undefined,
-  state: any,
-  event?: Event
+function bindElement(
+  element: HTMLElement,
+  event: string,
+  state: State<any>,
+  handler: (value: any) => void
 ): void {
-  if (domApi.isDocumentFragment(element)) {
-    if (event && isState(state)) {
-      const customEvent = event as CustomEvent;
-      state.next(customEvent.detail);
-    } else if (target) {
-      componentRefs.get(element)?.setProp(target, state);
-    }
-    return;
-  }
-
-  const bindValue = (getName: string, setName: string, setValue?: any) => {
-    const elm = element as any;
-    if (event && isState(state)) {
-      state.next(elm[target ?? getName]);
-    } else {
-      elm[target ?? setName] = setValue ?? state;
-    }
+  const subscription = state.subscribe(value => {
+    handler(value);
+  });
+  element.addEventListener(event, handler);
+  const unsubscribe = () => {
+    element.removeEventListener(event, handler);
   };
+  subscription.add({ unsubscribe });
+  subscriptons.set(element, subscription);
+}
 
+function createBind(element: HTMLElement, state: State<any>) {
   switch (element.nodeName.toLowerCase()) {
     case 'input':
       const input = element as HTMLInputElement;
 
       switch (input.type) {
         case 'checkbox':
-          bindValue('checked', 'checked', Boolean(state));
+          bindElement(element, 'change', state, value => {
+            if (value instanceof Event) {
+              state.next(input.checked);
+            } else {
+              input.checked = Boolean(value);
+            }
+          });
           break;
 
         case 'date':
         case 'time':
-          bindValue('valueAsDate', 'value');
+          bindElement(element, 'change', state, value => {
+            if (value instanceof Event) {
+              state.next(input.valueAsDate);
+            } else {
+              input.value = value;
+            }
+          });
           break;
 
         case 'number':
-          bindValue('valueAsNumber', 'value');
+          bindElement(element, 'input', state, value => {
+            if (value instanceof Event) {
+              state.next(input.valueAsNumber);
+            } else {
+              input.value = value;
+            }
+          });
           break;
 
         case 'radio':
-          bindValue('checked', 'value', state === input.value);
+          bindElement(element, 'change', state, value => {
+            if (value instanceof Event) {
+              state.next(input.value);
+            } else {
+              input.checked = value === input.value;
+            }
+          });
           break;
 
         default:
-          bindValue('value', 'value', String(state ?? ''));
+          bindElement(element, 'input', state, value => {
+            if (value instanceof Event) {
+              state.next(input.value);
+            } else {
+              input.value = value;
+            }
+          });
           break;
       }
       break;
 
     case 'select':
       const select = element as HTMLSelectElement;
-      if (event && isState(state)) {
-        const option = select.options.item(select.selectedIndex);
-        state.next(option?.value);
-      } else {
-        select.selectedIndex = Array.from(select.options).findIndex(
-          option => option.value === state
-        );
-      }
+      bindElement(element, 'change', state, value => {
+        if (value instanceof Event) {
+          const option = select.options.item(select.selectedIndex);
+          state.next(option?.value);
+        } else {
+          select.selectedIndex = Array.from(select.options).findIndex(
+            option => option.value === value
+          );
+        }
+      });
       break;
 
     case 'textarea':
-      bindValue('value', 'value', String(state ?? ''));
-      break;
-
-    default:
-      if (target) {
-        const elm = element as HTMLElement;
-        if (event && isState(state)) {
-          state.next((elm as any)[target]);
+      bindElement(element, 'input', state, value => {
+        if (value instanceof Event) {
+          state.next(input.value);
         } else {
-          elm.setAttribute(target, String(state ?? ''));
+          input.value = value;
         }
-      }
+      });
       break;
   }
-}
-
-function createBind(
-  element: Node,
-  state: State<any>,
-  key: string | undefined
-): void {
-  const subscription = state.subscribe(value => {
-    bindData(element, key, value);
-  });
-  const handler = (e: Event) => {
-    bindData(element, key, state, e);
-  };
-  element.addEventListener(key ?? 'input', handler);
-  const unsubscribe = () => {
-    element.removeEventListener(key ?? 'input', handler);
-  };
-  subscription.add({ unsubscribe });
-  subscriptons.set(key ?? element, subscription);
 }
 
 function hook(oldNode: VirtualNode, node?: VirtualNode): void {
   const element = oldNode.element ?? node?.element;
-  const oldBinds = oldNode.data?.binds;
-  const binds = node?.data?.binds;
   const oldBind = oldNode.data?.bind;
   const bind = node?.data?.bind;
 
-  if (!element) {
+  if (!element || !domApi.isHTMLElement(element) || oldBind === bind) {
     return;
-  }
-
-  if (node?.componentRef) {
-    componentRefs.set(element, node.componentRef);
   }
 
   if (oldBind !== bind) {
@@ -129,25 +122,7 @@ function hook(oldNode: VirtualNode, node?: VirtualNode): void {
       subscriptons.delete(element);
     }
     if (bind) {
-      createBind(element, bind, undefined);
-    }
-  }
-
-  if (oldBinds !== binds) {
-    for (let key in oldBinds) {
-      const bind = oldBinds[key];
-      if (bind !== binds?.[key]) {
-        subscriptons.get(key)?.unsubscribe();
-        subscriptons.delete(key);
-      }
-    }
-
-    for (let key in binds) {
-      const cur = binds[key];
-      const old = oldBinds?.[key];
-      if (cur !== old) {
-        createBind(element, cur, key);
-      }
+      createBind(element, bind);
     }
   }
 }

@@ -1,14 +1,16 @@
-import { Component, EventEmitter } from 'estrela';
+import { Props } from 'estrela';
 import Button from './Button';
 import styles from './GithubCard.module.css';
 import { Repository } from './repository';
 
 interface GithubCardProps {
   item: Repository;
-  remove: EventEmitter<Repository>;
+  emitters: {
+    remove: Repository;
+  };
 }
 
-const GithubCard: Component<GithubCardProps> = ({ item, remove }) => {
+function GithubCard({ item, remove }: Props<GithubCardProps>) {
   return (
     <div class={styles.card}>
       <div>
@@ -18,12 +20,9 @@ const GithubCard: Component<GithubCardProps> = ({ item, remove }) => {
         🌟<strong>{item().stargazers_count}</strong>
       </div>
       <p>{item().description}</p>
-      <Button on:click={() => remove.next(item())}>
-        Remove
-        <div slot="test">test</div>
-      </Button>
+      <Button on:click={() => remove.next(item())}>Remove</Button>
     </div>
   );
-};
+}
 
 export default GithubCard;

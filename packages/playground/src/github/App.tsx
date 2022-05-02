@@ -1,4 +1,4 @@
-import { Component, onDestroy, state } from 'estrela';
+import { onDestroy, state } from 'estrela';
 import { debounceTime, filter, from, switchMap, tap } from 'rxjs';
 import Button from './Button';
 import GithubCard from './GithubCard';
@@ -6,7 +6,7 @@ import { Repositories, Repository } from './repository';
 
 const GITHUB_API = '//api.github.com/search/repositories';
 
-const App: Component = () => {
+function App() {
   const searchQuery = state('');
   const githubList = state<Repositories | undefined>([]);
 
@@ -62,6 +62,6 @@ const App: Component = () => {
       </div>
     </>
   );
-};
+}
 
 export default App;

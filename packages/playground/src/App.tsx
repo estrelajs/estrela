@@ -1,9 +1,14 @@
-import { Component } from 'estrela';
 import { createRouter, Link, Router, withRoute } from 'estrela/router';
 import ChildrenTest from './children-test/App';
 import GithubTest from './github/App';
 
-const Menu: Component = () => {
+const routes = createRouter(
+  withRoute('/', () => <Menu />),
+  withRoute('/test', () => <ChildrenTest />),
+  withRoute('/github', () => <GithubTest />)
+);
+
+function Menu() {
   return (
     <>
       <h1>Examples</h1>
@@ -17,16 +22,10 @@ const Menu: Component = () => {
       </ul>
     </>
   );
-};
+}
 
-const routes = createRouter(
-  withRoute('/', () => <Menu />),
-  withRoute('/test', () => <ChildrenTest />),
-  withRoute('/github', () => <GithubTest />)
-);
-
-const App: Component = () => {
+function App() {
   return <Router routes={routes} />;
-};
+}
 
 export default App;

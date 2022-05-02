@@ -1,7 +1,7 @@
-import { Component, state } from 'estrela';
+import { state } from 'estrela';
 import classes from './App.module.css';
 
-const App: Component = () => {
+function App() {
   const items = state<number[]>([]);
   const showOdds = state(true);
   let counter = 0;
@@ -57,6 +57,6 @@ const App: Component = () => {
       </ul>
     </>
   );
-};
+}
 
 export default App;
