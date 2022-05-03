@@ -1,4 +1,5 @@
 import { Component } from '../core';
+import { h } from '../dom';
 import { navigateTo } from './router.store';
 
 export interface LinkProps {
@@ -10,9 +11,5 @@ export const Link: Component<LinkProps> = ({ to }) => {
     e.preventDefault();
     navigateTo(to());
   }
-  return (
-    <a href={to()} on:click={click}>
-      <slot />
-    </a>
-  );
+  return h('a', { href: to, 'on:click': click }, h('slot', null));
 };
