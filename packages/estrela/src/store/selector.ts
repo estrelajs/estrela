@@ -100,20 +100,17 @@ export function createSelector(...args: any[]): Observable<any> {
 
   states.forEach((state, i) => {
     state.subscribe(value => {
-      if (!memoizedValues.hasOwnProperty(i) || memoizedValues[i] !== value) {
-        memoizedValues[i] = value;
-
-        if (Object.keys(memoizedValues).length === states.length) {
-          hasResult = true;
-          const values = Array.from(
-            { length: states.length },
-            (_, i) => memoizedValues[i]
-          );
-          const result = selector(...values);
-          if (memoizedResult !== result) {
-            memoizedResult = result;
-            subscriber.next(result);
-          }
+      memoizedValues[i] = value;
+      if (Object.keys(memoizedValues).length === states.length) {
+        hasResult = true;
+        const values = Array.from(
+          { length: states.length },
+          (_, i) => memoizedValues[i]
+        );
+        const result = selector(...values);
+        if (memoizedResult !== result) {
+          memoizedResult = result;
+          subscriber.next(result);
         }
       }
     });

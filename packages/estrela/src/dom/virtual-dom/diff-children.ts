@@ -120,7 +120,7 @@ function makeKeyIndexAndFree(list: VirtualNode[]) {
   for (let i = 0; i < list.length; i++) {
     const item = list[i];
     const itemKey = item.data?.key;
-    if (itemKey) {
+    if (itemKey && !keyIndex.hasOwnProperty(itemKey)) {
       keyIndex[itemKey] = i;
     } else {
       free.push(item);

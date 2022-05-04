@@ -27,15 +27,58 @@ export default function estrelaPlugin() {
       inherits: jsx,
       visitor: {
         Program(path) {
-          const local = t.identifier('_jsx');
-          const imported = t.identifier('h');
-          const importSource = t.stringLiteral('estrela/dom');
-          const importSpecifier = t.importSpecifier(local, imported);
-          const importDeclaration = t.importDeclaration(
-            [importSpecifier],
-            importSource
-          );
-          path.unshiftContainer('body', importDeclaration);
+          // if (/\.[jt]sx$/.test(this.file.opts.filename ?? '')) {
+          const _$$ = createImport('createState', '_$$', 'estrela');
+          const _jsx = createImport('h', '_jsx', 'estrela/dom');
+          path.unshiftContainer('body', _$$);
+          path.unshiftContainer('body', _jsx);
+        },
+
+        AssignmentExpression(path) {
+          if (isState(path.node.left)) {
+            if (path.node.operator === '=') {
+              const state = t.memberExpression(
+                path.node.left,
+                t.identifier('next')
+              );
+              const callExpr = t.callExpression(state, [path.node.right]);
+              path.replaceWith(callExpr);
+            } else if (/=$/.test(path.node.operator)) {
+              const operator = path.node.operator.slice(0, -1);
+              const state = t.memberExpression(
+                path.node.left,
+                t.identifier('update')
+              );
+              const param = t.identifier('$$');
+              const exp = t.binaryExpression(
+                operator as any,
+                param,
+                path.node.right
+              );
+              const arrowFn = t.arrowFunctionExpression([param], exp);
+              const callExpr = t.callExpression(state, [arrowFn]);
+              path.replaceWith(callExpr);
+            }
+          }
+        },
+
+        Identifier(path) {
+          if (isState(path.node)) {
+            path.skip();
+            const state = t.memberExpression(path.node, t.identifier('value'));
+            path.replaceWith(state);
+          }
+        },
+
+        VariableDeclarator(path) {
+          if (isState(path.node.id)) {
+            path.skip();
+            if (path.node.init) {
+              path.node.init = t.callExpression(t.identifier('_$$'), [
+                path.node.init,
+              ]);
+            }
+          }
         },
 
         JSXAttribute(path) {
@@ -60,29 +103,41 @@ export default function estrelaPlugin() {
           },
         },
 
-        JSXExpressionContainer: {
-          exit(path) {
-            if (t.isExpression(path.node.expression)) {
-              const selectors = getSelectors(path);
+        // JSXExpressionContainer: {
+        //   exit(path) {
+        //     if (t.isExpression(path.node.expression)) {
+        //       const selectors = getSelectors(path);
 
-              if (selectors.length > 0) {
-                const arrow = t.arrowFunctionExpression(
-                  selectors.map(x => x.param),
-                  path.node.expression
-                );
-                const array = t.arrayExpression([
-                  ...selectors.map(x => x.sel),
-                  arrow,
-                ]);
-                const expression = t.jsxExpressionContainer(array);
-                path.replaceWith(t.inherits(expression, path.node));
-                path.skip();
-              }
-            }
-          },
-        },
+        //       if (selectors.length > 0) {
+        //         const arrow = t.arrowFunctionExpression(
+        //           selectors.map(x => x.param),
+        //           path.node.expression
+        //         );
+        //         const array = t.arrayExpression([
+        //           ...selectors.map(x => x.sel),
+        //           arrow,
+        //         ]);
+        //         const expression = t.jsxExpressionContainer(array);
+        //         path.replaceWith(t.inherits(expression, path.node));
+        //         path.skip();
+        //       }
+        //     }
+        //   },
+        // },
       },
     };
+
+    function createImport(prop: string, alias: string, from: string) {
+      const local = t.identifier(alias);
+      const imported = t.identifier(prop);
+      const importSource = t.stringLiteral(from);
+      const importSpecifier = t.importSpecifier(local, imported);
+      return t.importDeclaration([importSpecifier], importSource);
+    }
+
+    function isState(node: object | null | undefined): node is t.Identifier {
+      return t.isIdentifier(node) && /[^$]\$$/.test(node.name);
+    }
 
     function getSelectors(path: NodePath<t.JSXExpressionContainer>) {
       const node = path.node;

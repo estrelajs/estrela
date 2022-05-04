@@ -6,23 +6,26 @@ import { ObservableLike, Observer, SubjectObserver } from './types';
 import { coerceObserver } from './utils';
 
 export interface State<T> extends ObservableLike<T>, SubjectObserver<T> {
-  /** Get the current state value. */
-  (): T;
-
-  /** Type safe to behave like an observer. */
-  asObserver(): Observer<T>;
+  /** The current state value. */
+  get $(): T;
 
   /**
    * Update the current state.
    * @param value next value.
    */
-  next(value: T): void;
+  next(value: T): T;
 
   /**
    * Update the current state based on the last value.
    * @param updater callback function to update current state.
    */
-  update(updater: (value: T) => T): void;
+  update(updater: (value: T) => T): T;
+
+  /**
+   * Emit the current state. Useful when working with objects and arrays.
+   * @param updater optional callback function to update current state.
+   */
+  refresh(updater?: (value: T) => void): T;
 }
 
 export function createState<T>(): State<T | undefined>;
@@ -32,7 +35,7 @@ export function createState(initialValue?: any): State<any> {
   const observers = new Set<Observer<any>>();
   const subscriber = createSubscriber(observers);
 
-  const descriptor = {
+  const state: State<any> = {
     [symbol_observable]() {
       return this;
     },
@@ -42,17 +45,21 @@ export function createState(initialValue?: any): State<any> {
     get observed() {
       return observers.size > 0;
     },
-    get value() {
+    get $() {
       return value;
-    },
-    asObserver() {
-      return descriptor as any;
     },
     next(next: any) {
       subscriber.next((value = next));
+      return value;
     },
-    update(setter: (value: any) => any) {
-      this.next((value = setter(value)));
+    update(updater: (value: any) => any) {
+      this.next((value = updater(value)));
+      return value;
+    },
+    refresh(updater?: (value: any) => void) {
+      updater?.(value);
+      subscriber.next(value);
+      return value;
     },
     error(err: any) {
       subscriber.error(err);
@@ -68,10 +75,8 @@ export function createState(initialValue?: any): State<any> {
     },
   };
 
-  const valueGetter = () => value;
-  const instance = Object.assign(valueGetter, descriptor);
-  ComponentRef.currentRef?.pushState(instance);
-  return instance;
+  ComponentRef.currentRef?.pushState(state);
+  return state;
 }
 
 export function isState<T>(x: any): x is State<T> {
@@ -82,5 +87,3 @@ export function isState<T>(x: any): x is State<T> {
     typeof x.next === 'function'
   );
 }
-
-export const state = createState;

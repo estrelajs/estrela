@@ -9,7 +9,7 @@ export interface LinkProps {
 export const Link: Component<LinkProps> = ({ to }) => {
   function click(e: MouseEvent) {
     e.preventDefault();
-    navigateTo(to());
+    navigateTo((to as any).$);
   }
   return h('a', { href: to, 'on:click': click }, h('slot', null));
 };

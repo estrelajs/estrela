@@ -1,29 +1,28 @@
-import { state } from 'estrela';
 import classes from './App.module.css';
 
 function App() {
-  const items = state<number[]>([]);
-  const showOdds = state(true);
+  let items: number[] = [];
+  let showOdds = true;
   let counter = 0;
 
   function appendItem() {
-    items.update(list => [...list, ++counter]);
+    items = [...items, ++counter];
   }
 
   function prependItem() {
-    items.update(list => [++counter, ...list]);
+    items = [++counter, ...items];
   }
 
   function removeItem() {
-    items.update(list => list.slice(0, -1));
+    items = items.slice(0, -1);
   }
 
   function shuffleList() {
-    items.update(list => list.sort(() => Math.random() - 0.5).slice());
+    items = items.sort(() => Math.random() - 0.5).slice();
   }
 
   function toggleOdds() {
-    showOdds.next(!showOdds());
+    showOdds = !showOdds;
   }
 
   return (
@@ -35,18 +34,16 @@ function App() {
         <button on:click={prependItem}>Prepend item</button>
         <button on:click={removeItem}>Remove item</button>
         <button on:click={shuffleList}>Shuffle list</button>
-        <button on:click={toggleOdds}>
-          {showOdds() ? 'Hide' : 'Show'} odds
-        </button>
-        <button on:click={() => console.log(items())}>Log</button>
+        <button on:click={toggleOdds}>{showOdds ? 'Hide' : 'Show'} odds</button>
+        <button on:click={() => console.log(items)}>Log</button>
       </div>
 
-      <ul class="list" class:has-item={items().length}>
+      <ul class="list" class:has-item={items.length}>
         <li>Header</li>
 
-        {items().map(item => {
+        {items.map(item => {
           const klass = item % 2 === 0 ? 'even' : 'odd';
-          return showOdds() || klass === 'even' ? (
+          return showOdds || klass === 'even' ? (
             <li key={item} class={classes[klass]}>
               Item {item}
             </li>

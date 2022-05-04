@@ -12,24 +12,24 @@ export { VirtualNode } from '../dom/virtual-dom/virtual-node';
  */
 
 export interface Component<P = {}, C = JSX.Children> {
-  (props: Props<P, C>): JSX.Element | null;
+  (
+    props: P extends { children: any } ? P : P & { children?: C }
+  ): JSX.Element | null;
 }
 
-export type Props<T, C = undefined> = Omit<
-  { [P in keyof T]-?: State<T[P]> } & (T extends { emitters: infer E }
-    ? { [P in keyof E]-?: EventEmitter<E[P]> }
-    : { emitters: {} }),
-  'emitters'
->;
+type Props<P> = {
+  [K in keyof Omit<P, EmittersOf<P>>]: P[K];
+} & {
+  [K in keyof Pick<P, EmittersOf<P>> as `on:${K & string}`]: P[K] extends
+    | EventEmitter<infer E>
+    | undefined
+    ? EventHandler<E>
+    : never;
+};
 
-type PropsOf<T, C> = {
-  [K in keyof Omit<T, 'emitters'>]: T[K] | State<T[K]>;
-} & EmittersOf<T> &
-  (C extends undefined ? {} : { children: C });
-
-type EmittersOf<T> = T extends { emitters: infer E }
-  ? { [K in keyof E as `on:${K & string}`]?: EventHandler<E[K]> }
-  : {};
+type EmittersOf<P> = {
+  [K in keyof P]: P[K] extends EventEmitter<any> | undefined ? K : never;
+}[keyof P];
 
 export type EventHandler<T> = ((value: T) => void) | EventEmitter<T> | State<T>;
 
@@ -55,9 +55,7 @@ declare global {
       | Promise<T>
       | Subscribable<T>
       | Parameters<typeof createSelector>;
-    type LibraryManagedAttributes<C, P> = P extends Props<infer T, infer C>
-      ? PropsOf<T, C>
-      : {};
+    type LibraryManagedAttributes<C, P> = Props<P>;
     interface ElementChildrenAttribute {
       children: any;
     }

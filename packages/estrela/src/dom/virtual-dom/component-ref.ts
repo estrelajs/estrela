@@ -94,7 +94,7 @@ export class ComponentRef {
       } else {
         const subscription = coerceObservable(cur).subscribe(value => {
           const prop = this.props[key];
-          const propValue = isState(prop) ? prop() : undefined;
+          const propValue = isState(prop) ? prop.$ : undefined;
           if (propValue !== value) {
             prop.next(value);
           }

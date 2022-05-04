@@ -14,8 +14,6 @@ export class VirtualNode {
   listener?: (e: Event) => void;
   observable?: Promise<any> | Subscribable<any>;
 
-  static empty = new VirtualNode();
-
   constructor(data?: PropertiesOf<VirtualNode>) {
     Object.assign(this, data ?? {});
   }
@@ -56,7 +54,7 @@ export class VirtualNode {
         element = document.createDocumentFragment();
       }
       this.element = element as any;
-      hooks.forEach(hook => hook.create?.(VirtualNode.empty, this));
+      hooks.forEach(hook => hook.create?.(new VirtualNode(), this));
     }
 
     if (this.componentRef) {
