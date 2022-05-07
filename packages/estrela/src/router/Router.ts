@@ -1,6 +1,7 @@
-import { Component } from '../core';
-import { h } from '../dom';
+import { h } from '../internal';
+import { $ } from '../hooks';
 import { createSelector } from '../store';
+import { Component } from '../types';
 import { Routes } from './route';
 import { routeUrl } from './router.store';
 
@@ -48,6 +49,6 @@ export const Router: Component<RouterProps> = ({ routes }) => {
   }
 
   const node = h(null, null, null);
-  node.observable = createSelector(routeUrl, routes, getRoute);
+  node.observable = createSelector(routeUrl, $(routes), getRoute);
   return node;
 };

@@ -1,4 +1,4 @@
-import { VirtualNode } from './dom';
+import { VirtualNode } from './internal';
 
 /** Return value from a value or function. */
 export function apply<T>(value: T | ((...args: any) => T), ...args: any[]): T {

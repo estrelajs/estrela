@@ -7,8 +7,8 @@ export default defineConfig({
   resolve: {
     alias: [
       {
-        find: 'estrela/dom',
-        replacement: path.resolve(__dirname, '../estrela/src/dom'),
+        find: 'estrela/internal',
+        replacement: path.resolve(__dirname, '../estrela/src/internal'),
       },
       {
         find: 'estrela/router',
@@ -20,7 +20,7 @@ export default defineConfig({
       },
       {
         find: 'estrela',
-        replacement: path.resolve(__dirname, '../estrela/src/core'),
+        replacement: path.resolve(__dirname, '../estrela/src'),
       },
     ],
   },

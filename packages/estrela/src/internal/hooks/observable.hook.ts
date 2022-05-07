@@ -1,7 +1,7 @@
-import { coerceObservable, Subscription } from '../../core';
+import { coerceObservable, Subscription } from '../../observables';
 import { coerceArray } from '../../utils';
-import { h } from '../h';
 import { domApi } from '../domapi';
+import { h } from '../h';
 import { patch } from '../virtual-dom/patch';
 import { VirtualNode } from '../virtual-dom/virtual-node';
 import { Hook } from './types';

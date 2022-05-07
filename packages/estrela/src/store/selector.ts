@@ -3,11 +3,12 @@ import {
   coerceObserver,
   createSubscriber,
   createSubscription,
+  isState,
   Observable,
   Observer,
   Subscribable,
-} from '../core';
-import { symbol_observable } from '../core/observables/symbol';
+} from '../observables';
+import { symbol_observable } from '../observables/symbol';
 
 export type Selectable<T> = Promise<T> | Subscribable<T>;
 
@@ -99,21 +100,24 @@ export function createSelector(...args: any[]): Observable<any> {
   let hasResult = false;
 
   states.forEach((state, i) => {
-    state.subscribe(value => {
-      memoizedValues[i] = value;
-      if (Object.keys(memoizedValues).length === states.length) {
-        hasResult = true;
-        const values = Array.from(
-          { length: states.length },
-          (_, i) => memoizedValues[i]
-        );
-        const result = selector(...values);
-        if (memoizedResult !== result) {
-          memoizedResult = result;
-          subscriber.next(result);
+    state.subscribe(
+      value => {
+        memoizedValues[i] = value;
+        if (Object.keys(memoizedValues).length === states.length) {
+          hasResult = true;
+          const values = Array.from(
+            { length: states.length },
+            (_, i) => memoizedValues[i]
+          );
+          const result = selector(...values);
+          if (memoizedResult !== result) {
+            memoizedResult = result;
+            subscriber.next(result);
+          }
         }
-      }
-    });
+      },
+      { initialEmit: true }
+    );
   });
 
   return {

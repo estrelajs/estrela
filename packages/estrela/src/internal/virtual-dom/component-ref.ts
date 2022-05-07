@@ -1,6 +1,5 @@
 import {
   coerceObservable,
-  Component,
   createEventEmitter,
   createState,
   createSubscription,
@@ -8,8 +7,10 @@ import {
   isState,
   State,
   Subscription,
-} from '../../core';
+} from '../../observables';
 import { createSelector } from '../../store';
+import { StyledComponent } from '../../styled';
+import { Component } from '../../types';
 import { h } from '../h';
 import { VirtualNode } from './virtual-node';
 
@@ -175,10 +176,17 @@ export class ComponentRef {
           }
 
           return content;
-          // .map(child => child.clone());
         });
         return fragment;
       }
+
+      const styledComponent = this.node.kind as StyledComponent;
+      if (styledComponent.styleId) {
+        node.data ??= {};
+        node.data.attrs ??= {};
+        node.data.attrs[styledComponent.styleId] = '';
+      }
+
       if (node.children) {
         node.children = node.children.map(visitor);
       }

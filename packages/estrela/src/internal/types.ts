@@ -1,4 +1,5 @@
-import { EventHandler, State, Subscribable } from '../core';
+import { State, Subscribable } from '../observables';
+import { EventHandler } from '../types';
 
 export type SyncOrAsync<T> = T | Promise<T> | Subscribable<T>;
 

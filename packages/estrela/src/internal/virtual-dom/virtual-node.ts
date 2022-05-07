@@ -1,4 +1,5 @@
-import { Component, Subscribable } from '../../core';
+import { Subscribable } from '../../observables';
+import { Component } from '../../types';
 import { domApi } from '../domapi';
 import { hooks } from '../hooks';
 import { NodeMetadata, PropertiesOf, VirtualNodeData } from '../types';

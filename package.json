@@ -11,6 +11,7 @@
     "packages/vite-plugin-estrela"
   ],
   "scripts": {
-    "dev": "cd packages/playground && yarn dev"
+    "dev": "cd packages/playground && yarn dev",
+    "build:estrela": "cd packages/estrela && yarn build"
   }
 }

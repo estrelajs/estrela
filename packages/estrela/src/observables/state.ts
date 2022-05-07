@@ -1,8 +1,13 @@
-import { ComponentRef } from '../../dom/virtual-dom/component-ref';
+import { ComponentRef } from '../internal';
 import { createSubscriber } from './subscriber';
 import { createSubscription } from './subscription';
 import { symbol_observable } from './symbol';
-import { ObservableLike, Observer, SubjectObserver } from './types';
+import {
+  ObservableLike,
+  Observer,
+  SubjectObserver,
+  Unsubscribable,
+} from './types';
 import { coerceObserver } from './utils';
 
 export interface State<T> extends ObservableLike<T>, SubjectObserver<T> {
@@ -26,6 +31,8 @@ export interface State<T> extends ObservableLike<T>, SubjectObserver<T> {
    * @param updater optional callback function to update current state.
    */
   refresh(updater?: (value: T) => void): T;
+
+  type: 'state';
 }
 
 export function createState<T>(): State<T | undefined>;
@@ -67,12 +74,15 @@ export function createState(initialValue?: any): State<any> {
     complete() {
       subscriber.complete();
     },
-    subscribe(observer: any) {
+    subscribe(observer: any, options = {}) {
       const obs = coerceObserver(observer);
       observers.add(obs);
-      obs.next(value);
+      if (options.initialEmit) {
+        obs.next(value);
+      }
       return createSubscription(() => observers.delete(obs));
     },
+    type: 'state',
   };
 
   ComponentRef.currentRef?.pushState(state);
@@ -82,7 +92,8 @@ export function createState(initialValue?: any): State<any> {
 export function isState<T>(x: any): x is State<T> {
   return (
     x &&
-    typeof x === 'function' &&
+    x.type === 'state' &&
+    x.hasOwnProperty('$') &&
     typeof x[symbol_observable] === 'function' &&
     typeof x.next === 'function'
   );

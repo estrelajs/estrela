@@ -24,7 +24,7 @@ export interface SubscriptionLike extends Unsubscribable {
 // OBSERVABLE INTERFACES
 
 export interface Subscribable<T> {
-  subscribe(observer: Partial<Observer<T>>): Unsubscribable;
+  subscribe(observer?: Partial<Observer<T>>): Unsubscribable;
 }
 
 /**
@@ -33,7 +33,8 @@ export interface Subscribable<T> {
 export interface ObservableLike<T> extends Subscribable<T> {
   [Symbol.observable]: () => Subscribable<T>;
   subscribe(
-    observer?: ((value: T) => void) | Partial<Observer<T>>
+    observer?: ((value: T) => void) | Partial<Observer<T>>,
+    options?: { initialEmit?: boolean }
   ): Subscription;
 }
 

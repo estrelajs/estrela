@@ -1,5 +1,6 @@
-import { Component, isPromise, isSubscribable } from '../core';
+import { isPromise, isSubscribable } from '../observables';
 import { createSelector } from '../store';
+import { Component } from '../types';
 import { apply, coerceArray, isTruthy } from '../utils';
 import { domApi } from './domapi';
 import { buildData } from './virtual-dom/data-builder';

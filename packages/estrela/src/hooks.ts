@@ -1,8 +1,8 @@
-import { ComponentRef } from '../dom/virtual-dom/component-ref';
-import { State } from './observables';
+import { ComponentRef } from './internal';
+import { createState, isState, State } from './observables';
 
 export function $<T>(state: T): State<T> {
-  return state as any;
+  return isState<T>(state) ? state : createState(state);
 }
 
 export function onDestroy(callback: () => void): void {

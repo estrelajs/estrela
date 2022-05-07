@@ -7,8 +7,8 @@ import { Repositories, Repository } from './repository';
 const GITHUB_API = '//api.github.com/search/repositories';
 
 function App() {
-  let searchQuery = '';
   let githubList: Repositories | undefined = [];
+  let searchQuery = '';
 
   const subscription = from($(searchQuery))
     .pipe(

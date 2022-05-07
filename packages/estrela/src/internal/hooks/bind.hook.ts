@@ -1,4 +1,4 @@
-import { isState, State, Subscription } from '../../core';
+import { State, Subscription } from '../../observables';
 import { domApi } from '../domapi';
 import { VirtualNode } from '../virtual-dom/virtual-node';
 import { Hook } from './types';
@@ -11,8 +11,8 @@ function bindElement(
   state: State<any>,
   handler: (value: any) => void
 ): void {
-  const subscription = state.subscribe(value => {
-    handler(value);
+  const subscription = state.subscribe(value => handler(value), {
+    initialEmit: true,
   });
   element.addEventListener(event, handler);
   const unsubscribe = () => {

@@ -4,8 +4,8 @@ import {
   createSubscription,
   ObservableLike,
   Observer,
-} from '../core';
-import { symbol_observable } from '../core/observables/symbol';
+} from '../observables';
+import { symbol_observable } from '../observables/symbol';
 
 export interface Store<S extends Object> extends ObservableLike<S> {
   /** Get the current state. */

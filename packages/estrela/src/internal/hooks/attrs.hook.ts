@@ -1,4 +1,4 @@
-import { coerceObservable, Subscription } from '../../core';
+import { coerceObservable, Subscription } from '../../observables';
 import { domApi } from '../domapi';
 import { VirtualNode } from '../virtual-dom/virtual-node';
 import { Hook } from './types';

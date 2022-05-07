@@ -8,7 +8,7 @@
     "useDefineForClassFields": true,
     "paths": {
       "estrela": [
-        "../estrela/src/core/index.ts"
+        "../estrela/src/index.ts"
       ],
       "estrela/*": [
         "../estrela/src/*/index.ts"

@@ -11,10 +11,11 @@ export default function (): PluginObj {
     },
     visitor: {
       Program(path) {
-        const _$$ = createImport('createState', '_$$', 'estrela');
-        const _jsx = createImport('h', '_jsx', 'estrela/dom');
-        path.unshiftContainer('body', _$$);
-        path.unshiftContainer('body', _jsx);
+        const imports = createImport(
+          { h: '_jsx', createState: '_$$' },
+          'estrela/internal'
+        );
+        path.unshiftContainer('body', imports);
         path.traverse(reactiveTransform());
         path.traverse(jsxTransform());
       },
@@ -22,10 +23,12 @@ export default function (): PluginObj {
   };
 }
 
-function createImport(prop: string, alias: string, from: string) {
-  const local = t.identifier(alias);
-  const imported = t.identifier(prop);
+function createImport(props: Record<string, string>, from: string) {
+  const imports = Object.entries(props).map(([prop, alias]) => {
+    const local = t.identifier(alias);
+    const imported = t.identifier(prop);
+    return t.importSpecifier(local, imported);
+  });
   const importSource = t.stringLiteral(from);
-  const importSpecifier = t.importSpecifier(local, imported);
-  return t.importDeclaration([importSpecifier], importSource);
+  return t.importDeclaration(imports, importSource);
 }

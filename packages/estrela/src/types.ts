@@ -1,7 +1,6 @@
-import { VirtualNode } from '../dom/virtual-dom/virtual-node';
-import { createSelector } from '../store';
+import { VirtualNode } from './internal';
 import { EventEmitter, State, Subscribable } from './observables';
-export { VirtualNode } from '../dom/virtual-dom/virtual-node';
+import { createSelector } from './store';
 
 /**
  * Based on JSX types for Surplus, Inferno and dom-expressions, adapted for Estrela.
@@ -73,7 +72,7 @@ declare global {
       [K in `class:${string}`]?: boolean;
     };
     interface DOMAttributes<T> extends DirectiveAttributes {
-      ref?: T | ((el: T) => void);
+      ref?: State<T | null> | ((el: T) => void);
       key?: string | number | symbol;
       children?: Children;
       innerHTML?: string;

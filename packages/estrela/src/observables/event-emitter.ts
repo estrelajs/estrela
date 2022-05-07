@@ -7,6 +7,11 @@ import { coerceObserver } from './utils';
 export interface EventEmitter<T> extends ObservableLike<T>, SubjectObserver<T> {
   /** Emit event with the given value. */
   next(value: T): void;
+
+  /** Emit event with the given value. */
+  emit(value: T): void;
+
+  type: 'emitter';
 }
 
 export function createEventEmitter<T>(async = false): EventEmitter<T> {
@@ -32,6 +37,9 @@ export function createEventEmitter<T>(async = false): EventEmitter<T> {
         subscriber.next(value);
       }
     },
+    emit(value: any) {
+      this.next(value);
+    },
     error(err: any) {
       subscriber.error(err);
     },
@@ -43,12 +51,14 @@ export function createEventEmitter<T>(async = false): EventEmitter<T> {
       observers.add(obs);
       return createSubscription(() => observers.delete(obs));
     },
+    type: 'emitter',
   } as EventEmitter<T>;
 }
 
 export function isEventEmitter<T>(x: any): x is EventEmitter<T> {
   return (
     x &&
+    x.type === 'emitter' &&
     typeof x[symbol_observable] === 'function' &&
     typeof x.emit === 'function'
   );

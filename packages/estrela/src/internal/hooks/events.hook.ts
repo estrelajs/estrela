@@ -1,4 +1,9 @@
-import { EventEmitter, isEventEmitter, isState, State } from '../../core';
+import {
+  EventEmitter,
+  isEventEmitter,
+  isState,
+  State,
+} from '../../observables';
 import { toCamelCase } from '../../utils';
 import { VirtualNode } from '../virtual-dom/virtual-node';
 import { Hook } from './types';

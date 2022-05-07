@@ -3,7 +3,7 @@ import classes from './App.module.css';
 function App() {
   let items: number[] = [];
   let showOdds = true;
-  let counter = 0;
+  var counter = 0;
 
   function appendItem() {
     items = [...items, ++counter];
