@@ -26,7 +26,7 @@ export const styled =
       postcssNested(),
       postcssPrefixer({
         prefix: `[${styledComponent.styleId}]`,
-        transform: (prefix: string, selector: string) => {
+        transform: (prefix, selector) => {
           return `${selector}${prefix}`;
         },
       }) as any,

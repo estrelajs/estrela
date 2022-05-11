@@ -16,6 +16,8 @@ export interface Store<S extends Object> extends ObservableLike<S> {
    * @param updater callback function to update current state.
    */
   update(updater: (state: Readonly<S>) => S): void;
+
+  type: 'store';
 }
 
 export function createStore<S extends Object>(initialState: S): Store<S> {
@@ -40,5 +42,6 @@ export function createStore<S extends Object>(initialState: S): Store<S> {
       value = Object.freeze(setter(value));
       subscriber.next(value);
     },
+    type: 'store',
   };
 }
