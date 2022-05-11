@@ -1,6 +1,6 @@
 {
   "name": "vite-plugin-estrela",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "A vite plugin to process estrela jsx/tsx files",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

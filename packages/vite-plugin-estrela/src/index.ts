@@ -10,6 +10,9 @@ export default function (): Plugin {
         esbuild: {
           jsx: 'preserve',
         },
+        resolve: {
+          dedupe: ['estrela/internal'],
+        },
       };
     },
     transform(code, id) {

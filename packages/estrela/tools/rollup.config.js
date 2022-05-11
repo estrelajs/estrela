@@ -14,7 +14,7 @@ export default defineConfig({
   },
   output: [
     {
-      dir: 'dist/csj',
+      dir: 'dist/cjs',
       entryFileNames: '[name].js',
       format: 'cjs',
     },
