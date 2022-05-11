@@ -1,4 +1,4 @@
-import { $, EventEmitter, styled } from 'estrela';
+import { EventEmitter, getState, styled } from 'estrela';
 import { TodoData } from './Todo.model';
 
 export interface TodoProps {
@@ -10,13 +10,13 @@ export interface TodoProps {
 function Todo({ todo, complete, remove }: TodoProps) {
   let completed = todo.completed;
 
-  $(completed).subscribe(value => {
+  getState(completed).subscribe(value => {
     complete?.emit(value);
   });
 
   return (
     <div class="todo">
-      <input type="checkbox" bind={$(completed)} />
+      <input type="checkbox" bind={getState(completed)} />
       <span class:completed={completed}>{todo.text}</span>
       <button on:click={() => remove?.emit(todo)}>🗑️</button>
     </div>

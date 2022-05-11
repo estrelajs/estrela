@@ -26,12 +26,6 @@ export interface State<T> extends ObservableLike<T>, SubjectObserver<T> {
    */
   update(updater: (value: T) => T): T;
 
-  /**
-   * Emit the current state. Useful when working with objects and arrays.
-   * @param updater optional callback function to update current state.
-   */
-  refresh(updater?: (value: T) => void): T;
-
   type: 'state';
 }
 
@@ -61,11 +55,6 @@ export function createState(initialValue?: any): State<any> {
     },
     update(updater: (value: any) => any) {
       this.next((value = updater(value)));
-      return value;
-    },
-    refresh(updater?: (value: any) => void) {
-      updater?.(value);
-      subscriber.next(value);
       return value;
     },
     error(err: any) {

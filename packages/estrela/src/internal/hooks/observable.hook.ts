@@ -39,7 +39,8 @@ function hook(oldNode: VirtualNode, node?: VirtualNode): void {
           }
 
           lastNodeMap.set(element, lastNode);
-        }
+        },
+        { initialEmit: true }
       );
 
       if (!lastNodeMap.has(element)) {

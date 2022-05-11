@@ -1,4 +1,4 @@
-import { $ } from '../hooks';
+import { getState } from '../get-state';
 import { h } from '../internal';
 import { createSelector } from '../store';
 import { Component } from '../types';
@@ -8,14 +8,17 @@ export interface LinkProps {
   to: string;
 }
 
-export const Link: Component<LinkProps> = ({ to }) => {
+export const Link: Component<LinkProps> = props => {
   function click(e: MouseEvent) {
     e.preventDefault();
-    navigateTo((to as any).$);
+    navigateTo(props.to);
   }
   return h(
     'a',
-    { href: createSelector($(to), _to => _to), 'on:click': click },
+    {
+      href: createSelector(getState(props, 'to'), _to => _to),
+      'on:click': click,
+    },
     h('slot', null)
   );
 };

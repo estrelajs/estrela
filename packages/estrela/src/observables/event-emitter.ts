@@ -21,9 +21,6 @@ export function createEventEmitter<T>(async = false): EventEmitter<T> {
     [symbol_observable]() {
       return this;
     },
-    get $() {
-      return this;
-    },
     get closed() {
       return subscriber.closed;
     },
@@ -52,7 +49,7 @@ export function createEventEmitter<T>(async = false): EventEmitter<T> {
       return createSubscription(() => observers.delete(obs));
     },
     type: 'emitter',
-  } as EventEmitter<T>;
+  };
 }
 
 export function isEventEmitter<T>(x: any): x is EventEmitter<T> {

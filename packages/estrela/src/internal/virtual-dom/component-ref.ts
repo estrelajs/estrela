@@ -12,7 +12,13 @@ import { createSelector } from '../../store';
 import { StyledComponent } from '../../styled';
 import { Component } from '../../types';
 import { h } from '../h';
+import { ProxyState } from '../proxy-state';
 import { VirtualNode } from './virtual-node';
+
+type ProxyTarget = Record<
+  string | number | symbol,
+  State<any> | EventEmitter<any>
+>;
 
 export class ComponentRef {
   private readonly cleanup = createSubscription();
@@ -32,7 +38,7 @@ export class ComponentRef {
 
     this.hooks['destroy']?.();
     this.states.forEach(state => state.complete());
-    Object.values(this.props).forEach(state => state.complete());
+    Object.values(this.props.$).forEach(state => (state as any).complete());
     this.propsCleanup.forEach(subscription => subscription.unsubscribe());
     this.cleanup.unsubscribe();
   }
@@ -42,7 +48,7 @@ export class ComponentRef {
 
     // set reference and get component template
     ComponentRef.currentRef = this;
-    const template = (this.node.kind as Component)(this.props) ?? h('#');
+    const template = (this.node.kind as Component)(this.props as any) ?? h('#');
     this.template = this.buildTemplate(template);
     ComponentRef.currentRef = null;
 
@@ -67,7 +73,7 @@ export class ComponentRef {
 
     // patch children
     this.children = this.node.children ?? [];
-    this.props.children.next(this.getChildren());
+    this.props.children = this.getChildren();
     this.node.children = [];
 
     if (oldProps === props) {
@@ -90,18 +96,15 @@ export class ComponentRef {
         continue;
       }
 
-      if (isState(cur)) {
-        this.props[key] = cur;
-      } else {
-        const subscription = coerceObservable(cur).subscribe(value => {
-          const prop = this.props[key];
-          const propValue = isState(prop) ? prop.$ : undefined;
-          if (propValue !== value) {
-            prop.next(value);
+      const subscription = coerceObservable(cur).subscribe(
+        value => {
+          if (this.props[key] !== value) {
+            this.props[key] = value;
           }
-        });
-        this.propsCleanup.set(key, subscription);
-      }
+        },
+        { initialEmit: true }
+      );
+      this.propsCleanup.set(key, subscription);
     }
   }
 
@@ -113,30 +116,43 @@ export class ComponentRef {
     this.states.push(state);
   }
 
-  private createProps(): Record<string, State<any> | EventEmitter<any>> {
-    return new Proxy({} as Record<string, State<any> | EventEmitter<any>>, {
-      get: (target, key: string) => {
-        let prop: State<any> | EventEmitter<any>;
-        if (key in target) {
-          return target[key];
-        }
-
-        if (this.node?.data?.events?.hasOwnProperty(key)) {
-          prop = createEventEmitter();
-          const subscription = prop.subscribe(e =>
-            this.node.element!.dispatchEvent(
-              new CustomEvent(key, { detail: e })
-            )
+  private createProps(): ProxyState<any> {
+    const getProxyState = (target: ProxyTarget, prop: string | symbol) => {
+      if (target[prop]) {
+        return target[prop];
+      }
+      let state: State<any> | EventEmitter<any>;
+      if (this.node?.data?.events?.hasOwnProperty(prop)) {
+        state = createEventEmitter();
+        const subscription = state.subscribe(e =>
+          this.node.element!.dispatchEvent(
+            new CustomEvent(String(prop), { detail: e })
+          )
+        );
+        this.cleanup.add(subscription);
+      } else {
+        state = createState();
+      }
+      target[prop] = state;
+      return state;
+    };
+    return new Proxy({} as ProxyTarget, {
+      get(target, prop) {
+        if (prop === '$') {
+          return new Proxy(
+            {},
+            { get: (_, prop) => getProxyState(target, prop) }
           );
-          this.cleanup.add(subscription);
-        } else {
-          prop = createState();
         }
-
-        target[key] = prop;
-        return prop;
+        const state = getProxyState(target, prop);
+        return isState(state) ? state.$ : state;
       },
-    });
+      set(target, prop, value) {
+        const state = getProxyState(target, prop);
+        state.next(value);
+        return true;
+      },
+    }) as any;
   }
 
   private getChildren() {
@@ -160,7 +176,7 @@ export class ComponentRef {
         const fragment = h();
         const originalChildren = node.children;
 
-        fragment.observable = createSelector(this.props.children, () => {
+        fragment.observable = createSelector(this.props.$.children, () => {
           const slot = node.data?.attrs?.name as string | undefined;
           const select = node.data?.attrs?.select as string | undefined;
           let content: VirtualNode[] = this.children;

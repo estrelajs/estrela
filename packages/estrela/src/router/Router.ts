@@ -1,5 +1,5 @@
+import { getState } from '../get-state';
 import { h } from '../internal';
-import { $ } from '../hooks';
 import { createSelector } from '../store';
 import { Component } from '../types';
 import { Routes } from './route';
@@ -9,7 +9,7 @@ export interface RouterProps {
   routes: Routes;
 }
 
-export const Router: Component<RouterProps> = ({ routes }) => {
+export const Router: Component<RouterProps> = props => {
   function getRoute(url: string, routes: Routes): JSX.Element | null {
     const [path, query] = url.split('?');
 
@@ -49,6 +49,10 @@ export const Router: Component<RouterProps> = ({ routes }) => {
   }
 
   const node = h(null, null, null);
-  node.observable = createSelector(routeUrl, $(routes), getRoute);
+  node.observable = createSelector(
+    routeUrl,
+    getState(props, 'routes'),
+    getRoute
+  );
   return node;
 };
