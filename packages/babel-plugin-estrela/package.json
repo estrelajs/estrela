@@ -1,22 +1,26 @@
 {
   "name": "babel-plugin-estrela",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A babel plugin to process estrela jsx/tsx files",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "yarn clean && yarn compile && tsc",
     "clean": "rimraf dist",
-    "compile": "esbuild src/index.ts --bundle --platform=node --external:vite --outfile=dist/index.js",
+    "compile": "esbuild src/index.ts --bundle --platform=node --external:@babel/core --external:@babel/types --outfile=dist/index.js",
     "prepublish": "yarn build"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "dependencies": {
+    "@babel/core": "^7.17.9"
+  },
   "devDependencies": {
-    "@babel/core": "^7.17.9",
     "@babel/helper-annotate-as-pure": "^7.16.7",
     "@types/babel__core": "^7.1.19",
+    "esbuild": "^0.14.38",
+    "rimraf": "^3.0.2",
     "ts-node": "^10.7.0"
   }
 }

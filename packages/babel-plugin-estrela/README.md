@@ -1,67 +1,54 @@
-# vite-plugin-estrela
+# babel-plugin-estrela
 
-A vite plugin to process estrela jsx/tsx files.
+A babel plugin to process estrela jsx/tsx files.
 
 ### Estrela code example
 
 ```tsx
-import { state, onDestroy } from 'estrela';
+import { onDestroy } from 'estrela';
 
 const App = () => {
   // create a number state with initial value equal to 0.
-  const count = state(0);
+  let count = 0;
 
   // create an updater interval function.
-  const interval = setInterval(() => count.update(value => ++value), 1000);
+  const interval = setInterval(() => count++, 1000);
 
   // clean interval on destroy this component.
   onDestroy(() => clearInterval(interval));
   
   // return JSX element.
-  return <div>Count is { count() * 2 }</div>
+  return <div>Count is { count * 2 }</div>
 }
 ```
 
 It will convert the code above to:
 
 ```js
-import { h as _jsx } from 'estrela/dom';
+import { h as _jsx, createProxyState as _$$ } from 'estrela/internal';
 import { state, onDestroy } from 'estrela';
 
 const App = () => {
-  const count = state(0);
-  setInterval(() => count.update(value => ++value), 1000);
+  const _$ = /*#__PURE__*/_$$();
+  _$.count = 0;
+  setInterval(() => _$.count++, 1000);
   onDestroy(() => clearInterval(interval));
-  return h('div', null, 'Count is ', [count, _count => _count * 2]);
+  return /*#__PURE__*/h('div', null, 'Count is ', [_$.$.count, _count => _count * 2]);
 }
 ```
 
-## Installation
+## Install
 
-### npm
-
-```bash
-$ npm i --save-dev vite-plugin-estrela
-```
-
-### yarn
+Using npm:
 
 ```bash
-$ yarn add --dev vite-plugin-estrela
+$ npm install --save-dev babel-plugin-estrela
 ```
 
-## Usage
+or using yarn:
 
-### Vite Config
-
-```js
-// vite.config.js
-import estrela from "vite-plugin-estrela";
-
-export default {
-  plugins: [estrela()],
-};
-
+```bash
+$ yarn add babel-plugin-estrela --dev
 ```
 
 ## Estrela

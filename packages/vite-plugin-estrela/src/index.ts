@@ -1,17 +1,13 @@
 import * as babel from '@babel/core';
 import { Plugin } from 'vite';
-import estrelaPlugin from '../../babel-plugin-estrela/src';
-
-console.log(estrelaPlugin);
+import estrelaPlugin from 'babel-plugin-estrela/src';
 
 export default function (): Plugin {
   return {
     name: 'vite-plugin-estrela',
-    config(config) {
+    config() {
       return {
-        ...config,
         esbuild: {
-          ...config.esbuild,
           jsx: 'preserve',
         },
       };
@@ -19,6 +15,7 @@ export default function (): Plugin {
     transform(code, id) {
       if (/\.[jt]sx$/.test(id)) {
         const result = babel.transformSync(code, {
+          filename: id,
           sourceMaps: true,
           sourceType: 'module',
           plugins: [estrelaPlugin()],
