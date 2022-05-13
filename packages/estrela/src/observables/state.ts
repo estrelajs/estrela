@@ -2,12 +2,7 @@ import { ComponentRef } from '../internal';
 import { createSubscriber } from './subscriber';
 import { createSubscription } from './subscription';
 import { symbol_observable } from './symbol';
-import {
-  ObservableLike,
-  Observer,
-  SubjectObserver,
-  Unsubscribable,
-} from './types';
+import { ObservableLike, Observer, SubjectObserver } from './types';
 import { coerceObserver } from './utils';
 
 export interface State<T> extends ObservableLike<T>, SubjectObserver<T> {

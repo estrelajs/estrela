@@ -3,15 +3,15 @@ import { TodoData } from './Todo.model';
 
 export interface TodoProps {
   todo: TodoData;
-  complete?: EventEmitter<boolean>;
-  remove?: EventEmitter<TodoData>;
+  complete: EventEmitter<boolean>;
+  remove: EventEmitter<TodoData>;
 }
 
 function Todo({ todo, complete, remove }: TodoProps) {
   let completed = todo.completed;
 
   getState(completed).subscribe(value => {
-    complete?.emit(value);
+    complete.emit(value);
   });
 
   return (

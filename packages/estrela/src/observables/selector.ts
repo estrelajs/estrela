@@ -1,14 +1,9 @@
-import {
-  coerceObservable,
-  coerceObserver,
-  createSubscriber,
-  createSubscription,
-  isState,
-  Observable,
-  Observer,
-  Subscribable,
-} from '../observables';
-import { symbol_observable } from '../observables/symbol';
+import { Observable } from './observable';
+import { createSubscriber } from './subscriber';
+import { createSubscription } from './subscription';
+import { symbol_observable } from './symbol';
+import { Observer, Subscribable } from './types';
+import { coerceObservable, coerceObserver } from './utils';
 
 export type Selectable<T> = Promise<T> | Subscribable<T>;
 

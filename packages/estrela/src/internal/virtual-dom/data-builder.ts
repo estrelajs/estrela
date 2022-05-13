@@ -1,5 +1,4 @@
-import { isPromise, isSubscribable } from '../../observables';
-import { createSelector } from '../../store';
+import { createSelector, isPromise, isSubscribable } from '../../observables';
 import { apply, toCamelCase } from '../../utils';
 import { VirtualNodeData } from '../types';
 

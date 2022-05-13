@@ -1,6 +1,6 @@
 import { getState } from '../get-state';
 import { h } from '../internal';
-import { createSelector } from '../store';
+import { createSelector } from '../observables';
 import { Component } from '../types';
 import { Routes } from './route';
 import { routeUrl } from './router.store';

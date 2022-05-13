@@ -1,6 +1,10 @@
 import { VirtualNode } from './internal';
-import { EventEmitter, State, Subscribable } from './observables';
-import { createSelector } from './store';
+import {
+  EventEmitter,
+  createSelector,
+  State,
+  Subscribable,
+} from './observables';
 
 /**
  * Based on JSX types for Surplus, Inferno and dom-expressions, adapted for Estrela.

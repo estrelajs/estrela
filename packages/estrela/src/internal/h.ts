@@ -1,5 +1,4 @@
-import { isPromise, isSubscribable } from '../observables';
-import { createSelector } from '../store';
+import { createSelector, isPromise, isSubscribable } from '../observables';
 import { Component } from '../types';
 import { apply, coerceArray, isTruthy } from '../utils';
 import { domApi } from './domapi';

@@ -1,6 +1,7 @@
 import {
   coerceObservable,
   createEventEmitter,
+  createSelector,
   createState,
   createSubscription,
   EventEmitter,
@@ -8,7 +9,6 @@ import {
   State,
   Subscription,
 } from '../../observables';
-import { createSelector } from '../../store';
 import { StyledComponent } from '../../styled';
 import { Component } from '../../types';
 import { h } from '../h';
