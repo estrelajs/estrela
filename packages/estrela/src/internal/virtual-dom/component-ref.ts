@@ -200,7 +200,7 @@ export class ComponentRef {
       if (styledComponent.styleId) {
         node.data ??= {};
         node.data.attrs ??= {};
-        node.data.attrs[styledComponent.styleId] = '';
+        node.data.attrs[`_${styledComponent.styleId}`] = '';
       }
 
       if (node.children) {

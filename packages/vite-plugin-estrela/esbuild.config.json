@@ -1,0 +1,12 @@
+{
+  "bundle": true,
+  "entry": "src/index.ts",
+  "outfile": "dist/index.js",
+  "platform": "node",
+  "external": [
+    "@babel/core",
+    "@babel/types",
+    "babel-plugin-estrela",
+    "vite"
+  ]
+}

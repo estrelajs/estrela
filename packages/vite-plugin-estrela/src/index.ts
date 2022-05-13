@@ -1,6 +1,6 @@
 import * as babel from '@babel/core';
 import { Plugin } from 'vite';
-import estrelaPlugin from 'babel-plugin-estrela/src';
+import estrelaPlugin from 'babel-plugin-estrela';
 
 export default function (): Plugin {
   return {

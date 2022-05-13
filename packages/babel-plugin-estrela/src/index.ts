@@ -2,6 +2,7 @@ import { PluginObj } from '@babel/core';
 import * as t from '@babel/types';
 import functionalTransform from './functional.transform';
 import jsxTransform from './jsx.transform';
+import styledTransform from './styled.transform';
 
 export default function (): PluginObj {
   return {
@@ -12,12 +13,16 @@ export default function (): PluginObj {
     visitor: {
       Program(path) {
         const imports = createImport(
-          { h: '_jsx', createProxyState: '_$$' },
+          {
+            h: '_jsx',
+            createProxyState: '_$$',
+          },
           'estrela/internal'
         );
         path.unshiftContainer('body', imports);
         path.traverse(functionalTransform());
         path.traverse(jsxTransform());
+        path.traverse(styledTransform());
       },
     },
   };
