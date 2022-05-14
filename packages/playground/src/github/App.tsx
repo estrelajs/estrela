@@ -7,8 +7,11 @@ import { Repositories, Repository } from './repository';
 const GITHUB_API = '//api.github.com/search/repositories';
 
 function App() {
+  let inputRef: HTMLInputElement | null = null;
   let githubList: Repositories | undefined = [];
   let searchQuery = '';
+
+  getState(inputRef).subscribe(console.log);
 
   const subscription = from(getState(searchQuery))
     .pipe(
@@ -43,6 +46,7 @@ function App() {
         <label for="search">Search:</label>
         <input
           id="search"
+          ref={ref => (inputRef = ref)}
           bind={getState(searchQuery)}
           placeholder="Search for github repository..."
         />

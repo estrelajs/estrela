@@ -1,8 +1,9 @@
-import { getState, styled } from 'estrela';
-import Todo from './Todo';
+import { createState, getState, styled } from 'estrela';
+import Todo, { TodoRef } from './Todo';
 import { TodoData } from './Todo.model';
 
 function App() {
+  const todoRef = createState<TodoRef>();
   let todos: TodoData[] = [];
   let todoText = '';
   var id = 0;
@@ -15,6 +16,12 @@ function App() {
 
   getState(todos).subscribe(todos => {
     localStorage.setItem('todos', JSON.stringify(todos));
+  });
+
+  todoRef.subscribe(ref => {
+    if (ref) {
+      ref.doSomething();
+    }
   });
 
   const addTodo = () => {
@@ -59,6 +66,7 @@ function App() {
             <Todo
               key={todo.id}
               todo={todo}
+              ref={todoRef}
               on:complete={completeTodo(todo.id)}
               on:remove={removeTodo(todo.id)}
             />

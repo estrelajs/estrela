@@ -6,6 +6,7 @@ import { attrsHook } from './attrs.hook';
 import { bindHook } from './bind.hook';
 import { classesHook } from './classes.hook';
 import { stylesHook } from './styles.hook';
+import { refHook } from './ref.hook';
 
 export const hooks: Hook[] = [
   componentHook,
@@ -13,6 +14,7 @@ export const hooks: Hook[] = [
   classesHook,
   stylesHook,
   attrsHook,
+  refHook,
   bindHook,
   eventsHook,
 ];

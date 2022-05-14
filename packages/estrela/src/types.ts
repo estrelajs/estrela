@@ -40,6 +40,8 @@ export type HTMLEventHandler<T, E extends Event> = EventHandler<
   E & { target: T }
 >;
 
+export type Ref<T> = ((data: T | undefined) => void) | State<T | undefined>;
+
 declare global {
   namespace JSX {
     type Element = VirtualNode;

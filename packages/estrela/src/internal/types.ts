@@ -1,5 +1,5 @@
 import { State, Subscribable } from '../observables';
-import { EventHandler } from '../types';
+import { EventHandler, Ref } from '../types';
 
 export type SyncOrAsync<T> = T | Promise<T> | Subscribable<T>;
 
@@ -15,7 +15,6 @@ export type Events = Record<
 >;
 export type Key = string | number | symbol;
 export type Props = Record<string, SyncOrAsync<any>>;
-export type Ref = ((el: HTMLElement) => void) | State<HTMLElement>;
 export type Styles = Record<string, SyncOrAsync<string>>;
 
 export interface VirtualNodeData {
@@ -26,7 +25,7 @@ export interface VirtualNodeData {
   events?: Events;
   key?: Key;
   props?: Props;
-  ref?: Ref;
+  ref?: Ref<Node>;
   slot?: string;
   style?: SyncOrAsync<string | Styles>;
   styles?: Styles;

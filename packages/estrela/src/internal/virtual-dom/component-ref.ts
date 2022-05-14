@@ -9,7 +9,6 @@ import {
   State,
   Subscription,
 } from '../../observables';
-import { StyledComponent } from '../../styled';
 import { Component } from '../../types';
 import { h } from '../h';
 import { ProxyState } from '../proxy-state';
@@ -116,6 +115,15 @@ export class ComponentRef {
     this.states.push(state);
   }
 
+  setRef<T>(ref: T): void {
+    const nodeRef = this.node.data?.ref as any;
+    if (isState(nodeRef)) {
+      nodeRef.next(ref);
+    } else if (nodeRef) {
+      nodeRef(ref);
+    }
+  }
+
   private createProps(): ProxyState<any> {
     const getProxyState = (target: ProxyTarget, prop: string | symbol) => {
       if (target[prop]) {
@@ -196,7 +204,7 @@ export class ComponentRef {
         return fragment;
       }
 
-      const styledComponent = this.node.kind as StyledComponent;
+      const styledComponent = this.node.kind as any;
       if (styledComponent.styleId) {
         node.data ??= {};
         node.data.attrs ??= {};

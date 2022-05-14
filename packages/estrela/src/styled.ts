@@ -1,16 +1,13 @@
-import { Component } from './types';
+export type StyledTemplate<C> = (
+  css: TemplateStringsArray,
+  ...cssArgs: any[]
+) => C;
 
-export interface StyledComponent<P = {}, C = JSX.Children>
-  extends Component<P, C> {
-  styleId?: string;
-}
-
-export const styled =
-  <T, C>(component: Component<T, C>) =>
-  (css: TemplateStringsArray, ...cssArgs: any[]) => {
+export function styled<C extends Function>(Component: C): StyledTemplate<C> {
+  return (css, ...cssArgs) => {
     const template = Array.from(css);
-    const styledComponent: StyledComponent<T, C> = (...args: any[]) => {
-      return component.apply(undefined, args as any);
+    const styledComponent = (...args: any[]) => {
+      return Component.apply(undefined, args as any);
     };
 
     if (isStyleId(cssArgs[0])) {
@@ -29,8 +26,9 @@ export const styled =
     style.textContent = styleSheet;
     document.head.append(style);
 
-    return styledComponent;
+    return styledComponent as any;
   };
+}
 
 function isStyleId(id: string): boolean {
   return /^[a-z0-9]{5}$/.test(id);
