@@ -1,0 +1,19 @@
+{
+  "name": "estrela",
+  "version": "0.0.1",
+  "description": "Full Reactive Framework.",
+  "main": "index.js",
+  "authors": {
+    "name": "Eduardo Rosostolato",
+    "email": "eduardo.rosostolato@gmail.com"
+  },
+  "repository": "https://github.com/estrelajs/estrela/estrela",
+  "scripts": {
+    "dev": "vuepress dev src",
+    "build": "vuepress build src"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "vuepress": "^1.5.3"
+  }
+}

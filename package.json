@@ -12,6 +12,7 @@
   ],
   "scripts": {
     "dev": "cd packages/playground && yarn dev",
-    "build:estrela": "cd packages/estrela && yarn build"
+    "build:estrela": "cd packages/estrela && yarn build",
+    "docs": "cd docs && yarn dev"
   }
 }
