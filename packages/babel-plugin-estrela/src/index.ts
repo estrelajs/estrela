@@ -20,7 +20,7 @@ export default function (): PluginObj {
           'estrela/internal'
         );
         path.unshiftContainer('body', imports);
-        path.traverse(functionalTransform());
+        // path.traverse(functionalTransform());
         path.traverse(jsxTransform());
         path.traverse(styledTransform());
       },

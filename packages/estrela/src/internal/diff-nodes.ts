@@ -1,5 +1,5 @@
-import { isNil } from '../../utils';
-import { VirtualNode } from './virtual-node';
+import { isNil } from '../utils';
+import { NODE_DATA_MAP } from './node-map';
 
 export enum MoveType {
   Remove,
@@ -9,13 +9,13 @@ export enum MoveType {
 export interface Move {
   type: MoveType;
   index: number;
-  item: VirtualNode;
-  replaced?: VirtualNode;
+  item: Node;
+  replaced?: Node;
   ignore?: boolean;
 }
 
 /** Diff two list in O(N). */
-export function diffChildren(oldList: VirtualNode[], newList: VirtualNode[]) {
+export function diffNodes(oldList: Node[], newList: Node[]) {
   const oldMap = makeKeyIndexAndFree(oldList);
   const newMap = makeKeyIndexAndFree(newList);
   const newFree = newMap.free;
@@ -24,16 +24,17 @@ export function diffChildren(oldList: VirtualNode[], newList: VirtualNode[]) {
   const newKeyIndex = newMap.keyIndex;
 
   const moves: Move[] = [];
-  const children: (VirtualNode | null)[] = [];
+  const children: (Node | null)[] = [];
   let freeIndex = 0;
 
   // first pass to check item in old list: if it's removed or not
   for (const item of oldList) {
-    if (item.data?.key) {
-      if (!newKeyIndex.hasOwnProperty(item.data?.key)) {
+    const key = getKey(item);
+    if (!isNil(key)) {
+      if (!newKeyIndex.hasOwnProperty(key)) {
         children.push(null);
       } else {
-        const newItemIndex = newKeyIndex[item.data?.key];
+        const newItemIndex = newKeyIndex[key];
         children.push(newList[newItemIndex]);
       }
     } else {
@@ -62,10 +63,10 @@ export function diffChildren(oldList: VirtualNode[], newList: VirtualNode[]) {
   j = i = 0;
   while (i < newList.length) {
     const item = newList[i];
-    const itemKey = item.data?.key;
+    const itemKey = getKey(item);
 
     const simulateItem = simulateList[j];
-    const simulateItemKey = simulateItem?.data?.key;
+    const simulateItemKey = getKey(simulateItem);
 
     if (simulateItem) {
       if (itemKey === simulateItemKey) {
@@ -89,15 +90,15 @@ export function diffChildren(oldList: VirtualNode[], newList: VirtualNode[]) {
   let k = simulateList.length - j;
   while (j++ < simulateList.length) {
     k--;
-    remove(k + i, simulateList[k + i] as VirtualNode);
+    remove(k + i, simulateList[k + i] as Node);
   }
 
-  function remove(index: number, item: VirtualNode) {
+  function remove(index: number, item: Node) {
     const move: Move = { type: MoveType.Remove, index, item };
     moves.push(move);
   }
 
-  function insert(index: number, item: VirtualNode) {
+  function insert(index: number, item: Node) {
     const move: Move = { type: MoveType.Insert, index, item };
     moves.push(move);
   }
@@ -108,19 +109,19 @@ export function diffChildren(oldList: VirtualNode[], newList: VirtualNode[]) {
 
   return {
     moves: moves,
-    children: children as VirtualNode[],
+    children: children as Node[],
   };
 }
 
 /**
  * Convert list to key-item keyIndex object.
  */
-function makeKeyIndexAndFree(list: VirtualNode[]) {
+function makeKeyIndexAndFree(list: Node[]) {
   const keyIndex: Record<string | number | symbol, number> = {};
-  const free: VirtualNode[] = [];
+  const free: Node[] = [];
   for (let i = 0; i < list.length; i++) {
     const item = list[i];
-    const itemKey = item.data?.key;
+    const itemKey = getKey(item);
     if (!isNil(itemKey) && !keyIndex.hasOwnProperty(itemKey)) {
       keyIndex[itemKey] = i;
     } else {
@@ -131,4 +132,8 @@ function makeKeyIndexAndFree(list: VirtualNode[]) {
     keyIndex: keyIndex,
     free: free,
   };
+}
+
+function getKey(node?: Node | null) {
+  return node ? NODE_DATA_MAP.get(node)?.key : undefined;
 }

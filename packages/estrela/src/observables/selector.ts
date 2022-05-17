@@ -1,4 +1,5 @@
 import { Observable } from './observable';
+import { STATE_CALLS } from './state-calls';
 import { createSubscriber } from './subscriber';
 import { createSubscription } from './subscription';
 import { symbol_observable } from './symbol';
@@ -11,6 +12,9 @@ export type Selectable<T> = Promise<T> | Subscribable<T>;
  * Create a new observable by combining the given observables
  * and applying to the selector function.
  */
+export function createSelector<Result>(
+  selector: () => Result
+): Observable<Result>;
 export function createSelector<S1, Result>(
   s1: Selectable<S1>,
   selector: (s1: S1) => Result
@@ -93,6 +97,16 @@ export function createSelector(...args: any[]): Observable<any> {
   const memoizedValues: Record<number, any> = {};
   let memoizedResult: any = undefined;
   let hasResult = false;
+  let initialEmit = true;
+
+  if (states.length === 0) {
+    STATE_CALLS.clear();
+    memoizedResult = selector();
+    states.push(...Array.from(STATE_CALLS));
+    hasResult = true;
+    initialEmit = false;
+    STATE_CALLS.clear();
+  }
 
   states.forEach((state, i) => {
     state.subscribe(
@@ -111,7 +125,7 @@ export function createSelector(...args: any[]): Observable<any> {
           }
         }
       },
-      { initialEmit: true }
+      { initialEmit }
     );
   });
 

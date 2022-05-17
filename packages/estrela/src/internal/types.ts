@@ -17,7 +17,7 @@ export type Key = string | number | symbol;
 export type Props = Record<string, SyncOrAsync<any>>;
 export type Styles = Record<string, SyncOrAsync<string>>;
 
-export interface VirtualNodeData {
+export interface NodeData {
   attrs?: Attrs;
   bind?: State<any>;
   class?: SyncOrAsync<string | string[] | Classes>;

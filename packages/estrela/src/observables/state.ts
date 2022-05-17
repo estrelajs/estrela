@@ -1,4 +1,5 @@
 import { ComponentRef } from '../internal';
+import { STATE_CALLS } from './state-calls';
 import { createSubscriber } from './subscriber';
 import { createSubscription } from './subscription';
 import { symbol_observable } from './symbol';
@@ -42,6 +43,7 @@ export function createState(initialValue?: any): State<any> {
       return observers.size > 0;
     },
     get $() {
+      STATE_CALLS.add(state);
       return value;
     },
     next(next: any) {

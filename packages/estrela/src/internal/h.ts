@@ -1,119 +1,143 @@
-import { createSelector, isPromise, isSubscribable } from '../observables';
+import {
+  coerceObservable,
+  createSelector,
+  isObservable,
+  isPromise,
+  Observable,
+} from '../observables';
 import { Component } from '../types';
-import { apply, coerceArray, isTruthy } from '../utils';
-import { domApi } from './domapi';
+import { createComponent } from './component';
+import { diffNodes, MoveType } from './diff-nodes';
+import { NODE_DATA_MAP } from './node-map';
 import { buildData } from './virtual-dom/data-builder';
-import { VirtualNode } from './virtual-dom/virtual-node';
 
-export function h(): VirtualNode;
-export function h(kind: Node): VirtualNode;
-export function h(kind: '#' | '!', content?: any): VirtualNode;
 export function h(
-  kind: string | Component | null,
-  data: Record<string, any> | null,
-  ...children: JSX.Children[]
-): VirtualNode;
-export function h(
-  kind: string | Component | Node | null = null,
+  kind: string | Component | null = null,
   data: string | Record<string, any> | null = null,
-  ...children: JSX.Children[]
-): VirtualNode {
+  ...children: any[]
+): Node | Node[] | null {
+  let element: Node;
   if (kind === '#') {
     kind = '#text';
   }
   if (kind === '!') {
     kind = '#comment';
   }
-  if (kind === '#text' || kind === '!#comment') {
-    return new VirtualNode({
-      kind: kind,
-      content: data,
-    });
+  if (kind === '#text') {
+    element = document.createTextNode(data as string);
+  } else if (kind === '#comment') {
+    element = document.createComment(data as string);
+  } else if (typeof kind === 'string') {
+    element = document.createElement(kind);
+  } else if (typeof kind === 'function') {
+    return createComponent(kind, data as any, children);
+  } else {
+    return children.flatMap(createElement);
   }
-  if (kind instanceof Node) {
-    return node2vnode(kind);
+  if (data && typeof data === 'object') {
+    const nodeData = buildData(data, false);
+    NODE_DATA_MAP.set(element, nodeData);
+  }
+  children.flatMap(createElement).forEach(child => {
+    element.appendChild(child);
+  });
+  return element;
+}
+
+function createElement(data: any): Node | Node[] {
+  if (data instanceof Node) {
+    return data;
+  }
+  if (typeof data === 'function') {
+    const selector = createSelector(data);
+    return handleObservable(selector);
+  }
+  if (Array.isArray(data)) {
+    return data.flatMap(createElement);
+  }
+  if (isObservable(data) || isPromise(data)) {
+    return handleObservable(data);
+  }
+  return document.createTextNode(data);
+}
+
+function handleObservable(obj: Observable<any> | Promise<any>): Node[] {
+  let nodes: Node[] = [];
+  const subscription = coerceObservable(obj).subscribe(
+    value => {
+      if (nodes[0]?.parentElement === null) {
+        subscription.unsubscribe();
+        return;
+      }
+      nodes = patchNodes(nodes, value);
+    },
+    { initialEmit: true }
+  );
+  return nodes;
+}
+
+function patchNodes(nodes: Node[], data: any): Node[] {
+  const firstChild = nodes[0];
+  const parent = firstChild?.parentElement;
+  const newNodes = [createElement(data)].flat();
+
+  if (newNodes.length === 0) {
+    newNodes.push(document.createTextNode(''));
   }
 
-  data = data as Record<string, any> | null;
-  const vchildren = children.flatMap(child => {
-    // create selector
-    if (Array.isArray(child) && typeof child.at(-1) === 'function') {
-      const selectorFn = child.pop() as any;
-      const inputs = child as any[];
-      const states = inputs.filter(
-        input => isPromise(input) || isSubscribable(input)
-      );
+  if (parent) {
+    const children = Array.from(parent.childNodes) as Node[];
+    const startIndex = children.indexOf(firstChild);
+    const diff = diffNodes(nodes, newNodes);
 
-      if (states.length === 0) {
-        child = selectorFn(...inputs.map(apply));
-      } else {
-        child = createSelector(...states, (...args: any): any => {
-          let index = 0;
-          return selectorFn(
-            ...inputs.map(arg => (isSubscribable(arg) ? args[index++] : arg()))
-          );
-        });
+    for (let i = 0; i < nodes.length; i++) {
+      const child = nodes[i];
+      const newChild = diff.children[i];
+      if (child && newChild) {
+        patchNode(child, newChild);
       }
     }
 
-    // parse each child
-    return coerceArray(child)
-      .filter(isTruthy)
-      .flatMap(c => {
-        if (isPromise(c) || isSubscribable(c)) {
-          return new VirtualNode({ observable: c });
-        }
-        if (c instanceof Node) {
-          return node2vnode(c);
-        }
-        if (c instanceof VirtualNode) {
-          const node = c.clone();
-          if (!node.kind && !node.observable) {
-            return node.children ?? [];
-          }
-          return node;
-        }
-        return h('#', c);
-      });
-  });
-
-  if (kind) {
-    return new VirtualNode({
-      kind: kind,
-      data: buildData(data ?? {}, typeof kind === 'function'),
-      children: vchildren,
+    diff.moves.forEach(move => {
+      if (move.type === MoveType.Remove) {
+        parent.removeChild(move.item);
+      }
+      if (move.type === MoveType.Insert) {
+        // if (meta.isFragment) {
+        //   parent = meta.parent ?? meta.element;
+        //   move.index += meta.childIndex;
+        // }
+        const oldChild = parent.childNodes[move.index];
+        parent.insertBefore(move.item, oldChild);
+      }
     });
+
+    return Array.from(parent.childNodes).slice(
+      startIndex,
+      startIndex + newNodes.length
+    );
   }
-  return new VirtualNode({
-    children: vchildren.length === 0 ? [h('#')] : vchildren,
-  });
+
+  return newNodes;
 }
 
-function node2vnode(node: Node): VirtualNode {
-  if (domApi.isText(node)) {
-    return new VirtualNode({
-      kind: '#text',
-      content: node.textContent,
-      element: node,
-    });
+function patchNode(node: Node, newNode: Node): Node {
+  if (node.nodeType === newNode.nodeType) {
+    // hooks.forEach(hook => hook.update?.(node, newNode));
+
+    if (
+      node.nodeType === Node.TEXT_NODE ||
+      node.nodeType === Node.COMMENT_NODE
+    ) {
+      if (node.textContent !== newNode.textContent) {
+        node.textContent = newNode.textContent;
+      }
+    }
+    // else {
+    //   patchChildren(node, newNode);
+    // }
+    return node;
   }
-  if (domApi.isComment(node)) {
-    return new VirtualNode({
-      kind: '#comment',
-      content: node.textContent,
-      element: node,
-    });
-  }
-  const children = Array.from(node.childNodes ?? []).map(node2vnode);
-  if (domApi.isDocumentFragment(node)) {
-    return new VirtualNode({
-      children,
-      element: node,
-    });
-  }
-  return new VirtualNode({
-    kind: node.nodeName.toLowerCase(),
-    children,
-    element: node,
-  });
+  node.parentNode?.replaceChild(newNode, node);
+  return newNode;
 }

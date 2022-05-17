@@ -2,12 +2,12 @@ import { Subscribable } from '../../observables';
 import { Component } from '../../types';
 import { domApi } from '../domapi';
 import { hooks } from '../hooks';
-import { NodeMetadata, PropertiesOf, VirtualNodeData } from '../types';
+import { NodeMetadata, PropertiesOf, NodeData } from '../types';
 import { ComponentRef } from './component-ref';
 
 export class VirtualNode {
   kind?: string | Component;
-  data?: VirtualNodeData;
+  data?: NodeData;
   children?: VirtualNode[];
   componentRef?: ComponentRef;
   content?: any;

@@ -1,40 +1,13 @@
-import { createSelector, isPromise, isSubscribable } from '../../observables';
-import { apply, toCamelCase } from '../../utils';
-import { VirtualNodeData } from '../types';
+import { toCamelCase } from '../../utils';
+import { NodeData } from '../types';
 
 export function buildData(
   data: Record<string, any>,
   isComponent: boolean
-): VirtualNodeData {
+): NodeData {
   if (!data) {
     return {};
   }
-
-  data = Object.entries(data).reduce((acc, [key, value]) => {
-    // create selector
-    // TODO: move code to a shared file
-    if (Array.isArray(value) && typeof value.at(-1) === 'function') {
-      const selectorFn = value.pop() as any;
-      const inputs = value as any[];
-      const states = inputs.filter(
-        input => isPromise(input) || isSubscribable(input)
-      );
-
-      if (states.length === 0) {
-        acc[key] = selectorFn(...inputs.map(apply));
-      } else {
-        acc[key] = createSelector(...states, (...args: any): any => {
-          let index = 0;
-          return selectorFn(
-            ...inputs.map(arg => (isSubscribable(arg) ? args[index++] : arg()))
-          );
-        });
-      }
-    } else {
-      acc[key] = value;
-    }
-    return acc;
-  }, {} as Record<string, any>);
 
   return Object.entries(data).reduce((data, [attr, arg]) => {
     // declarations
@@ -119,5 +92,5 @@ export function buildData(
     }
 
     return data;
-  }, {} as VirtualNodeData);
+  }, {} as NodeData);
 }
