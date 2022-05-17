@@ -1,22 +1,63 @@
-import { createSelector, createState, render } from 'estrela';
+import { createState, render } from 'estrela';
 
-function App(props: { title: string }) {
-  const count = createState(0);
+function App() {
+  const items = createState<number[]>([]);
+  const showOdds = createState(true);
+  let counter = 0;
 
-  setInterval(() => count.update(value => value + 1), 1000);
+  function appendItem() {
+    items.update(items => [...items, ++counter]);
+  }
+
+  function prependItem() {
+    items.update(items => [++counter, ...items]);
+  }
+
+  function removeItem() {
+    items.update(items => items.slice(0, -1));
+  }
+
+  function shuffleList() {
+    items.update(items => items.sort(() => Math.random() - 0.5).slice());
+  }
+
+  function toggleOdds() {
+    showOdds.update(showOdds => !showOdds);
+  }
 
   return (
     <>
-      <h1>Hello {props.title}!</h1>
-      <DisplayCount count={() => count.$} />
+      <h1 style:color="red">Children Test</h1>
+
+      <div class="actions">
+        <button on:click={appendItem}>Append item</button>
+        <button on:click={prependItem}>Prepend item</button>
+        <button on:click={removeItem}>Remove item</button>
+        <button on:click={shuffleList}>Shuffle list</button>
+        <button on:click={toggleOdds}>
+          {showOdds.$ ? 'Hide' : 'Show'} odds
+        </button>
+        <button on:click={() => console.log(items.$)}>Log</button>
+      </div>
+
+      <ul class="list" class:has-item={items.$.length}>
+        <li>Header</li>
+
+        {() =>
+          items.$.map(item => {
+            const klass = item % 2 === 0 ? 'even' : 'odd';
+            return showOdds || klass === 'even' ? (
+              <li key={item} class={klass}>
+                Item {item}
+              </li>
+            ) : null;
+          })
+        }
+
+        <li>Footer</li>
+      </ul>
     </>
   );
 }
 
-function DisplayCount(props: { count: number }) {
-  createSelector(() => console.log(props.count));
-
-  return <div>Count is {() => props.count}</div>;
-}
-
-render(<App title="world" />, document.getElementById('app')!);
+render(<App />, document.getElementById('app')!);

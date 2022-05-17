@@ -3,7 +3,7 @@ import { coerceArray } from '../../utils';
 import { domApi } from '../domapi';
 import { Classes } from '../types';
 import { VirtualNode } from '../virtual-dom/virtual-node';
-import { Hook } from './types';
+import { Hook } from './Hook';
 
 const subscriptons = new Map<any, Subscription>();
 

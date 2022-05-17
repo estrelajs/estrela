@@ -1,5 +1,5 @@
 import { ComponentRef } from '../internal';
-import { STATE_CALLS } from './state-calls';
+import { STATE_CALLS } from '../internal/tokens';
 import { createSubscriber } from './subscriber';
 import { createSubscription } from './subscription';
 import { symbol_observable } from './symbol';

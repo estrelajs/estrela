@@ -8,7 +8,8 @@ import {
 import { Component } from '../types';
 import { createComponent } from './component';
 import { diffNodes, MoveType } from './diff-nodes';
-import { NODE_DATA_MAP } from './node-map';
+import { hooks } from './hooks';
+import { NODE_DATA_MAP } from './tokens';
 import { buildData } from './virtual-dom/data-builder';
 
 export function h(
@@ -30,7 +31,8 @@ export function h(
   } else if (typeof kind === 'string') {
     element = document.createElement(kind);
   } else if (typeof kind === 'function') {
-    return createComponent(kind, data as any, children);
+    const nodeData = buildData((data as any) ?? {}, true);
+    return createComponent(kind, nodeData, children);
   } else {
     return children.flatMap(createElement);
   }
@@ -38,27 +40,28 @@ export function h(
     const nodeData = buildData(data, false);
     NODE_DATA_MAP.set(element, nodeData);
   }
+  hooks.forEach(hook => hook.create?.(element, NODE_DATA_MAP.get(element)!));
   children.flatMap(createElement).forEach(child => {
     element.appendChild(child);
   });
   return element;
 }
 
-function createElement(data: any): Node | Node[] {
-  if (data instanceof Node) {
-    return data;
+function createElement(child: any): Node | Node[] {
+  if (child instanceof Node) {
+    return child;
   }
-  if (typeof data === 'function') {
-    const selector = createSelector(data);
+  if (Array.isArray(child)) {
+    return child.flatMap(createElement);
+  }
+  if (isObservable(child) || isPromise(child)) {
+    return handleObservable(child);
+  }
+  if (typeof child === 'function') {
+    const selector = createSelector(child);
     return handleObservable(selector);
   }
-  if (Array.isArray(data)) {
-    return data.flatMap(createElement);
-  }
-  if (isObservable(data) || isPromise(data)) {
-    return handleObservable(data);
-  }
-  return document.createTextNode(data);
+  return document.createTextNode(child);
 }
 
 function handleObservable(obj: Observable<any> | Promise<any>): Node[] {
@@ -103,10 +106,7 @@ function patchNodes(nodes: Node[], data: any): Node[] {
         parent.removeChild(move.item);
       }
       if (move.type === MoveType.Insert) {
-        // if (meta.isFragment) {
-        //   parent = meta.parent ?? meta.element;
-        //   move.index += meta.childIndex;
-        // }
+        move.index += startIndex;
         const oldChild = parent.childNodes[move.index];
         parent.insertBefore(move.item, oldChild);
       }

@@ -4,7 +4,7 @@ import { domApi } from '../domapi';
 import { h } from '../h';
 import { patch } from '../virtual-dom/patch';
 import { VirtualNode } from '../virtual-dom/virtual-node';
-import { Hook } from './types';
+import { Hook } from './Hook';
 
 const subscriptonMap = new WeakMap<Node, Subscription>();
 const lastNodeMap = new WeakMap<Node, VirtualNode>();

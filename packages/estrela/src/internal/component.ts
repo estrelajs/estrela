@@ -10,7 +10,6 @@ import {
 import { Component } from '../types';
 import { ProxyState } from './proxy-state';
 import { NodeData } from './types';
-import { buildData } from './virtual-dom/data-builder';
 
 type ProxyTarget = Record<
   string | number | symbol,
@@ -19,11 +18,10 @@ type ProxyTarget = Record<
 
 export function createComponent(
   Component: Component,
-  data: Record<string, any> | null,
+  data: NodeData,
   children: any[]
 ): Node | Node[] | null {
-  const nodeData = buildData(data ?? {}, true);
-  const props = createProps(nodeData);
+  const props = createProps(data);
   const template = Component(props);
   return template;
 }

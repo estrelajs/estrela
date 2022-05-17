@@ -1,5 +1,5 @@
 import { isNil } from '../utils';
-import { NODE_DATA_MAP } from './node-map';
+import { NODE_DATA_MAP } from './tokens';
 
 export enum MoveType {
   Remove,

@@ -1,6 +1,6 @@
 import { ComponentRef } from '../virtual-dom/component-ref';
 import { VirtualNode } from '../virtual-dom/virtual-node';
-import { Hook } from './types';
+import { Hook } from './Hook';
 
 function hook(oldNode: VirtualNode, node?: VirtualNode): void {
   const isComponent = typeof node?.kind === 'function';
