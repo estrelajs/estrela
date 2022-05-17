@@ -20,6 +20,7 @@ export type Styles = Record<string, SyncOrAsync<string>>;
 export interface NodeData {
   attrs?: Attrs;
   bind?: State<any>;
+  children?: any;
   class?: SyncOrAsync<string | string[] | Classes>;
   classes?: Classes;
   events?: Events;

@@ -73,7 +73,7 @@ export class VirtualNode {
     const children =
       this.componentRef?.getChildrenElements() ??
       this.children?.flatMap(child => {
-        if (!child.element || domApi.isDocumentFragment(child.element)) {
+        if (!child.element || domApi.isFragment(child.element)) {
           const meta = child.getMetadata();
           return meta.children ?? [];
         }
@@ -87,7 +87,7 @@ export class VirtualNode {
       element && parent
         ? Array.from(parent.childNodes).indexOf(element as ChildNode)
         : -1;
-    const isFragment = !!element && domApi.isDocumentFragment(element);
+    const isFragment = !!element && domApi.isFragment(element);
 
     if (isFragment) {
       const firstChild = children?.[0] as ChildNode | undefined;
@@ -126,7 +126,7 @@ export class VirtualNode {
     this.emitRemove();
 
     if (this.element) {
-      if (domApi.isDocumentFragment(this.element)) {
+      if (domApi.isFragment(this.element)) {
         this.children?.forEach(child => child.removeElement());
       } else {
         const parent = this.element.parentNode;

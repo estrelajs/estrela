@@ -5,10 +5,6 @@ export function buildData(
   data: Record<string, any>,
   isComponent: boolean
 ): NodeData {
-  if (!data) {
-    return {};
-  }
-
   return Object.entries(data).reduce((data, [attr, arg]) => {
     // declarations
     const [, , namespace, attrName, , accessor, rawFilters] =
@@ -22,6 +18,12 @@ export function buildData(
     // bind
     if (attr === 'bind') {
       data.bind = arg;
+      return data;
+    }
+
+    // children
+    if (attr === 'children') {
+      data.children = arg;
       return data;
     }
 

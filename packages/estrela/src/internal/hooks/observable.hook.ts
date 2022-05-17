@@ -11,7 +11,7 @@ const lastNodeMap = new WeakMap<Node, VirtualNode>();
 
 function hook(oldNode: VirtualNode, node?: VirtualNode): void {
   const element = node?.element ?? oldNode.element;
-  if (!element || !domApi.isDocumentFragment(element)) {
+  if (!element || !domApi.isFragment(element)) {
     return;
   }
 

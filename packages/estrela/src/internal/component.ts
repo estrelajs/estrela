@@ -18,8 +18,7 @@ type ProxyTarget = Record<
 
 export function createComponent(
   Component: Component,
-  data: NodeData,
-  children: any[]
+  data: NodeData
 ): Node | Node[] | null {
   const props = createProps(data);
   const template = Component(props);
