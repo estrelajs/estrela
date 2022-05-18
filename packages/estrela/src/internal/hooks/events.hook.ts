@@ -5,12 +5,14 @@ import {
   State,
 } from '../../observables';
 import { toCamelCase } from '../../utils';
-import { NodeData } from '../types';
+import { Events } from '../types';
 import { Hook } from './Hook';
 
 type EventFilter = (event: Event, element: HTMLElement) => boolean;
 
-const NODE_LISTENER = new WeakMap<Node, EventListener>();
+const NODE_LISTENER_MAP = new WeakMap<Node, EventListener>();
+
+const NODE_EVENTS_MAP = new WeakMap<Node, Events>();
 
 const EVENT_FILTERS: Record<string, EventFilter> = {
   alt(event) {
@@ -43,10 +45,12 @@ const EVENT_FILTERS: Record<string, EventFilter> = {
 };
 
 export const eventsHook: Hook = {
-  create(node: Node, data: NodeData) {
+  insert(node, data) {
+    // add all listeners
     if (data.events) {
-      const listener = NODE_LISTENER.get(node) ?? createListener(node, data);
-      NODE_LISTENER.set(node, listener);
+      const listener = NODE_LISTENER_MAP.get(node) ?? createListener(node);
+      NODE_LISTENER_MAP.set(node, listener);
+      NODE_EVENTS_MAP.set(node, data.events);
 
       for (let name in data.events) {
         const event = data.events[name];
@@ -58,17 +62,29 @@ export const eventsHook: Hook = {
       }
     }
   },
+  update(node, data) {
+    this.remove?.(node, data);
+    this.insert?.(node, data);
+  },
+  remove(node, data) {
+    const listener = NODE_LISTENER_MAP.get(node);
+    if (listener && data.events) {
+      for (let name in data.events) {
+        node.removeEventListener(name, listener);
+      }
+    }
+  },
 };
 
-function createListener(node: Node, data: NodeData): EventListener {
+function createListener(node: Node): EventListener {
   return function handler(event: Event) {
-    handleEvent(event, node, data);
+    handleEvent(event, node);
   };
 }
 
-function handleEvent(event: Event, node: Node, data: NodeData): void {
+function handleEvent(event: Event, node: Node): void {
+  const events = NODE_EVENTS_MAP.get(node) ?? {};
   const name = event.type;
-  const events = data.events ?? {};
 
   // call event handler(s) if exists
   if (events[name]) {

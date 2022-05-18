@@ -1,67 +1,61 @@
-import { coerceObservable, Subscription } from '../../observables';
+import {
+  coerceObservable,
+  createSubscription,
+  Subscription,
+} from '../../observables';
 import { domApi } from '../domapi';
 import { Styles } from '../types';
-import { VirtualNode } from '../virtual-dom/virtual-node';
 import { Hook } from './Hook';
 
-const subscriptons = new Map<any, Subscription>();
-
-function hook(oldNode: VirtualNode, node?: VirtualNode) {
-  const element = node?.element ?? oldNode.element;
-  const oldStyles = oldNode.data?.styles;
-  const styles = node?.data?.styles;
-  const oldStyle = oldNode.data?.style;
-  const style = node?.data?.style;
-
-  if (!element || !domApi.isHTMLElement(element)) {
-    return;
-  }
-
-  if (oldStyles !== styles) {
-    bindStyles(oldStyles ?? {}, styles ?? {}, element);
-  }
-
-  if (oldStyle !== style) {
-    let oldStyles: Styles = {};
-    subscriptons.get(element)?.unsubscribe();
-    subscriptons.delete(element);
-
-    if (style) {
-      const subscription = coerceObservable(style).subscribe(value => {
-        const styles = parseStyle(value);
-        bindStyles(oldStyles, styles, element);
-        oldStyles = styles;
-      });
-      subscriptons.set(element, subscription);
-    }
-  }
+interface Cleanup {
+  keys: Subscription;
+  node: Subscription;
 }
 
-function bindStyles(oldStyles: Styles, styles: Styles, element: HTMLElement) {
-  for (let key in oldStyles) {
-    const style = oldStyles[key];
-    if (style !== styles[key]) {
-      subscriptons.get(key)?.unsubscribe();
-      subscriptons.delete(key);
-      element.style[key as any] = '';
-    }
-  }
+const NODE_CLEANUP = new WeakMap<Node, Cleanup>();
 
-  for (let key in styles) {
-    const cur = styles[key];
-    const old = oldStyles[key];
-    if (cur !== old) {
-      const subscription = coerceObservable(cur).subscribe(value => {
-        element.style[key as any] = value;
-      });
-      subscriptons.set(key, subscription);
+export const stylesHook: Hook = {
+  insert(node, data) {
+    if (!domApi.isHTMLElement(node) || (!data.style && !data.styles)) {
+      return;
     }
-  }
-}
 
-function parseStyle(style: string | Styles): Styles {
+    const cleanup = NODE_CLEANUP.get(node) ?? {
+      keys: createSubscription(),
+      node: createSubscription(),
+    };
+    NODE_CLEANUP.set(node, cleanup);
+
+    const subscription = coerceObservable(data.style).subscribe(style => {
+      const styles = { ...parseStyle(style), ...data.styles };
+      cleanup.keys.unsubscribe();
+      cleanup.keys = createSubscription();
+
+      for (let key in styles) {
+        const subscription = coerceObservable(styles[key]).subscribe(value => {
+          node.style[key as any] = value;
+        });
+        cleanup.keys.add(subscription);
+        cleanup.keys.add(() => {
+          node.style[key as any] = '';
+        });
+      }
+    });
+    cleanup?.node.add(subscription);
+  },
+  update(node, data) {
+    this.insert?.(node, data);
+  },
+  remove(node) {
+    const cleanup = NODE_CLEANUP.get(node);
+    cleanup?.keys.unsubscribe();
+    cleanup?.node.unsubscribe();
+  },
+};
+
+function parseStyle(style?: string | Styles): Styles {
   if (typeof style !== 'string') {
-    return style;
+    return style ?? {};
   }
   return String(style)
     .split(';')
@@ -73,9 +67,3 @@ function parseStyle(style: string | Styles): Styles {
       return acc;
     }, {} as Styles);
 }
-
-export const stylesHook: Hook = {
-  create: hook,
-  update: hook,
-  remove: hook,
-};

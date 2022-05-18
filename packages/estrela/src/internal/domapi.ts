@@ -1,18 +1,54 @@
 import {
   coerceObservable,
   createSelector,
+  createSubscription,
   isPromise,
   isSubscribable,
   Subscribable,
+  Subscription,
 } from '../observables';
 import { diffNodes, MoveType } from './diff-nodes';
 import { hooks } from './hooks';
-import { NODE_DATA_MAP } from './tokens';
+import { getNodeData, setNodeData } from './tokens';
 
 export const domApi = {
+  addEventListener(
+    node: Node,
+    event: string,
+    listener: EventListener
+  ): Subscription {
+    node.addEventListener(event, listener);
+    return createSubscription(() => {
+      node.removeEventListener(event, listener);
+    });
+  },
+
+  cloneNode(node: Node): Node {
+    const data = getNodeData(node) ?? {};
+    const clone = node.cloneNode(true);
+    setNodeData(clone, data);
+
+    const cleanup = domApi.addEventListener(
+      clone,
+      'DOMNodeInsertedIntoDocument',
+      () => {
+        hooks.forEach(hook => hook.insert?.(clone, data));
+      }
+    );
+
+    cleanup.add(
+      domApi.addEventListener(node, 'DOMNodeRemovedFromDocument', () => {
+        hooks.forEach(hook => hook.remove?.(clone, data));
+        cleanup.unsubscribe();
+      })
+    );
+
+    return clone;
+  },
+
   createElement(content: JSX.Children): Node | Node[] {
     if (content instanceof Node) {
-      return content;
+      return domApi.cloneNode(content);
     }
     if (Array.isArray(content)) {
       return content.flatMap(domApi.createElement);
@@ -47,20 +83,27 @@ export const domApi = {
     return nodes;
   },
 
+  isComment(node: Node): node is Comment {
+    return node.nodeType === 8;
+  },
+
   isElement(node: Node): node is Element {
     return node.nodeType === 1;
+  },
+
+  isFragment(node: Node): node is DocumentFragment {
+    return node.nodeType === 11;
   },
 
   isHTMLElement(node: Node): node is HTMLElement {
     return domApi.isElement(node) && (node as any).style;
   },
 
-  isComment(node: Node): node is Comment {
-    return node.nodeType === 8;
-  },
-
-  isFragment(node: Node): node is DocumentFragment {
-    return node.nodeType === 11;
+  isSameNode(node: Node, other: Node): boolean {
+    return (
+      node === other ||
+      (node.nodeType === other.nodeType && node.nodeName === other.nodeName)
+    );
   },
 
   isText(node: Node): node is Text {
@@ -115,15 +158,14 @@ function patchNodes(nodes: Node[], data: any): Node[] {
 }
 
 function patchNode(node: Node, newNode: Node): Node {
-  if (node.nodeType === newNode.nodeType) {
-    const nodeData = NODE_DATA_MAP.get(node) ?? {};
-    hooks.forEach(hook => hook.update?.(node, nodeData));
+  if (domApi.isSameNode(node, newNode)) {
     if (domApi.isText(node) || domApi.isComment(node)) {
       if (node.textContent !== newNode.textContent) {
-        node.textContent = newNode.textContent;
+        domApi.setTextContent(node, newNode.textContent);
       }
     } else {
       patchNodes(Array.from(node.childNodes), Array.from(newNode.childNodes));
+      hooks.forEach(hook => hook.update?.(node, getNodeData(newNode) ?? {}));
     }
     return node;
   }

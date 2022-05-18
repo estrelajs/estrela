@@ -1,14 +1,28 @@
-import { toCamelCase } from '../../utils';
-import { NodeData } from '../types';
+import { createSelector } from '../observables';
+import { toCamelCase } from '../utils';
+import { NodeData } from './types';
 
 export function buildData(
   data: Record<string, any>,
   isComponent: boolean
 ): NodeData {
+  if (!isComponent) {
+    data = Object.keys(data).reduce((acc, key) => {
+      const value = data[key];
+      const isEvent = key.startsWith('on');
+      if (typeof value === 'function' && !isEvent) {
+        acc[key] = createSelector(value);
+      } else {
+        acc[key] = value;
+      }
+      return acc;
+    }, {} as Record<string, any>);
+  }
+
   return Object.entries(data).reduce((data, [attr, arg]) => {
-    // declarations
     const [, , namespace, attrName, , accessor, rawFilters] =
       /((on|use|class|style):)?([\w-]+)(\.([\w-]+))?(.*)/.exec(attr) ?? [];
+
     const filters =
       rawFilters
         ?.split('|')

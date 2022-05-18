@@ -1,10 +1,10 @@
 import { Component } from '../types';
 import { coerceArray } from '../utils';
 import { createComponent } from './component';
+import { buildData } from './data-builder';
 import { domApi } from './domapi';
 import { hooks } from './hooks';
-import { NODE_DATA_MAP } from './tokens';
-import { buildData } from './virtual-dom/data-builder';
+import { setNodeData } from './tokens';
 
 interface Data {
   [key: string]: any;
@@ -16,7 +16,7 @@ export function h(
   data: Data
 ): JSX.Element | null {
   const children = coerceArray(data.children ?? []);
-  let element: Node;
+  let node: Node;
 
   if (kind === '#') {
     kind = '#text';
@@ -25,11 +25,11 @@ export function h(
     kind = '#comment';
   }
   if (kind === '#text') {
-    element = document.createTextNode(children[0] ?? '');
+    node = document.createTextNode(children[0] ?? '');
   } else if (kind === '#comment') {
-    element = document.createComment(children[0] ?? '');
+    node = document.createComment(children[0] ?? '');
   } else if (typeof kind === 'string') {
-    element = document.createElement(kind);
+    node = document.createElement(kind);
   } else if (typeof kind === 'function') {
     const nodeData = buildData(data, true);
     return createComponent(kind, nodeData);
@@ -38,11 +38,12 @@ export function h(
   }
 
   const nodeData = buildData(data, false);
-  NODE_DATA_MAP.set(element, nodeData);
-  hooks.forEach(hook => hook.create?.(element, nodeData));
+  hooks.forEach(hook => hook.create?.(node, nodeData));
+  setNodeData(node, nodeData);
+
   children
     .flatMap(domApi.createElement)
-    .forEach(child => element.appendChild(child));
+    .forEach(child => node.appendChild(child));
 
-  return element;
+  return node;
 }
