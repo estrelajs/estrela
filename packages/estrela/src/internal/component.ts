@@ -7,9 +7,9 @@ import {
   isState,
   State,
 } from '../observables';
-import { Component } from '../types';
+import { Component } from '../types/jsx';
 import { ProxyState } from './proxy-state';
-import { NodeData } from './types';
+import { NodeData } from '../types/node-data';
 
 type ProxyTarget = Record<
   string | number | symbol,

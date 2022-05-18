@@ -1,5 +1,5 @@
 import { State, Subscribable } from '../observables';
-import { EventHandler, Ref } from '../types';
+import { EventHandler, Ref } from '../types/jsx';
 
 export type SyncOrAsync<T> = T | Promise<T> | Subscribable<T>;
 
@@ -31,18 +31,3 @@ export interface NodeData {
   style?: SyncOrAsync<string | Styles>;
   styles?: Styles;
 }
-
-export interface NodeMetadata {
-  parent: Node | null;
-  element: Node | null;
-  children: Node[];
-  childIndex: number;
-  isFragment: boolean;
-}
-
-export type PropertiesOf<T> = Pick<
-  T,
-  {
-    [K in keyof T]: T[K] extends Function ? never : K;
-  }[keyof T]
->;

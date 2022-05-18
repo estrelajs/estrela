@@ -1,4 +1,4 @@
-import { Component } from '../types';
+import { Component } from '../types/jsx';
 import { coerceArray } from '../utils';
 import { createComponent } from './component';
 import { buildData } from './data-builder';

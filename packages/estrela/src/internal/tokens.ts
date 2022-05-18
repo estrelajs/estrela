@@ -1,5 +1,5 @@
 import { State } from '../observables';
-import { NodeData } from './types';
+import { NodeData } from '../types/node-data';
 
 export const NODE_DATA_MAP = new WeakMap<Node, NodeData>();
 export const STATE_CALLS = new Set<State<any>>();

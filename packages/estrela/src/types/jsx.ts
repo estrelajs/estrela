@@ -1,5 +1,5 @@
-import { ProxyState } from './internal';
-import { EventEmitter, State, Subscribable } from './observables';
+import { ProxyState } from '../internal';
+import { EventEmitter, State, Subscribable } from '../observables';
 
 /**
  * Based on JSX types for Surplus, Inferno and dom-expressions, adapted for Estrela.
@@ -11,7 +11,7 @@ import { EventEmitter, State, Subscribable } from './observables';
 
 export interface Component<P = {}, C = JSX.Children> {
   (
-    props: P extends { children: any } ? P : P & { children?: C }
+    props: P extends { children: any } ? Props<P> : Props<P> & { children?: C }
   ): JSX.Element | null;
 }
 

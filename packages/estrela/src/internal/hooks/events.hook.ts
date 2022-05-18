@@ -4,8 +4,8 @@ import {
   isState,
   State,
 } from '../../observables';
+import { Events } from '../../types/node-data';
 import { toCamelCase } from '../../utils';
-import { Events } from '../types';
 import { Hook } from './Hook';
 
 type EventFilter = (event: Event, element: HTMLElement) => boolean;

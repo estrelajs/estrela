@@ -3,8 +3,8 @@ import {
   createSubscription,
   Subscription,
 } from '../../observables';
+import { Styles } from '../../types/node-data';
 import { domApi } from '../domapi';
-import { Styles } from '../types';
 import { Hook } from './Hook';
 
 interface Cleanup {

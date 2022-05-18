@@ -1,4 +1,4 @@
-import { NodeData } from '../types';
+import { NodeData } from '../../types/node-data';
 
 export interface Hook {
   create?: (node: Node, data: NodeData) => void;

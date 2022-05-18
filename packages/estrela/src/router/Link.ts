@@ -1,7 +1,5 @@
-import { getState } from '../get-state';
 import { h } from '../internal';
-import { createSelector } from '../observables';
-import { Component } from '../types';
+import { Component } from '../types/jsx';
 import { navigateTo } from './router.store';
 
 export interface LinkProps {
@@ -13,12 +11,9 @@ export const Link: Component<LinkProps> = props => {
     e.preventDefault();
     navigateTo(props.to);
   }
-  return h(
-    'a',
-    {
-      href: createSelector(getState(props, 'to'), _to => _to),
-      'on:click': click,
-    },
-    h('slot', null)
-  );
+  return h('a', {
+    children: h('slot', {}),
+    href: () => props.to,
+    'on:click': click,
+  });
 };

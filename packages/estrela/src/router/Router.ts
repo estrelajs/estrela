@@ -1,7 +1,6 @@
-import { getState } from '../get-state';
 import { h } from '../internal';
 import { createSelector } from '../observables';
-import { Component } from '../types';
+import { Component } from '../types/jsx';
 import { Routes } from './route';
 import { routeUrl } from './router.store';
 
@@ -48,11 +47,7 @@ export const Router: Component<RouterProps> = props => {
     return null;
   }
 
-  const node = h(null, null, null);
-  node.observable = createSelector(
-    routeUrl,
-    getState(props, 'routes'),
-    getRoute
-  );
-  return node;
+  return h(null, {
+    children: [createSelector(routeUrl, props.$.routes, getRoute)],
+  });
 };

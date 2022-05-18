@@ -1,4 +1,3 @@
-import { ComponentRef } from '../internal';
 import { STATE_CALLS } from '../internal/tokens';
 import { createSubscriber } from './subscriber';
 import { createSubscription } from './subscription';
@@ -70,8 +69,6 @@ export function createState(initialValue?: any): State<any> {
     },
     type: 'state',
   };
-
-  ComponentRef.currentRef?.pushState(state);
   return state;
 }
 
