@@ -1,4 +1,3 @@
-import { STATE_CALLS } from '../internal/tokens';
 import { createSubscriber } from './subscriber';
 import { createSubscription } from './subscription';
 import { symbol_observable } from './symbol';
@@ -23,6 +22,8 @@ export interface State<T> extends ObservableLike<T>, SubjectObserver<T> {
 
   type: 'state';
 }
+
+export const STATE_CALLS = new Set<State<any>>();
 
 export function createState<T>(): State<T | undefined>;
 export function createState<T>(initialValue: T): State<T>;

@@ -24,17 +24,14 @@ export function createSubscription(teardown?: () => void): Subscription {
     unsubscribe() {
       if (!closed) {
         closed = true;
-
-        if (finalizers.size > 0) {
-          finalizers.forEach(finalizer => {
-            if (typeof finalizer === 'function') {
-              finalizer();
-            } else {
-              finalizer.unsubscribe();
-            }
-          });
-          finalizers.clear();
-        }
+        finalizers.forEach(finalizer => {
+          if (typeof finalizer === 'function') {
+            finalizer();
+          } else {
+            finalizer.unsubscribe();
+          }
+        });
+        finalizers.clear();
       }
     },
   };

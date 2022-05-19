@@ -1,134 +1,129 @@
-// import { State, Subscription } from '../../observables';
-// import { domApi } from '../domapi';
-// import { VirtualNode } from '../virtual-dom/virtual-node';
-// import { Hook } from './Hook';
+import { State, Subscription } from '../../observables';
+import { domApi } from '../domapi';
+import { Hook, HookData } from './Hook';
 
-// const subscriptons = new Map<Node, Subscription>();
+const subscriptons = new Map<Node, Subscription>();
 
-// function bindElement(
-//   element: HTMLElement,
-//   event: string,
-//   state: State<any>,
-//   handler: (value: any) => void
-// ): void {
-//   const subscription = state.subscribe(value => handler(value), {
-//     initialEmit: true,
-//   });
-//   element.addEventListener(event, handler);
-//   const unsubscribe = () => {
-//     element.removeEventListener(event, handler);
-//   };
-//   subscription.add({ unsubscribe });
-//   subscriptons.set(element, subscription);
-// }
+export const bindHook: Hook = {
+  insert: hook,
+  update: hook,
+  remove: hook,
+};
 
-// function createBind(element: HTMLElement, state: State<any>) {
-//   switch (element.nodeName.toLowerCase()) {
-//     case 'input':
-//       const input = element as HTMLInputElement;
+function hook(node: Node, { prev, next }: HookData): void {
+  const oldBind = prev?.bind;
+  const bind = next?.bind;
 
-//       switch (input.type) {
-//         case 'checkbox':
-//           bindElement(element, 'change', state, value => {
-//             if (value instanceof Event) {
-//               state.next(input.checked);
-//             } else {
-//               input.checked = Boolean(value);
-//             }
-//           });
-//           break;
+  if (!domApi.isHTMLElement(node) || oldBind === bind) {
+    return;
+  }
+  if (oldBind) {
+    subscriptons.get(node)?.unsubscribe();
+    subscriptons.delete(node);
+  }
+  if (bind) {
+    createBind(node, bind);
+  }
+}
 
-//         case 'date':
-//         case 'time':
-//           bindElement(element, 'change', state, value => {
-//             if (value instanceof Event) {
-//               state.next(input.valueAsDate);
-//             } else {
-//               input.value = value;
-//             }
-//           });
-//           break;
+function bindElement(
+  element: HTMLElement,
+  event: string,
+  state: State<any>,
+  handler: (value: any) => void
+): void {
+  const subscription = state.subscribe(value => handler(value), {
+    initialEmit: true,
+  });
+  element.addEventListener(event, handler);
+  const unsubscribe = () => {
+    element.removeEventListener(event, handler);
+  };
+  subscription.add({ unsubscribe });
+  subscriptons.set(element, subscription);
+}
 
-//         case 'number':
-//           bindElement(element, 'input', state, value => {
-//             if (value instanceof Event) {
-//               state.next(input.valueAsNumber);
-//             } else {
-//               input.value = value;
-//             }
-//           });
-//           break;
+function createBind(element: HTMLElement, state: State<any>) {
+  switch (element.nodeName.toLowerCase()) {
+    case 'input':
+      const input = element as HTMLInputElement;
 
-//         case 'radio':
-//           bindElement(element, 'change', state, value => {
-//             if (value instanceof Event) {
-//               state.next(input.value);
-//             } else {
-//               input.checked = value === input.value;
-//             }
-//           });
-//           break;
+      switch (input.type) {
+        case 'checkbox':
+          bindElement(element, 'change', state, value => {
+            if (value instanceof Event) {
+              state.next(input.checked);
+            } else {
+              input.checked = Boolean(value);
+            }
+          });
+          break;
 
-//         default:
-//           bindElement(element, 'input', state, value => {
-//             if (value instanceof Event) {
-//               state.next(input.value);
-//             } else {
-//               input.value = value;
-//             }
-//           });
-//           break;
-//       }
-//       break;
+        case 'date':
+        case 'time':
+          bindElement(element, 'change', state, value => {
+            if (value instanceof Event) {
+              state.next(input.valueAsDate);
+            } else {
+              input.value = value;
+            }
+          });
+          break;
 
-//     case 'select':
-//       const select = element as HTMLSelectElement;
-//       bindElement(element, 'change', state, value => {
-//         if (value instanceof Event) {
-//           const option = select.options.item(select.selectedIndex);
-//           state.next(option?.value);
-//         } else {
-//           select.selectedIndex = Array.from(select.options).findIndex(
-//             option => option.value === value
-//           );
-//         }
-//       });
-//       break;
+        case 'number':
+          bindElement(element, 'input', state, value => {
+            if (value instanceof Event) {
+              state.next(input.valueAsNumber);
+            } else {
+              input.value = value;
+            }
+          });
+          break;
 
-//     case 'textarea':
-//       bindElement(element, 'input', state, value => {
-//         if (value instanceof Event) {
-//           state.next(input.value);
-//         } else {
-//           input.value = value;
-//         }
-//       });
-//       break;
-//   }
-// }
+        case 'radio':
+          bindElement(element, 'change', state, value => {
+            if (value instanceof Event) {
+              state.next(input.value);
+            } else {
+              input.checked = value === input.value;
+            }
+          });
+          break;
 
-// function hook(oldNode: VirtualNode, node?: VirtualNode): void {
-//   const element = oldNode.element ?? node?.element;
-//   const oldBind = oldNode.data?.bind;
-//   const bind = node?.data?.bind;
+        default:
+          bindElement(element, 'input', state, value => {
+            if (value instanceof Event) {
+              state.next(input.value);
+            } else {
+              input.value = value;
+            }
+          });
+          break;
+      }
+      break;
 
-//   if (!element || !domApi.isHTMLElement(element) || oldBind === bind) {
-//     return;
-//   }
+    case 'select':
+      const select = element as HTMLSelectElement;
+      bindElement(element, 'change', state, value => {
+        if (value instanceof Event) {
+          const option = select.options.item(select.selectedIndex);
+          state.next(option?.value);
+        } else {
+          select.selectedIndex = Array.from(select.options).findIndex(
+            option => option.value === value
+          );
+        }
+      });
+      break;
 
-//   if (oldBind !== bind) {
-//     if (oldBind) {
-//       subscriptons.get(element)?.unsubscribe();
-//       subscriptons.delete(element);
-//     }
-//     if (bind) {
-//       createBind(element, bind);
-//     }
-//   }
-// }
-
-// export const bindHook: Hook = {
-//   create: hook,
-//   update: hook,
-//   remove: hook,
-// };
+    case 'textarea':
+      bindElement(element, 'input', state, value => {
+        if (value instanceof Event) {
+          state.next(input.value);
+        } else {
+          input.value = value;
+        }
+      });
+      break;
+  }
+}

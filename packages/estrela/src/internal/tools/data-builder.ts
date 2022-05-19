@@ -1,6 +1,6 @@
-import { createSelector } from '../observables';
-import { toCamelCase } from '../utils';
-import { NodeData } from '../types/node-data';
+import { createSelector } from '../../observables';
+import { toCamelCase } from '../../utils';
+import { NodeData } from '../../types/node-data';
 
 export function buildData(
   data: Record<string, any>,

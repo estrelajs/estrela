@@ -1,5 +1,5 @@
-import { STATE_CALLS } from '../internal/tokens';
 import { Observable } from './observable';
+import { STATE_CALLS } from './state';
 import { createSubscriber } from './subscriber';
 import { createSubscription } from './subscription';
 import { symbol_observable } from './symbol';

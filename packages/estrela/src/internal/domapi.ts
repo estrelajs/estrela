@@ -7,9 +7,13 @@ import {
   Subscribable,
   Subscription,
 } from '../observables';
-import { diffNodes, MoveType } from './diff-nodes';
 import { hooks } from './hooks';
-import { getNodeData, setNodeData } from './tokens';
+import { diffNodes, MoveType } from './tools/diff-nodes';
+import {
+  getCurrentNodeData,
+  getOriginalNodeData,
+  setCurrentNodeData,
+} from './tools/node-data-store';
 
 export const domApi = {
   addEventListener(
@@ -24,31 +28,15 @@ export const domApi = {
   },
 
   cloneNode(node: Node): Node {
-    const data = getNodeData(node) ?? {};
+    const data = getOriginalNodeData(node);
     const clone = node.cloneNode(true);
-    setNodeData(clone, data);
-
-    const cleanup = domApi.addEventListener(
-      clone,
-      'DOMNodeInsertedIntoDocument',
-      () => {
-        hooks.forEach(hook => hook.insert?.(clone, data));
-      }
-    );
-
-    cleanup.add(
-      domApi.addEventListener(node, 'DOMNodeRemovedFromDocument', () => {
-        hooks.forEach(hook => hook.remove?.(clone, data));
-        cleanup.unsubscribe();
-      })
-    );
-
+    setCurrentNodeData(clone, data);
     return clone;
   },
 
   createElement(content: JSX.Children): Node | Node[] {
     if (content instanceof Node) {
-      return domApi.cloneNode(content);
+      return content;
     }
     if (Array.isArray(content)) {
       return content.flatMap(domApi.createElement);
@@ -76,10 +64,14 @@ export const domApi = {
           subscription.unsubscribe();
           return;
         }
-        nodes = patchNodes(nodes, value);
+        const newNodes = [domApi.createElement(value)].flat();
+        nodes = patchNodes(nodes, newNodes);
       },
       { initialEmit: true }
     );
+    if (nodes.length === 0) {
+      nodes.push(document.createTextNode(''));
+    }
     return nodes;
   },
 
@@ -115,10 +107,9 @@ export const domApi = {
   },
 };
 
-function patchNodes(nodes: Node[], data: any): Node[] {
+function patchNodes(nodes: Node[], newNodes: Node[]): Node[] {
   const firstChild = nodes[0];
   const parent = firstChild?.parentElement;
-  const newNodes = [domApi.createElement(data)].flat();
 
   if (newNodes.length === 0) {
     newNodes.push(document.createTextNode(''));
@@ -154,7 +145,7 @@ function patchNodes(nodes: Node[], data: any): Node[] {
     );
   }
 
-  return newNodes;
+  return newNodes.map(domApi.cloneNode);
 }
 
 function patchNode(node: Node, newNode: Node): Node {
@@ -164,11 +155,19 @@ function patchNode(node: Node, newNode: Node): Node {
         domApi.setTextContent(node, newNode.textContent);
       }
     } else {
+      const nextData = getCurrentNodeData(newNode);
       patchNodes(Array.from(node.childNodes), Array.from(newNode.childNodes));
-      hooks.forEach(hook => hook.update?.(node, getNodeData(newNode) ?? {}));
+      hooks.forEach(hook =>
+        hook.update?.(node, {
+          prev: getCurrentNodeData(node),
+          next: nextData,
+        })
+      );
+      setCurrentNodeData(node, nextData);
     }
     return node;
   }
+  newNode = domApi.cloneNode(newNode);
   node.parentNode?.replaceChild(newNode, node);
   return newNode;
 }

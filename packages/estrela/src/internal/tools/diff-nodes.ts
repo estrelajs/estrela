@@ -1,5 +1,6 @@
-import { isNil } from '../utils';
-import { NODE_DATA_MAP } from './tokens';
+import { Key } from '../../types/node-data';
+import { isNil } from '../../utils';
+import { getCurrentNodeData } from './node-data-store';
 
 export enum MoveType {
   Remove,
@@ -134,6 +135,6 @@ function makeKeyIndexAndFree(list: Node[]) {
   };
 }
 
-function getKey(node?: Node | null) {
-  return node ? NODE_DATA_MAP.get(node)?.key : undefined;
+function getKey(node?: Node | null): Key | undefined {
+  return node ? getCurrentNodeData(node)?.key : undefined;
 }

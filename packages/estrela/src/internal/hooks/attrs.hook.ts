@@ -1,64 +1,65 @@
-// import { coerceObservable, Subscription } from '../../observables';
-// import { domApi } from '../domapi';
-// import { VirtualNode } from '../virtual-dom/virtual-node';
-// import { Hook } from './Hook';
+import { coerceObservable, Subscription } from '../../observables';
+import { Attrs } from '../../types/node-data';
+import { domApi } from '../domapi';
+import { Hook, HookData } from './Hook';
 
-// const subscriptons = new Map<string, Subscription>();
+const subscriptons = new Map<Node, Record<string, Subscription>>();
 
-// const xlinkNS = 'http://www.w3.org/1999/xlink';
-// const xmlNS = 'http://www.w3.org/XML/1998/namespace';
-// const colonChar = 58;
-// const xChar = 120;
+const xlinkNS = 'http://www.w3.org/1999/xlink';
+const xmlNS = 'http://www.w3.org/XML/1998/namespace';
+const colonChar = 58;
+const xChar = 120;
 
-// function hook(oldNode: VirtualNode, node?: VirtualNode): void {
-//   // element will always be the same, if both exists
-//   const element = node?.element ?? oldNode.element;
-//   const oldAttrs = oldNode.data?.attrs ?? {};
-//   const attrs = node?.data?.attrs ?? {};
+export const attrsHook: Hook = {
+  insert: hook,
+  update: hook,
+  remove: hook,
+};
 
-//   if (!element || !domApi.isElement(element) || oldAttrs === attrs) {
-//     return;
-//   }
+function hook(node: Node, { prev, next }: HookData): void {
+  // element will always be the same, if both exists
+  const empty: Attrs = {};
+  const oldAttrs = prev?.attrs ?? empty;
+  const attrs = next?.attrs ?? empty;
+  const map = subscriptons.get(node) ?? {};
 
-//   for (let key in oldAttrs) {
-//     const attr = oldAttrs[key];
-//     if (attr !== attrs[key]) {
-//       subscriptons.get(key)?.unsubscribe();
-//       subscriptons.delete(key);
-//       element.removeAttribute(key);
-//     }
-//   }
+  if (!domApi.isElement(node) || oldAttrs === attrs) {
+    return;
+  }
 
-//   for (let key in attrs) {
-//     const cur = attrs[key];
-//     const old = oldAttrs[key];
-//     if (cur !== old) {
-//       const subscription = coerceObservable(cur).subscribe(value => {
-//         if (value === true) {
-//           element.setAttribute(key, '');
-//         } else if (value === false || value === undefined) {
-//           element.removeAttribute(key);
-//         } else {
-//           if (key.charCodeAt(0) !== xChar) {
-//             element.setAttribute(key, value as any);
-//           } else if (key.charCodeAt(3) === colonChar) {
-//             // Assume xml namespace
-//             element.setAttributeNS(xmlNS, key, value as any);
-//           } else if (key.charCodeAt(5) === colonChar) {
-//             // Assume xlink namespace
-//             element.setAttributeNS(xlinkNS, key, value as any);
-//           } else {
-//             element.setAttribute(key, value as any);
-//           }
-//         }
-//       });
-//       subscriptons.set(key, subscription);
-//     }
-//   }
-// }
+  for (let key in oldAttrs) {
+    const attr = oldAttrs[key];
+    if (attr !== attrs[key]) {
+      map[key]?.unsubscribe();
+      node.removeAttribute(key);
+    }
+  }
 
-// export const attrsHook: Hook = {
-//   create: hook,
-//   update: hook,
-//   remove: hook,
-// };
+  for (let key in attrs) {
+    const cur = attrs[key];
+    const old = oldAttrs[key];
+    if (cur !== old) {
+      const subscription = coerceObservable(cur).subscribe(value => {
+        if (value === true) {
+          node.setAttribute(key, '');
+        } else if (value === false || value === undefined) {
+          node.removeAttribute(key);
+        } else {
+          if (key.charCodeAt(0) !== xChar) {
+            node.setAttribute(key, value as any);
+          } else if (key.charCodeAt(3) === colonChar) {
+            // Assume xml namespace
+            node.setAttributeNS(xmlNS, key, value as any);
+          } else if (key.charCodeAt(5) === colonChar) {
+            // Assume xlink namespace
+            node.setAttributeNS(xlinkNS, key, value as any);
+          } else {
+            node.setAttribute(key, value as any);
+          }
+        }
+      });
+      map[key] = subscription;
+      subscriptons.set(node, map);
+    }
+  }
+}

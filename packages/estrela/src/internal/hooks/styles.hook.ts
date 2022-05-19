@@ -1,61 +1,74 @@
-import {
-  coerceObservable,
-  createSubscription,
-  Subscription,
-} from '../../observables';
+import { coerceObservable, Subscription } from '../../observables';
 import { Styles } from '../../types/node-data';
 import { domApi } from '../domapi';
-import { Hook } from './Hook';
+import { Hook, HookData } from './Hook';
 
-interface Cleanup {
-  keys: Subscription;
-  node: Subscription;
-}
-
-const NODE_CLEANUP = new WeakMap<Node, Cleanup>();
+const subscriptons = new WeakMap<Node, Record<string, Subscription>>();
 
 export const stylesHook: Hook = {
-  insert(node, data) {
-    if (!domApi.isHTMLElement(node) || (!data.style && !data.styles)) {
-      return;
-    }
-
-    const cleanup = NODE_CLEANUP.get(node) ?? {
-      keys: createSubscription(),
-      node: createSubscription(),
-    };
-    NODE_CLEANUP.set(node, cleanup);
-
-    const subscription = coerceObservable(data.style).subscribe(style => {
-      const styles = { ...parseStyle(style), ...data.styles };
-      cleanup.keys.unsubscribe();
-      cleanup.keys = createSubscription();
-
-      for (let key in styles) {
-        const subscription = coerceObservable(styles[key]).subscribe(value => {
-          node.style[key as any] = value;
-        });
-        cleanup.keys.add(subscription);
-        cleanup.keys.add(() => {
-          node.style[key as any] = '';
-        });
-      }
-    });
-    cleanup?.node.add(subscription);
-  },
-  update(node, data) {
-    this.insert?.(node, data);
-  },
-  remove(node) {
-    const cleanup = NODE_CLEANUP.get(node);
-    cleanup?.keys.unsubscribe();
-    cleanup?.node.unsubscribe();
-  },
+  insert: hook,
+  update: hook,
+  remove: hook,
 };
 
-function parseStyle(style?: string | Styles): Styles {
+function hook(node: Node, { prev, next }: HookData) {
+  const oldStyles = prev?.styles;
+  const styles = next?.styles;
+  const oldStyle = prev?.style;
+  const style = next?.style;
+
+  if (!domApi.isHTMLElement(node)) {
+    return;
+  }
+
+  if (oldStyles !== styles) {
+    bindStyles(node, oldStyles ?? {}, styles ?? {});
+  }
+
+  if (oldStyle !== style) {
+    let oldStyles: Styles = {};
+    const map = subscriptons.get(node) ?? {};
+    map[0]?.unsubscribe();
+
+    if (style) {
+      const subscription = coerceObservable(style).subscribe(value => {
+        const styles = parseStyle(value);
+        bindStyles(node, oldStyles, styles);
+        oldStyles = styles;
+      });
+      map[0] = subscription;
+      subscriptons.set(node, map);
+    }
+  }
+}
+
+function bindStyles(node: HTMLElement, oldStyles: Styles, styles: Styles) {
+  const map = subscriptons.get(node) ?? {};
+
+  for (let key in oldStyles) {
+    const style = oldStyles[key];
+    if (style !== styles[key]) {
+      map[key]?.unsubscribe();
+      node.style[key as any] = '';
+    }
+  }
+
+  for (let key in styles) {
+    const cur = styles[key];
+    const old = oldStyles[key];
+    if (cur !== old) {
+      const subscription = coerceObservable(cur).subscribe(value => {
+        node.style[key as any] = value;
+      });
+      map[key] = subscription;
+      subscriptons.set(node, map);
+    }
+  }
+}
+
+function parseStyle(style: string | Styles): Styles {
   if (typeof style !== 'string') {
-    return style ?? {};
+    return style;
   }
   return String(style)
     .split(';')

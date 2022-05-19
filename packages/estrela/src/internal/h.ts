@@ -1,10 +1,10 @@
 import { Component } from '../types/jsx';
 import { coerceArray } from '../utils';
 import { createComponent } from './component';
-import { buildData } from './data-builder';
+import { buildData } from './tools/data-builder';
 import { domApi } from './domapi';
 import { hooks } from './hooks';
-import { setNodeData } from './tokens';
+import { setCurrentNodeData } from './tools/node-data-store';
 
 interface Data {
   [key: string]: any;
@@ -38,8 +38,8 @@ export function h(
   }
 
   const nodeData = buildData(data, false);
-  hooks.forEach(hook => hook.create?.(node, nodeData));
-  setNodeData(node, nodeData);
+  setCurrentNodeData(node, nodeData);
+  hooks.forEach(hook => hook.create?.(node, { next: nodeData }));
 
   children
     .flatMap(domApi.createElement)
