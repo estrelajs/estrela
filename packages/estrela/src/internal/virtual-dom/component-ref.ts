@@ -9,7 +9,7 @@ import {
   State,
   Subscription,
 } from '../../observables';
-import { Component } from '../../types';
+import { Component } from '../../types/jsx';
 import { h } from '../h';
 import { ProxyState } from '../proxy-state';
 import { VirtualNode } from './virtual-node';

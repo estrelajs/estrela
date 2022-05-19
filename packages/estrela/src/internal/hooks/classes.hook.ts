@@ -1,11 +1,20 @@
 import { coerceObservable, Subscription } from '../../observables';
+import { Classes } from '../../types/data';
 import { coerceArray } from '../../utils';
 import { domApi } from '../domapi';
-import { Classes } from '../types';
 import { VirtualNode } from '../virtual-dom/virtual-node';
-import { Hook } from './types';
+import { Hook } from './Hook';
 
-const subscriptons = new Map<any, Subscription>();
+const NODE_SUBSCRIPTIONS_MAP = new WeakMap<
+  Node,
+  Record<string, Subscription>
+>();
+
+export const classesHook: Hook = {
+  create: hook,
+  update: hook,
+  remove: hook,
+};
 
 function hook(oldNode: VirtualNode, node?: VirtualNode): void {
   const element = node?.element ?? oldNode.element;
@@ -19,32 +28,36 @@ function hook(oldNode: VirtualNode, node?: VirtualNode): void {
   }
 
   if (oldClasses !== classes) {
-    bindClasses(oldClasses ?? {}, classes ?? {}, element);
+    bindClasses(element, oldClasses ?? {}, classes ?? {});
   }
 
   if (klass !== oldKlass) {
     let oldClasses: Classes = {};
-    subscriptons.get(element)?.unsubscribe();
-    subscriptons.delete(element);
+    const map = NODE_SUBSCRIPTIONS_MAP.get(element) ?? {};
+    map[0]?.unsubscribe();
+    delete map[0];
 
     if (klass) {
-      const subscription = coerceObservable(klass).subscribe(value => {
+      map[0] = coerceObservable(klass).subscribe(value => {
         const classes = parseClass(value);
-        bindClasses(oldClasses, classes, element);
+        bindClasses(element, oldClasses, classes);
         oldClasses = classes;
       });
-      subscriptons.set(element, subscription);
     }
+
+    NODE_SUBSCRIPTIONS_MAP.set(element, map);
   }
 }
 
-function bindClasses(oldClasses: Classes, classes: Classes, element: Element) {
+function bindClasses(element: Element, oldClasses: Classes, classes: Classes) {
+  const map = NODE_SUBSCRIPTIONS_MAP.get(element) ?? {};
+
   for (let name in oldClasses) {
     const klass = oldClasses[name];
     if (klass !== classes[name]) {
-      subscriptons.get(name)?.unsubscribe();
-      subscriptons.delete(name);
+      map[name]?.unsubscribe();
       element.classList.remove(name);
+      delete map[name];
     }
   }
 
@@ -52,13 +65,14 @@ function bindClasses(oldClasses: Classes, classes: Classes, element: Element) {
     const cur = classes[name];
     const old = oldClasses[name];
     if (cur !== old) {
-      const subscription = coerceObservable(cur).subscribe(value => {
+      map[name] = coerceObservable(cur).subscribe(value => {
         const action = value ? 'add' : 'remove';
         element.classList[action](name);
       });
-      subscriptons.set(name, subscription);
     }
   }
+
+  NODE_SUBSCRIPTIONS_MAP.set(element, map);
 }
 
 function parseClass(klass: string | string[] | Classes): Classes {
@@ -81,9 +95,3 @@ function parseClass(klass: string | string[] | Classes): Classes {
     return acc;
   }, {} as Record<string, any>);
 }
-
-export const classesHook: Hook = {
-  create: hook,
-  update: hook,
-  remove: hook,
-};

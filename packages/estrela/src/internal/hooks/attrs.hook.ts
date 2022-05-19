@@ -1,14 +1,23 @@
 import { coerceObservable, Subscription } from '../../observables';
 import { domApi } from '../domapi';
 import { VirtualNode } from '../virtual-dom/virtual-node';
-import { Hook } from './types';
+import { Hook } from './Hook';
 
-const subscriptons = new Map<string, Subscription>();
+const NODE_SUBSCRIPTIONS_MAP = new WeakMap<
+  Node,
+  Record<string, Subscription>
+>();
 
 const xlinkNS = 'http://www.w3.org/1999/xlink';
 const xmlNS = 'http://www.w3.org/XML/1998/namespace';
 const colonChar = 58;
 const xChar = 120;
+
+export const attrsHook: Hook = {
+  create: hook,
+  update: hook,
+  remove: hook,
+};
 
 function hook(oldNode: VirtualNode, node?: VirtualNode): void {
   // element will always be the same, if both exists
@@ -20,12 +29,14 @@ function hook(oldNode: VirtualNode, node?: VirtualNode): void {
     return;
   }
 
+  const map = NODE_SUBSCRIPTIONS_MAP.get(element) ?? {};
+
   for (let key in oldAttrs) {
     const attr = oldAttrs[key];
     if (attr !== attrs[key]) {
-      subscriptons.get(key)?.unsubscribe();
-      subscriptons.delete(key);
+      map[key]?.unsubscribe();
       element.removeAttribute(key);
+      delete map[key];
     }
   }
 
@@ -33,7 +44,7 @@ function hook(oldNode: VirtualNode, node?: VirtualNode): void {
     const cur = attrs[key];
     const old = oldAttrs[key];
     if (cur !== old) {
-      const subscription = coerceObservable(cur).subscribe(value => {
+      map[key] = coerceObservable(cur).subscribe(value => {
         if (value === true) {
           element.setAttribute(key, '');
         } else if (value === false || value === undefined) {
@@ -52,13 +63,8 @@ function hook(oldNode: VirtualNode, node?: VirtualNode): void {
           }
         }
       });
-      subscriptons.set(key, subscription);
     }
   }
-}
 
-export const attrsHook: Hook = {
-  create: hook,
-  update: hook,
-  remove: hook,
-};
+  NODE_SUBSCRIPTIONS_MAP.set(element, map);
+}

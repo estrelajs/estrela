@@ -1,6 +1,12 @@
 import { ComponentRef } from '../virtual-dom/component-ref';
 import { VirtualNode } from '../virtual-dom/virtual-node';
-import { Hook } from './types';
+import { Hook } from './Hook';
+
+export const componentHook: Hook = {
+  create: hook,
+  update: hook,
+  remove: hook,
+};
 
 function hook(oldNode: VirtualNode, node?: VirtualNode): void {
   const isComponent = typeof node?.kind === 'function';
@@ -14,9 +20,3 @@ function hook(oldNode: VirtualNode, node?: VirtualNode): void {
     node.componentRef?.patch(oldNode, node);
   }
 }
-
-export const componentHook: Hook = {
-  create: hook,
-  update: hook,
-  remove: hook,
-};

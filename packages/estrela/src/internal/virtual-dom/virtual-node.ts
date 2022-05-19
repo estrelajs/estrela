@@ -1,8 +1,8 @@
 import { Subscribable } from '../../observables';
-import { Component } from '../../types';
+import { NodeMetadata, PropertiesOf, VirtualNodeData } from '../../types/data';
+import { Component } from '../../types/jsx';
 import { domApi } from '../domapi';
 import { hooks } from '../hooks';
-import { NodeMetadata, PropertiesOf, VirtualNodeData } from '../types';
 import { ComponentRef } from './component-ref';
 
 export class VirtualNode {

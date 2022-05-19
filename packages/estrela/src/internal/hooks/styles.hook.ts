@@ -1,10 +1,19 @@
 import { coerceObservable, Subscription } from '../../observables';
+import { Styles } from '../../types/data';
 import { domApi } from '../domapi';
-import { Styles } from '../types';
 import { VirtualNode } from '../virtual-dom/virtual-node';
-import { Hook } from './types';
+import { Hook } from './Hook';
 
-const subscriptons = new Map<any, Subscription>();
+const NODE_SUBSCRIPTIONS_MAP = new WeakMap<
+  Node,
+  Record<string, Subscription>
+>();
+
+export const stylesHook: Hook = {
+  create: hook,
+  update: hook,
+  remove: hook,
+};
 
 function hook(oldNode: VirtualNode, node?: VirtualNode) {
   const element = node?.element ?? oldNode.element;
@@ -23,27 +32,31 @@ function hook(oldNode: VirtualNode, node?: VirtualNode) {
 
   if (oldStyle !== style) {
     let oldStyles: Styles = {};
-    subscriptons.get(element)?.unsubscribe();
-    subscriptons.delete(element);
+    const map = NODE_SUBSCRIPTIONS_MAP.get(element) ?? {};
+    map[0]?.unsubscribe();
+    delete map[0];
 
     if (style) {
-      const subscription = coerceObservable(style).subscribe(value => {
+      map[0] = coerceObservable(style).subscribe(value => {
         const styles = parseStyle(value);
         bindStyles(oldStyles, styles, element);
         oldStyles = styles;
       });
-      subscriptons.set(element, subscription);
     }
+
+    NODE_SUBSCRIPTIONS_MAP.set(element, map);
   }
 }
 
 function bindStyles(oldStyles: Styles, styles: Styles, element: HTMLElement) {
+  const map = NODE_SUBSCRIPTIONS_MAP.get(element) ?? {};
+
   for (let key in oldStyles) {
     const style = oldStyles[key];
     if (style !== styles[key]) {
-      subscriptons.get(key)?.unsubscribe();
-      subscriptons.delete(key);
+      map[key]?.unsubscribe();
       element.style[key as any] = '';
+      delete map[key];
     }
   }
 
@@ -51,12 +64,13 @@ function bindStyles(oldStyles: Styles, styles: Styles, element: HTMLElement) {
     const cur = styles[key];
     const old = oldStyles[key];
     if (cur !== old) {
-      const subscription = coerceObservable(cur).subscribe(value => {
+      map[key] = coerceObservable(cur).subscribe(value => {
         element.style[key as any] = value;
       });
-      subscriptons.set(key, subscription);
     }
   }
+
+  NODE_SUBSCRIPTIONS_MAP.set(element, map);
 }
 
 function parseStyle(style: string | Styles): Styles {
@@ -73,9 +87,3 @@ function parseStyle(style: string | Styles): Styles {
       return acc;
     }, {} as Styles);
 }
-
-export const stylesHook: Hook = {
-  create: hook,
-  update: hook,
-  remove: hook,
-};

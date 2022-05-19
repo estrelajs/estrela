@@ -1,10 +1,10 @@
-import { VirtualNode } from './internal';
+import { ProxyState, VirtualNode } from '../internal';
 import {
   EventEmitter,
   createSelector,
   State,
   Subscribable,
-} from './observables';
+} from '../observables';
 
 /**
  * Based on JSX types for Surplus, Inferno and dom-expressions, adapted for Estrela.
@@ -16,12 +16,14 @@ import {
 
 export interface Component<P = {}, C = JSX.Children> {
   (
-    props: P extends { children: any } ? P : P & { children?: C }
+    props: P extends { children: any } ? Props<P> : Props<P> & { children?: C }
   ): JSX.Element | null;
 }
 
-type Props<P> = {
-  [K in keyof Omit<P, EmittersOf<P>>]: P[K];
+export type Props<T extends Object> = ProxyState<T>;
+
+type PropsOf<P> = {
+  [K in keyof Omit<P, '$' | EmittersOf<P>>]: P[K];
 } & {
   [K in keyof Pick<P, EmittersOf<P>> as `on:${K & string}`]: P[K] extends
     | EventEmitter<infer E>
@@ -60,7 +62,7 @@ declare global {
       | Promise<T>
       | Subscribable<T>
       | Parameters<typeof createSelector>;
-    type LibraryManagedAttributes<C, P> = Props<P>;
+    type LibraryManagedAttributes<C, P> = PropsOf<P>;
     interface ElementChildrenAttribute {
       children: any;
     }

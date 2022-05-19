@@ -1,9 +1,35 @@
 import { State, Subscription } from '../../observables';
 import { domApi } from '../domapi';
 import { VirtualNode } from '../virtual-dom/virtual-node';
-import { Hook } from './types';
+import { Hook } from './Hook';
 
-const subscriptons = new Map<Node, Subscription>();
+const NODE_SUBSCRIPTIONS_MAP = new WeakMap<Node, Subscription>();
+
+export const bindHook: Hook = {
+  create: hook,
+  update: hook,
+  remove: hook,
+};
+
+function hook(oldNode: VirtualNode, node?: VirtualNode): void {
+  const element = oldNode.element ?? node?.element;
+  const oldBind = oldNode.data?.bind;
+  const bind = node?.data?.bind;
+
+  if (!element || !domApi.isHTMLElement(element) || oldBind === bind) {
+    return;
+  }
+
+  if (oldBind !== bind) {
+    if (oldBind) {
+      NODE_SUBSCRIPTIONS_MAP.get(element)?.unsubscribe();
+      NODE_SUBSCRIPTIONS_MAP.delete(element);
+    }
+    if (bind) {
+      createBind(element, bind);
+    }
+  }
+}
 
 function bindElement(
   element: HTMLElement,
@@ -19,7 +45,7 @@ function bindElement(
     element.removeEventListener(event, handler);
   };
   subscription.add({ unsubscribe });
-  subscriptons.set(element, subscription);
+  NODE_SUBSCRIPTIONS_MAP.set(element, subscription);
 }
 
 function createBind(element: HTMLElement, state: State<any>) {
@@ -106,29 +132,3 @@ function createBind(element: HTMLElement, state: State<any>) {
       break;
   }
 }
-
-function hook(oldNode: VirtualNode, node?: VirtualNode): void {
-  const element = oldNode.element ?? node?.element;
-  const oldBind = oldNode.data?.bind;
-  const bind = node?.data?.bind;
-
-  if (!element || !domApi.isHTMLElement(element) || oldBind === bind) {
-    return;
-  }
-
-  if (oldBind !== bind) {
-    if (oldBind) {
-      subscriptons.get(element)?.unsubscribe();
-      subscriptons.delete(element);
-    }
-    if (bind) {
-      createBind(element, bind);
-    }
-  }
-}
-
-export const bindHook: Hook = {
-  create: hook,
-  update: hook,
-  remove: hook,
-};

@@ -1,4 +1,5 @@
 import { Observable } from './observable';
+import { STATE_CALLS } from './state';
 import { createSubscriber } from './subscriber';
 import { createSubscription } from './subscription';
 import { symbol_observable } from './symbol';
@@ -11,6 +12,9 @@ export type Selectable<T> = Promise<T> | Subscribable<T>;
  * Create a new observable by combining the given observables
  * and applying to the selector function.
  */
+export function createSelector<Result>(
+  selector: () => Result
+): Observable<Result>;
 export function createSelector<S1, Result>(
   s1: Selectable<S1>,
   selector: (s1: S1) => Result
@@ -86,34 +90,58 @@ export function createSelector(
 
 export function createSelector(...args: any[]): Observable<any> {
   const selector = args.pop();
-  const states: Observable<any>[] = args.map(coerceObservable);
+  const states = args.map(coerceObservable);
   const observers = new Set<Observer<any>>();
   const subscriber = createSubscriber(observers);
+  const length = states.length;
 
-  const memoizedValues: Record<number, any> = {};
+  let memoizedValues: Record<number, any> = {};
   let memoizedResult: any = undefined;
+  let hasInitialized = false;
   let hasResult = false;
 
-  states.forEach((state, i) => {
-    state.subscribe(
+  const subscribeAt = (index: number, initialEmit?: boolean) => {
+    states[index].subscribe(
       value => {
-        memoizedValues[i] = value;
-        if (Object.keys(memoizedValues).length === states.length) {
-          hasResult = true;
-          const values = Array.from(
-            { length: states.length },
-            (_, i) => memoizedValues[i]
-          );
-          const result = selector(...values);
-          if (memoizedResult !== result) {
-            memoizedResult = result;
-            subscriber.next(result);
-          }
+        memoizedValues[index] = value;
+        if (Object.keys(memoizedValues).length >= length) {
+          execute();
         }
       },
-      { initialEmit: true }
+      { initialEmit }
     );
-  });
+  };
+
+  const execute = () => {
+    STATE_CALLS.clear();
+    hasResult = true;
+    const result = selector(
+      ...Array.from({ length }, (_, i) => memoizedValues[i])
+    );
+
+    STATE_CALLS.forEach(state => {
+      if (!states.includes(state)) {
+        subscribeAt(states.push(state) - 1);
+      }
+    });
+
+    if (memoizedResult !== result) {
+      memoizedResult = result;
+      subscriber.next(result);
+    }
+
+    STATE_CALLS.clear();
+  };
+
+  const initialize = () => {
+    if (!hasInitialized) {
+      hasInitialized = true;
+      states.forEach((_, i) => subscribeAt(i, true));
+      if (states.length === 0) {
+        execute();
+      }
+    }
+  };
 
   return {
     [symbol_observable]() {
@@ -125,6 +153,7 @@ export function createSelector(...args: any[]): Observable<any> {
       if (hasResult) {
         obs.next(memoizedResult);
       }
+      initialize();
       return createSubscription(() => observers.delete(obs));
     },
   };

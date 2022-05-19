@@ -1,6 +1,6 @@
 import { createSelector, isPromise, isSubscribable } from '../../observables';
+import { VirtualNodeData } from '../../types/data';
 import { apply, toCamelCase } from '../../utils';
-import { VirtualNodeData } from '../types';
 
 export function buildData(
   data: Record<string, any>,

@@ -1,5 +1,5 @@
 import { createSelector, isPromise, isSubscribable } from '../observables';
-import { Component } from '../types';
+import { Component } from '../types/jsx';
 import { apply, coerceArray, isTruthy } from '../utils';
 import { domApi } from './domapi';
 import { buildData } from './virtual-dom/data-builder';

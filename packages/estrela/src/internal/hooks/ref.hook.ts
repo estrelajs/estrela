@@ -1,7 +1,12 @@
 import { isState } from '../../observables';
 import { domApi } from '../domapi';
 import { VirtualNode } from '../virtual-dom/virtual-node';
-import { Hook } from './types';
+import { Hook } from './Hook';
+
+export const refHook: Hook = {
+  create: hook,
+  remove: hook,
+};
 
 function hook(oldNode: VirtualNode, node?: VirtualNode): void {
   const element = node?.element ?? oldNode.element;
@@ -16,8 +21,3 @@ function hook(oldNode: VirtualNode, node?: VirtualNode): void {
     ref(next);
   }
 }
-
-export const refHook: Hook = {
-  create: hook,
-  remove: hook,
-};

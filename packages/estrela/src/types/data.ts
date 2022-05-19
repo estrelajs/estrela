@@ -1,5 +1,5 @@
 import { State, Subscribable } from '../observables';
-import { EventHandler, Ref } from '../types';
+import { EventHandler, Ref } from './jsx';
 
 export type SyncOrAsync<T> = T | Promise<T> | Subscribable<T>;
 

@@ -24,6 +24,8 @@ export interface State<T> extends ObservableLike<T>, SubjectObserver<T> {
   type: 'state';
 }
 
+export const STATE_CALLS = new Set<State<any>>();
+
 export function createState<T>(): State<T | undefined>;
 export function createState<T>(initialValue: T): State<T>;
 export function createState(initialValue?: any): State<any> {
@@ -42,6 +44,7 @@ export function createState(initialValue?: any): State<any> {
       return observers.size > 0;
     },
     get $() {
+      STATE_CALLS.add(state);
       return value;
     },
     next(next: any) {

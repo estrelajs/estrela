@@ -6,7 +6,7 @@ import {
 } from '../../observables';
 import { toCamelCase } from '../../utils';
 import { VirtualNode } from '../virtual-dom/virtual-node';
-import { Hook } from './types';
+import { Hook } from './Hook';
 
 type EventFilter = (event: Event, element: HTMLElement) => boolean;
 
@@ -39,6 +39,56 @@ const EVENT_FILTERS: Record<string, EventFilter> = {
     return event.target === element;
   },
 };
+
+export const eventsHook: Hook = {
+  create: hook,
+  update: hook,
+  remove: hook,
+};
+
+function hook(oldNode: VirtualNode, node?: VirtualNode): void {
+  const oldEvents = oldNode.data?.events;
+  const oldListener = oldNode.listener;
+  const oldelement = oldNode.element as Element | undefined;
+  const events = node?.data?.events;
+  const element = node?.element as Element | undefined;
+  let name: string;
+
+  // remove existing listeners which no longer used
+  if (oldelement && oldEvents && oldListener) {
+    for (name in oldEvents) {
+      // remove listener if existing listener removed
+      if (!events?.[name]) {
+        oldelement.removeEventListener(name, oldListener);
+      }
+    }
+  }
+
+  // add new listeners which has not already attached
+  if (node && element && events) {
+    // reuse existing listener or create new
+    const listener = (node.listener = oldNode.listener || createListener(node));
+
+    // if element changed or added we add all needed listeners unconditionally
+    for (name in events) {
+      // add listener if new listener added
+      if (!oldEvents?.[name]) {
+        const event = events[name];
+        element.addEventListener(name, listener, {
+          capture: event.filters.includes('capture'),
+          once: event.filters.includes('once'),
+          passive: event.filters.includes('passive'),
+        });
+      }
+    }
+  }
+}
+
+function createListener(node: VirtualNode) {
+  return function handler(event: Event) {
+    handleEvent(event, node);
+  };
+}
 
 function invokeHandler(
   handler: EventEmitter<any> | State<any> | ((e: Event) => void),
@@ -82,53 +132,3 @@ function handleEvent(event: Event, node: VirtualNode) {
     }
   }
 }
-
-function createListener(node: VirtualNode) {
-  return function handler(event: Event) {
-    handleEvent(event, node);
-  };
-}
-
-function hook(oldNode: VirtualNode, node?: VirtualNode): void {
-  const oldEvents = oldNode.data?.events;
-  const oldListener = oldNode.listener;
-  const oldelement = oldNode.element as Element | undefined;
-  const events = node?.data?.events;
-  const element = node?.element as Element | undefined;
-  let name: string;
-
-  // remove existing listeners which no longer used
-  if (oldelement && oldEvents && oldListener) {
-    for (name in oldEvents) {
-      // remove listener if existing listener removed
-      if (!events?.[name]) {
-        oldelement.removeEventListener(name, oldListener);
-      }
-    }
-  }
-
-  // add new listeners which has not already attached
-  if (node && element && events) {
-    // reuse existing listener or create new
-    const listener = (node.listener = oldNode.listener || createListener(node));
-
-    // if element changed or added we add all needed listeners unconditionally
-    for (name in events) {
-      // add listener if new listener added
-      if (!oldEvents?.[name]) {
-        const event = events[name];
-        element.addEventListener(name, listener, {
-          capture: event.filters.includes('capture'),
-          once: event.filters.includes('once'),
-          passive: event.filters.includes('passive'),
-        });
-      }
-    }
-  }
-}
-
-export const eventsHook: Hook = {
-  create: hook,
-  update: hook,
-  remove: hook,
-};
