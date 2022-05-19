@@ -10,6 +10,7 @@ import {
   Subscription,
 } from '../../observables';
 import { Component } from '../../types/jsx';
+import { coerceArray } from '../../utils';
 import { h } from '../h';
 import { ProxyState } from '../proxy-state';
 import { VirtualNode } from './virtual-node';
@@ -25,7 +26,6 @@ export class ComponentRef {
   private readonly props = this.createProps();
   private readonly propsCleanup = new Map<string, Subscription>();
   private readonly states: State<any>[] = [];
-  private children: VirtualNode[] = [];
   private template: VirtualNode | null = null;
 
   constructor(private node: VirtualNode) {}
@@ -70,11 +70,6 @@ export class ComponentRef {
     const props = node.data?.props ?? {};
     const oldProps = oldNode.data?.props ?? {};
 
-    // patch children
-    this.children = this.node.children ?? [];
-    this.props.children = this.getChildren();
-    this.node.children = [];
-
     if (oldProps === props) {
       return;
     }
@@ -90,7 +85,6 @@ export class ComponentRef {
     for (let key in props) {
       const cur = props[key];
       const old = oldProps[key];
-
       if (cur === old) {
         continue;
       }
@@ -163,36 +157,20 @@ export class ComponentRef {
     }) as any;
   }
 
-  private getChildren() {
-    const children = this.node.children!.map(child =>
-      child.kind === '#text' || child.kind === '#comment'
-        ? child.content
-        : child.clone()
-    );
-    if (children.length === 0) {
-      return null;
-    }
-    if (children.length === 1) {
-      return children[0];
-    }
-    return children;
-  }
-
   private buildTemplate(template: VirtualNode): VirtualNode {
     const visitor = (node: VirtualNode): VirtualNode => {
       if (node.kind === 'slot') {
         const fragment = h();
         const originalChildren = node.children;
-
-        fragment.observable = createSelector(this.props.$.children, () => {
+        fragment.observable = createSelector(() => {
           const slot = node.data?.attrs?.name as string | undefined;
           const select = node.data?.attrs?.select as string | undefined;
-          let content: VirtualNode[] = this.children;
+          let content: VirtualNode[] = coerceArray(this.props.children);
 
           if (select) {
-            content = this.children.filter(child => child.kind === select);
+            content = content.filter(child => child.kind === select);
           } else if (slot) {
-            content = this.children.filter(child => child.data?.slot === slot);
+            content = content.filter(child => child.data?.slot === slot);
           }
 
           if (content.length === 0) {
@@ -203,20 +181,17 @@ export class ComponentRef {
         });
         return fragment;
       }
-
       const styledComponent = this.node.kind as any;
       if (styledComponent.styleId) {
         node.data ??= {};
         node.data.attrs ??= {};
         node.data.attrs[`_${styledComponent.styleId}`] = '';
       }
-
       if (node.children) {
         node.children = node.children.map(visitor);
       }
       return node;
     };
-
     return visitor(template);
   }
 

@@ -1,4 +1,4 @@
-import { NodePath, Visitor } from '@babel/core';
+import { Visitor } from '@babel/core';
 // @ts-ignore
 import annotateAsPure from '@babel/helper-annotate-as-pure';
 import * as t from '@babel/types';
@@ -27,7 +27,10 @@ export default function (): Visitor {
             object = state.propsParam;
             prop = param.name;
           }
-        } else if (isMemberExpression(param)) {
+        } else if (
+          t.isMemberExpression(param) ||
+          t.isOptionalMemberExpression(param)
+        ) {
           const member = param as t.MemberExpression;
           if (t.isIdentifier(member.object)) {
             const scopeNode = path.scope.getBindingIdentifier(
@@ -67,28 +70,46 @@ export default function (): Visitor {
     },
 
     JSXExpressionContainer(path, state) {
-      path.skip();
       const expPath = path.get('expression');
+
       if (
         expPath.isFunction() ||
         (expPath.isCallExpression() &&
           expPath.get('callee').isIdentifier({ name: 'getState' }))
       ) {
         path.traverse(visitor, state);
-      } else if (t.isExpression(path.node.expression)) {
-        const selectors = getSelectors(path, state);
-        if (selectors.length > 0) {
-          const arrow = t.arrowFunctionExpression(
-            selectors.map(x => x.param),
-            path.node.expression
-          );
-          const array = t.arrayExpression([
-            ...selectors.map(x => x.sel),
-            arrow,
-          ]);
-          const expression = t.jsxExpressionContainer(array);
-          path.replaceWith(t.inherits(expression, path.node));
-        }
+        path.skip();
+        return;
+      }
+
+      if (expPath.isExpression() && hasStates()) {
+        expPath.replaceWith(t.arrowFunctionExpression([], expPath.node));
+      }
+
+      function hasStates(): boolean {
+        const node = path.node;
+        let hasState = false;
+
+        path.traverse({
+          Function(path) {
+            if (path.parent === node) {
+              path.skip();
+            }
+          },
+          Identifier(path) {
+            const scopeNode = path.scope.getBindingIdentifier(path.node.name);
+            if (
+              state.states.includes(scopeNode) ||
+              state.props.includes(scopeNode) ||
+              t.isNodesEquivalent(state.propsParam, path.node)
+            ) {
+              hasState = true;
+              path.stop();
+            }
+          },
+        });
+
+        return hasState;
       }
     },
 
@@ -187,67 +208,4 @@ export default function (): Visitor {
       }
     },
   };
-}
-
-function getSelectors(path: NodePath<t.JSXExpressionContainer>, state: State) {
-  let id = 0;
-  const node = path.node;
-  const selectors: {
-    sel: t.Expression;
-    param: t.Identifier;
-  }[] = [];
-
-  path.traverse({
-    Function(path) {
-      if (path.parent === node) {
-        path.skip();
-      }
-    },
-    Identifier(path) {
-      let sel: t.MemberExpression;
-      const scopeNode = path.scope.getBindingIdentifier(path.node.name);
-      if (state.states.includes(scopeNode)) {
-        sel = t.memberExpression(
-          t.memberExpression(t.identifier('_$'), t.identifier('$')),
-          path.node
-        );
-      } else if (state.props.includes(scopeNode)) {
-        sel = t.memberExpression(
-          t.memberExpression(t.cloneNode(state.propsParam), t.identifier('$')),
-          path.node
-        );
-      } else if (t.isNodesEquivalent(state.propsParam, path.node)) {
-        if (isMemberExpression(path.parent)) {
-          const parent = t.cloneNode(path.parent) as t.MemberExpression;
-          parent.object = t.memberExpression(path.node, t.identifier('$'));
-          sel = parent;
-        } else {
-          sel = t.memberExpression(path.node, t.identifier('$'));
-        }
-      } else {
-        return;
-      }
-      const name =
-        t.isMemberExpression(sel) && t.isIdentifier(sel.property)
-          ? sel.property.name
-          : String(id++);
-      const param = path.scope.generateUidIdentifier(name);
-      let selector = selectors.find(selector =>
-        t.isNodesEquivalent(selector.sel, sel)
-      );
-      if (!selector) {
-        selector = { sel, param };
-        selectors.push(selector);
-      }
-      path.replaceWith(selector.param);
-    },
-  });
-
-  return selectors;
-}
-
-function isMemberExpression(node: Object | null | undefined): boolean {
-  return (
-    !!node && (t.isMemberExpression(node) || t.isOptionalMemberExpression(node))
-  );
 }

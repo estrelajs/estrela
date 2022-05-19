@@ -68,10 +68,6 @@ export function isVirtualNode(x: any): x is VirtualNode {
   );
 }
 
-// export function toCamelCase(str: string): string {
-//   return str.replace(/[-_](\w)/g, (_, c) => c.toUpperCase());
-// }
-
 /** Transform string to camelCase. */
 export function toCamelCase(str: string): string {
   const s = str.replace(/[-_\s]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ''));

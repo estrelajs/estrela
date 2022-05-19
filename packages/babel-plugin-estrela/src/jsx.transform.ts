@@ -1,4 +1,4 @@
-import { NodePath, PluginPass, Visitor } from '@babel/core';
+import { NodePath, Visitor } from '@babel/core';
 // @ts-ignore
 import annotateAsPure from '@babel/helper-annotate-as-pure';
 import * as t from '@babel/types';
@@ -20,181 +20,21 @@ function visitor(): Visitor {
     },
 
     JSXElement: {
-      exit(path, file) {
-        const callExpr = buildCreateElementCall(path, file);
+      exit(path) {
+        const callExpr = buildJSXElementCall(path);
         path.replaceWith(t.inherits(callExpr, path.node));
       },
     },
 
     JSXFragment: {
-      exit(path, file) {
-        const callExpr = buildCreateElementFragmentCall(path);
+      exit(path) {
+        const callExpr = buildJSXFragmentCall(path);
         if (callExpr) {
           path.replaceWith(t.inherits(callExpr, path.node));
         }
       },
     },
-
-    // JSXExpressionContainer: {
-    //   exit(path) {
-    //     if (t.isExpression(path.node.expression)) {
-    //       const selectors = getSelectors(path);
-
-    //       if (selectors.length > 0) {
-    //         const arrow = t.arrowFunctionExpression(
-    //           selectors.map(x => x.param),
-    //           path.node.expression
-    //         );
-    //         const array = t.arrayExpression([
-    //           ...selectors.map(x => x.sel),
-    //           arrow,
-    //         ]);
-    //         const expression = t.jsxExpressionContainer(array);
-    //         path.replaceWith(t.inherits(expression, path.node));
-    //         path.skip();
-    //       }
-    //     }
-    //   },
-    // },
   };
-}
-
-// function getSelectors(path: NodePath<t.JSXExpressionContainer>) {
-//   const node = path.node;
-//   const selectors: {
-//     sel: t.Identifier | t.CallExpression;
-//     param: t.Identifier;
-//   }[] = [];
-
-//   path.traverse({
-//     CallExpression(path) {
-//       if (
-//         t.isIdentifier(path.node.callee) &&
-//         (!path.node.arguments[0] || t.isIdentifier(path.node.arguments[0]))
-//       ) {
-//         const isState = path.node.arguments.length === 0;
-//         const isSync = path.node.arguments.length === 1;
-
-//         if (isState || (isSync && path.node.callee.name === 'sync')) {
-//           const sel = isSync ? path.node : path.node.callee;
-//           let selector = selectors.find(selector => {
-//             return t.isNodesEquivalent(selector.sel, sel);
-//           });
-//           if (!selector) {
-//             const param = t.identifier(
-//               `${isSync ? '_sync' : ''}_${
-//                 path.node.arguments[0]?.name ?? path.node.callee.name
-//               }`
-//             );
-//             selector = { sel, param };
-//             selectors.push(selector);
-//           }
-//           path.replaceWith(selector.param);
-//         }
-//       }
-//     },
-//     ArrowFunctionExpression(path) {
-//       if (path.parent === node) {
-//         path.skip();
-//       }
-//     },
-//     FunctionExpression(path) {
-//       if (path.parent === node) {
-//         path.skip();
-//       }
-//     },
-//   });
-
-//   return selectors;
-// }
-
-function buildVirtualNode(args: any[]) {
-  const node = t.callExpression(t.identifier('_jsx'), args);
-  // if (PURE_ANNOTATION) {
-  annotateAsPure(node);
-  // }
-  return node;
-}
-
-function buildCreateElementCall(path: NodePath<JSXElement>, file: any) {
-  const openingPath = path.get('openingElement');
-
-  return buildVirtualNode([
-    getTag(openingPath),
-    buildCreateElementOpeningElementAttributes(
-      file,
-      // path,
-      openingPath.get('attributes')
-    ),
-    ...t.react.buildChildren(path.node),
-  ]);
-}
-
-// Builds JSX Fragment <></> into
-// _jsx(null, null, ...children)
-function buildCreateElementFragmentCall(path: NodePath<JSXFragment>) {
-  // if (filter && !filter(path.node, file)) return;
-
-  return buildVirtualNode([
-    t.nullLiteral(),
-    t.nullLiteral(),
-    ...t.react.buildChildren(path.node),
-  ]);
-}
-
-function getTag(openingPath: NodePath<JSXOpeningElement>) {
-  const tagExpr = convertJSXIdentifier(openingPath.node.name, openingPath.node);
-
-  let tagName;
-  if (t.isIdentifier(tagExpr)) {
-    tagName = tagExpr.name;
-  } else if (t.isLiteral(tagExpr)) {
-    // @ts-expect-error todo(flow->ts) value in missing for NullLiteral
-    tagName = tagExpr.value;
-  }
-
-  if (t.react.isCompatTag(tagName)) {
-    return t.stringLiteral(tagName);
-  } else {
-    return tagExpr;
-  }
-}
-
-function convertJSXIdentifier(
-  node: t.JSXIdentifier | t.JSXMemberExpression | t.JSXNamespacedName,
-  parent: t.JSXOpeningElement | t.JSXMemberExpression
-): any {
-  if (t.isJSXIdentifier(node)) {
-    if (node.name === 'this' && t.isReferenced(node, parent)) {
-      return t.thisExpression();
-    } else if (t.isValidIdentifier(node.name, false)) {
-      // @ts-expect-error todo(flow->ts)
-      node.type = 'Identifier';
-    } else {
-      return t.stringLiteral(node.name);
-    }
-  } else if (t.isJSXMemberExpression(node)) {
-    return t.memberExpression(
-      convertJSXIdentifier(node.object, node),
-      convertJSXIdentifier(node.property, node)
-    );
-  } else if (t.isJSXNamespacedName(node)) {
-    /**
-     * If the flag "throwIfNamespace" is false
-     * print XMLNamespace like string literal
-     */
-    return t.stringLiteral(`${node.namespace.name}:${node.name.name}`);
-  }
-
-  return node;
-}
-
-function convertAttributeValue(node: any) {
-  if (t.isJSXExpressionContainer(node)) {
-    return node.expression;
-  } else {
-    return node;
-  }
 }
 
 function accumulateAttribute(
@@ -260,61 +100,193 @@ function accumulateAttribute(
   return array;
 }
 
-/**
- * The logic for this is quite terse. It's because we need to
- * support spread elements. We loop over all attributes,
- * breaking on spreads, we then push a new object containing
- * all prior attributes to an array for later processing.
- */
-function buildCreateElementOpeningElementAttributes(
-  file: PluginPass,
-  // path: NodePath<JSXElement>,
-  attribs: NodePath<JSXAttribute | JSXSpreadAttribute>[]
+function buildChildrenProperty(children: t.Expression[]) {
+  let childrenNode;
+  if (children.length === 1) {
+    childrenNode = children[0];
+  } else if (children.length > 1) {
+    childrenNode = t.arrayExpression(children);
+  } else {
+    return undefined;
+  }
+
+  return t.objectProperty(t.identifier('children'), childrenNode);
+}
+
+// Builds JSX into:
+// Production: React.jsx(type, arguments, key)
+// Development: React.jsxDEV(type, arguments, key, isStaticChildren, source, self)
+function buildJSXElementCall(path: NodePath<JSXElement>) {
+  const openingPath = path.get('openingElement');
+  const args = [getTag(openingPath)];
+
+  const attribsArray = [];
+  const extracted = Object.create(null);
+
+  // for React.jsx, key, __source (dev), and __self (dev) is passed in as
+  // a separate argument rather than in the args object. We go through the
+  // props and filter out these three keywords so we can pass them in
+  // as separate arguments later
+  for (const attr of openingPath.get('attributes')) {
+    if (attr.isJSXAttribute() && t.isJSXIdentifier(attr.node.name)) {
+      const { name } = attr.node.name;
+      switch (name) {
+        case '__source':
+        case '__self':
+          if (extracted[name]) throw sourceSelfError(path, name);
+        /* falls through */
+        case 'key': {
+          const keyValue = convertAttributeValue(attr.node.value);
+          if (keyValue === null) {
+            throw attr.buildCodeFrameError(
+              'Please provide an explicit key value. Using "key" as a shorthand for "key={true}" is not allowed.'
+            );
+          }
+
+          extracted[name] = keyValue;
+          break;
+        }
+        default:
+          attribsArray.push(attr);
+      }
+    } else {
+      attribsArray.push(attr);
+    }
+  }
+
+  const children = t.react.buildChildren(path.node);
+
+  let attribs: t.ObjectExpression;
+
+  if (attribsArray.length || children.length) {
+    attribs = buildJSXOpeningElementAttributes(
+      attribsArray,
+      //@ts-expect-error The children here contains JSXSpreadChild,
+      // which will be thrown later
+      children
+    );
+  } else {
+    // attributes should never be null
+    attribs = t.objectExpression([]);
+  }
+
+  args.push(attribs);
+
+  if (extracted.key !== undefined) {
+    args.push(extracted.key);
+  }
+
+  return call('_jsx', args);
+}
+
+// Builds JSX Fragment <></> into
+// Production: React.jsx(type, arguments)
+// Development: React.jsxDEV(type, { children })
+function buildJSXFragmentCall(path: NodePath<JSXFragment>) {
+  const args = [t.nullLiteral()] as t.Expression[];
+
+  const children = t.react.buildChildren(path.node);
+
+  args.push(
+    t.objectExpression(
+      children.length > 0
+        ? ([
+            buildChildrenProperty(
+              //@ts-expect-error The children here contains JSXSpreadChild,
+              // which will be thrown later
+              children
+            ),
+          ].filter(x => x) as any)
+        : []
+    )
+  );
+
+  return call('_jsx', args);
+}
+
+// Builds props for React.jsx. This function adds children into the props
+// and ensures that props is always an object
+function buildJSXOpeningElementAttributes(
+  attribs: NodePath<JSXAttribute | JSXSpreadAttribute>[],
+  children: t.Expression[]
 ) {
-  const objs = [];
   const props = attribs.reduce(accumulateAttribute, []);
 
-  // if (!useSpread) {
-  //   // Convert syntax to use multiple objects instead of spread
-  //   let start = 0;
-  //   props.forEach((prop, i) => {
-  //     if (t.isSpreadElement(prop)) {
-  //       if (i > start) {
-  //         objs.push(t.objectExpression(props.slice(start, i)));
-  //       }
-  //       objs.push(prop.argument);
-  //       start = i + 1;
-  //     }
-  //   });
-  //   if (props.length > start) {
-  //     objs.push(t.objectExpression(props.slice(start)));
-  //   }
-  // } else if (props.length) {
-  objs.push(t.objectExpression(props));
-  // }
-
-  if (!objs.length) {
-    return t.nullLiteral();
+  // In React.jsx, children is no longer a separate argument, but passed in
+  // through the argument object
+  if (children?.length > 0) {
+    const childrenProp = buildChildrenProperty(children);
+    if (childrenProp) {
+      props.push(childrenProp);
+    }
   }
 
-  if (objs.length === 1) {
-    return objs[0];
+  return t.objectExpression(props);
+}
+
+function call(name: string, args: t.CallExpression['arguments']) {
+  const node = t.callExpression(t.identifier(name), args);
+  annotateAsPure(node);
+  return node;
+}
+
+function convertAttributeValue(node: any) {
+  if (t.isJSXExpressionContainer(node)) {
+    return node.expression;
+  } else {
+    return node;
+  }
+}
+
+function convertJSXIdentifier(
+  node: t.JSXIdentifier | t.JSXMemberExpression | t.JSXNamespacedName,
+  parent: t.JSXOpeningElement | t.JSXMemberExpression
+): any {
+  if (t.isJSXIdentifier(node)) {
+    if (node.name === 'this' && t.isReferenced(node, parent)) {
+      return t.thisExpression();
+    } else if (t.isValidIdentifier(node.name, false)) {
+      // @ts-expect-error todo(flow->ts)
+      node.type = 'Identifier';
+    } else {
+      return t.stringLiteral(node.name);
+    }
+  } else if (t.isJSXMemberExpression(node)) {
+    return t.memberExpression(
+      convertJSXIdentifier(node.object, node),
+      convertJSXIdentifier(node.property, node)
+    );
+  } else if (t.isJSXNamespacedName(node)) {
+    /**
+     * If the flag "throwIfNamespace" is false
+     * print XMLNamespace like string literal
+     */
+    return t.stringLiteral(`${node.namespace.name}:${node.name.name}`);
   }
 
-  // looks like we have multiple objects
-  if (!t.isObjectExpression(objs[0])) {
-    objs.unshift(t.objectExpression([]));
+  return node;
+}
+
+function getTag(openingPath: NodePath<JSXOpeningElement>) {
+  const tagExpr = convertJSXIdentifier(openingPath.node.name, openingPath.node);
+
+  let tagName;
+  if (t.isIdentifier(tagExpr)) {
+    tagName = tagExpr.name;
+  } else if (t.isLiteral(tagExpr)) {
+    // @ts-expect-error todo(flow->ts) value in missing for NullLiteral
+    tagName = tagExpr.value;
   }
 
-  const helper =
-    //  useBuiltIns
-    //   ? t.memberExpression(t.identifier('Object'), t.identifier('assign'))
-    //   :
-    // @ts-ignore
-    file.addHelper('extends');
+  if (t.react.isCompatTag(tagName)) {
+    return t.stringLiteral(tagName);
+  } else {
+    return tagExpr;
+  }
+}
 
-  // spread it
-  return t.callExpression(helper, objs);
+function sourceSelfError(path: NodePath, name: string) {
+  return path.buildCodeFrameError(`Duplicate ${name} prop found.`);
 }
 
 export default visitor;

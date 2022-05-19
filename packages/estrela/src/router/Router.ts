@@ -47,5 +47,7 @@ export const Router: Component<RouterProps> = props => {
     return null;
   }
 
-  return h(null, null, createSelector(routeUrl, props.$.routes, getRoute));
+  return h(null, {
+    children: createSelector(routeUrl, props.$.routes, getRoute),
+  });
 };

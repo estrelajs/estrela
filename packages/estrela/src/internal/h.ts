@@ -1,22 +1,22 @@
 import { createSelector, isPromise, isSubscribable } from '../observables';
 import { Component } from '../types/jsx';
-import { apply, coerceArray, isTruthy } from '../utils';
+import { coerceArray, isTruthy } from '../utils';
 import { domApi } from './domapi';
 import { buildData } from './virtual-dom/data-builder';
 import { VirtualNode } from './virtual-dom/virtual-node';
 
+interface Data {
+  [key: string]: any;
+  children?: JSX.Children;
+}
+
 export function h(): VirtualNode;
 export function h(kind: Node): VirtualNode;
-export function h(kind: '#' | '!', content?: any): VirtualNode;
-export function h(
-  kind: string | Component | null,
-  data: Record<string, any> | null,
-  ...children: JSX.Children[]
-): VirtualNode;
+export function h(kind: '#' | '!', content?: string): VirtualNode;
+export function h(kind: string | Component | null, data: Data): VirtualNode;
 export function h(
   kind: string | Component | Node | null = null,
-  data: string | Record<string, any> | null = null,
-  ...children: JSX.Children[]
+  data: string | Data = {}
 ): VirtualNode {
   if (kind === '#') {
     kind = '#text';
@@ -25,43 +25,27 @@ export function h(
     kind = '#comment';
   }
   if (kind === '#text' || kind === '!#comment') {
-    return new VirtualNode({
-      kind: kind,
-      content: data,
-    });
+    const content = typeof data === 'object' ? null : data;
+    return new VirtualNode({ kind, content });
   }
   if (kind instanceof Node) {
     return node2vnode(kind);
   }
+  if (typeof kind === 'function') {
+    return new VirtualNode({
+      kind,
+      children: [],
+      data: buildData(data as Data, true),
+    });
+  }
 
-  data = data as Record<string, any> | null;
-  const vchildren = children.flatMap(child => {
-    // create selector
-    if (Array.isArray(child) && typeof child.at(-1) === 'function') {
-      const selectorFn = child.pop() as any;
-      const inputs = child as any[];
-      const states = inputs.filter(
-        input => isPromise(input) || isSubscribable(input)
-      );
-
-      if (states.length === 0) {
-        child = selectorFn(...inputs.map(apply));
-      } else {
-        child = createSelector(...states, (...args: any): any => {
-          let index = 0;
-          return selectorFn(
-            ...inputs.map(arg => (isSubscribable(arg) ? args[index++] : arg()))
-          );
-        });
-      }
-    }
-
-    // parse each child
-    return coerceArray(child)
+  data = data as Data;
+  const children = coerceArray(data.children ?? []).flatMap(child =>
+    coerceArray(child)
       .filter(isTruthy)
       .flatMap(c => {
-        if (isPromise(c) || isSubscribable(c)) {
-          return new VirtualNode({ observable: c });
+        if (typeof c === 'function') {
+          c = createSelector(c);
         }
         if (c instanceof Node) {
           return node2vnode(c);
@@ -73,19 +57,23 @@ export function h(
           }
           return node;
         }
-        return h('#', c);
-      });
-  });
+        if (isPromise(c) || isSubscribable(c)) {
+          return new VirtualNode({ observable: c });
+        }
+        return h('#', String(c));
+      })
+  );
 
   if (kind) {
     return new VirtualNode({
       kind: kind,
-      data: buildData(data ?? {}, typeof kind === 'function'),
-      children: vchildren,
+      data: buildData(data as Data),
+      children,
     });
   }
+
   return new VirtualNode({
-    children: vchildren.length === 0 ? [h('#')] : vchildren,
+    children: children.length === 0 ? [h('#')] : children,
   });
 }
 

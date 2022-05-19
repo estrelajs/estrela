@@ -30,7 +30,8 @@ function hook(oldNode: VirtualNode, node?: VirtualNode): void {
       const subscription = coerceObservable(node.observable).subscribe(
         value => {
           let lastNode = LAST_NODE_MAP.get(element);
-          const patchNode = h(null, null, ...coerceArray(value));
+          const patchNode = h(null, { children: coerceArray(value) });
+          patchNode.observable = node.observable;
           patchNode.element = element;
 
           if (!patchNode.children?.length) {
@@ -40,8 +41,8 @@ function hook(oldNode: VirtualNode, node?: VirtualNode): void {
           if (lastNode) {
             lastNode = patch(lastNode, patchNode);
           } else {
-            lastNode = patchNode;
-            patchNode.createElement();
+            lastNode = node;
+            lastNode.children = patchNode.children;
           }
 
           LAST_NODE_MAP.set(element, lastNode);

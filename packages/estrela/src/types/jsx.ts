@@ -1,10 +1,5 @@
 import { ProxyState, VirtualNode } from '../internal';
-import {
-  EventEmitter,
-  createSelector,
-  State,
-  Subscribable,
-} from '../observables';
+import { EventEmitter, State, Subscribable } from '../observables';
 
 /**
  * Based on JSX types for Surplus, Inferno and dom-expressions, adapted for Estrela.
@@ -51,17 +46,14 @@ declare global {
       | Node
       | Element
       | Array<Children>
-      | SelectorLike<any>
+      | Subscribable<any>
+      | Promise<any>
       | string
       | number
       | boolean
       | null
       | undefined;
     type Children = Child | Array<Child>;
-    type SelectorLike<T> =
-      | Promise<T>
-      | Subscribable<T>
-      | Parameters<typeof createSelector>;
     type LibraryManagedAttributes<C, P> = PropsOf<P>;
     interface ElementChildrenAttribute {
       children: any;

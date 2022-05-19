@@ -1,42 +1,29 @@
-import { createSelector, isPromise, isSubscribable } from '../../observables';
+import { createSelector } from '../../observables';
 import { VirtualNodeData } from '../../types/data';
-import { apply, toCamelCase } from '../../utils';
+import { toCamelCase } from '../../utils';
 
 export function buildData(
   data: Record<string, any>,
-  isComponent: boolean
+  isComponent?: boolean
 ): VirtualNodeData {
-  if (!data) {
-    return {};
-  }
-
-  data = Object.entries(data).reduce((acc, [key, value]) => {
-    // create selector
-    // TODO: move code to a shared file
-    if (Array.isArray(value) && typeof value.at(-1) === 'function') {
-      const selectorFn = value.pop() as any;
-      const inputs = value as any[];
-      const states = inputs.filter(
-        input => isPromise(input) || isSubscribable(input)
-      );
-
-      if (states.length === 0) {
-        acc[key] = selectorFn(...inputs.map(apply));
-      } else {
-        acc[key] = createSelector(...states, (...args: any): any => {
-          let index = 0;
-          return selectorFn(
-            ...inputs.map(arg => (isSubscribable(arg) ? args[index++] : arg()))
-          );
-        });
-      }
-    } else {
-      acc[key] = value;
+  data = Object.keys(data).reduce((acc, key) => {
+    const value = data[key];
+    const isFunctionProp = /^(on:.+|ref|children)$/.test(key);
+    if (typeof value === 'function' && !isFunctionProp) {
+      acc[key] = createSelector(value);
     }
     return acc;
-  }, {} as Record<string, any>);
+  }, data);
 
   return Object.entries(data).reduce((data, [attr, arg]) => {
+    const strictKeys = ['bind', 'class', 'key', 'ref', 'slot', 'style'];
+
+    // bind
+    if (strictKeys.includes(attr)) {
+      data[attr as keyof VirtualNodeData] = arg;
+      return data;
+    }
+
     // declarations
     const [, , namespace, attrName, , accessor, rawFilters] =
       /((on|use|class|style):)?([\w-]+)(\.([\w-]+))?(.*)/.exec(attr) ?? [];
@@ -45,42 +32,6 @@ export function buildData(
         ?.split('|')
         .slice(1)
         .map(s => s.trim()) ?? [];
-
-    // bind
-    if (attr === 'bind') {
-      data.bind = arg;
-      return data;
-    }
-
-    // key
-    if (attr === 'key') {
-      data.key = arg;
-      return data;
-    }
-
-    // ref
-    if (attr === 'ref') {
-      data.ref = arg;
-      return data;
-    }
-
-    // slot
-    if (attr === 'slot') {
-      data.slot = arg;
-      return data;
-    }
-
-    // class
-    if (attr === 'class') {
-      data.class = arg;
-      return data;
-    }
-
-    // style
-    if (attr === 'style') {
-      data.style = arg;
-      return data;
-    }
 
     if (namespace === 'class') {
       // ex: class.foo={true}
@@ -110,7 +61,7 @@ export function buildData(
       return data;
     }
 
-    if (isComponent) {
+    if (isComponent || attr === 'children') {
       data.props ??= {};
       data.props[attrName] = arg;
     } else {

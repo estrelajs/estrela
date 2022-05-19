@@ -11,12 +11,9 @@ export const Link: Component<LinkProps> = props => {
     e.preventDefault();
     navigateTo(props.to);
   }
-  return h(
-    'a',
-    {
-      href: () => props.to,
-      'on:click': click,
-    },
-    h('slot', null)
-  );
+  return h('a', {
+    children: h('slot', {}),
+    href: () => props.to,
+    'on:click': click,
+  });
 };
