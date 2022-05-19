@@ -1,4 +1,4 @@
-import { getState, onDestroy } from 'estrela';
+import { createProxyState } from 'estrela/internal';
 import { debounceTime, filter, from, switchMap, tap } from 'rxjs';
 import Button from './Button';
 import GithubCard from './GithubCard';
@@ -6,36 +6,46 @@ import { Repositories, Repository } from './repository';
 
 const GITHUB_API = '//api.github.com/search/repositories';
 
+interface AppState {
+  inputRef: HTMLInputElement | null;
+  githubList: Repositories | undefined;
+  searchQuery: string;
+}
+
 function App() {
-  let inputRef: HTMLInputElement | null = null;
-  let githubList: Repositories | undefined = [];
-  let searchQuery = '';
+  const state = createProxyState<AppState>({
+    inputRef: null,
+    githubList: [],
+    searchQuery: '',
+  });
 
-  getState(inputRef).subscribe(console.log);
+  // getState(inputRef).subscribe(console.log);
 
-  const subscription = from(getState(searchQuery))
+  const subscription = from(state.$.searchQuery)
     .pipe(
       filter(query => query.length > 2),
       debounceTime(500),
-      tap(() => (githubList = undefined)),
+      tap(() => (state.githubList = undefined)),
       switchMap(query =>
         fetch(`${GITHUB_API}?q=${query}`)
           .then(res => res.json())
           .then<Repositories>(json => json?.items ?? [])
       )
     )
-    .subscribe(data => (githubList = data));
+    .subscribe(data => (state.githubList = data));
 
-  onDestroy(() => {
-    subscription.unsubscribe();
-  });
+  // onDestroy(() => {
+  //   subscription.unsubscribe();
+  // });
 
   function onRemove(item: Repository): void {
-    githubList = githubList?.filter(x => x !== item);
+    state.githubList = state.githubList?.filter(x => x !== item);
   }
 
   function shuffle(): void {
-    githubList = githubList?.sort(() => Math.random() - 0.5).slice();
+    state.githubList = state.githubList
+      ?.sort(() => Math.random() - 0.5)
+      .slice();
   }
 
   return (
@@ -46,23 +56,25 @@ function App() {
         <label for="search">Search:</label>
         <input
           id="search"
-          ref={ref => (inputRef = ref)}
-          bind={getState(searchQuery)}
+          ref={ref => (state.inputRef = ref)}
+          bind={state.$.searchQuery}
           placeholder="Search for github repository..."
         />
       </div>
 
       <div>
-        <span>{githubList?.length ?? 0} repository results</span>
-        <Button disabled={!githubList?.length} on:click={shuffle}>
+        <span>{() => state.githubList?.length ?? 0} repository results</span>
+        <Button disabled={() => !state.githubList?.length} on:click={shuffle}>
           Shuffle
         </Button>
       </div>
 
-      <div class="list" class:has-items={githubList?.length}>
-        {githubList?.map(item => (
-          <GithubCard key={item.id} item={item} on:remove={onRemove} />
-        )) ?? 'loading...'}
+      <div class="list" class:has-items={() => state.githubList?.length}>
+        {() =>
+          state.githubList?.map(item => (
+            <GithubCard key={item.id} item={item} on:remove={onRemove} />
+          )) ?? 'loading...'
+        }
       </div>
     </>
   );

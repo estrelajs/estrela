@@ -10,6 +10,8 @@ import {
 import { Component } from '../types/jsx';
 import { ProxyState } from './proxy-state';
 import { NodeData } from '../types/node-data';
+import { coerceArray, isTruthy } from '../utils';
+import { domApi } from './tools/domapi';
 
 type ProxyTarget = Record<
   string | number | symbol,
@@ -19,10 +21,10 @@ type ProxyTarget = Record<
 export function createComponent(
   Component: Component,
   data: NodeData
-): Node | Node[] | null {
+): Node | Node[] {
   const props = createProps(data);
-  const template = Component(props);
-  return template;
+  const template = [Component(props)].flat().filter(isTruthy);
+  return buildTemplate(template, props, data);
 }
 
 function createProps(data: NodeData): ProxyState<any> {
@@ -73,45 +75,56 @@ function createProps(data: NodeData): ProxyState<any> {
   }) as any;
 }
 
-// function buildTemplate(template: JSX.Element, props: ProxyState<any>, data: NodeData): JSX.Element {
-//   const visitor = (node: Node): Node | Node[] => {
-//     if (node.nodeName.toLowerCase() === 'slot') {
-//       const originalChildren = node.children;
+function buildTemplate(
+  template: Node[],
+  props: ProxyState,
+  data: NodeData
+): Node[] {
+  const visitor = (node: Node): Node | Node[] => {
+    node.childNodes.forEach(child => {
+      const newChild = visitor(child);
+      if (child !== newChild) {
+        child.replaceWith(...coerceArray(newChild));
+      }
+    });
 
-//       fragment.observable = createSelector(props.$.children, () => {
-//         const slot = data.attrs?.name as string | undefined;
-//         const select = data.attrs?.select as string | undefined;
-//         let content: VirtualNode[] = this.children;
+    if (node.nodeName.toLowerCase() === 'slot') {
+      const originalChildren = node.childNodes;
 
-//         if (select) {
-//           content = this.children.filter(child => child.kind === select);
-//         } else if (slot) {
-//           content = this.children.filter(child => child.data?.slot === slot);
-//         }
+      // const observable = createSelector(props.$.children, () => {
+      const slot = data.attrs?.name as string | undefined;
+      const select = data.attrs?.select as string | undefined;
+      let content = coerceArray(data.children).flatMap(domApi.createElement);
 
-//         if (content.length === 0) {
-//           return originalChildren;
-//         }
+      // if (select) {
+      //   content = coerceArray(data.children).filter(child => child.kind === select);
+      // } else if (slot) {
+      //   content = coerceArray(data.children).filter(child => child.data?.slot === slot);
+      // }
 
-//         return content;
-//       });
+      // if (content.length === 0) {
+      //   return originalChildren;
+      // }
 
-//       return fragment;
-//     }
+      return content;
+      // });
 
-//     // const styledComponent = this.node.kind as any;
-//     // if (styledComponent.styleId) {
-//     //   node.data ??= {};
-//     //   node.data.attrs ??= {};
-//     //   node.data.attrs[`_${styledComponent.styleId}`] = '';
-//     // }
+      // return fragment;
+    }
 
-//     // if (node.children) {
-//     //   node.children = node.children.map(visitor);
-//     // }
+    // const styledComponent = this.node.kind as any;
+    // if (styledComponent.styleId) {
+    //   node.data ??= {};
+    //   node.data.attrs ??= {};
+    //   node.data.attrs[`_${styledComponent.styleId}`] = '';
+    // }
 
-//     return node;
-//   };
+    // if (node.children) {
+    //   node.children = node.children.map(visitor);
+    // }
 
-//   return visitor(template);
-// }
+    return node;
+  };
+
+  return template.flatMap(visitor);
+}

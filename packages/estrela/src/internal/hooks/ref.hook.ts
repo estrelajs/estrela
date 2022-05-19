@@ -1,5 +1,5 @@
 import { isState } from '../../observables';
-import { domApi } from '../domapi';
+import { domApi } from '../tools/domapi';
 import { Hook, HookData } from './Hook';
 
 function hook(node: Node, { prev, next }: HookData): void {

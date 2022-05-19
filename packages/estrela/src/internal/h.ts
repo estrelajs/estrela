@@ -2,7 +2,7 @@ import { Component } from '../types/jsx';
 import { coerceArray } from '../utils';
 import { createComponent } from './component';
 import { buildData } from './tools/data-builder';
-import { domApi } from './domapi';
+import { domApi } from './tools/domapi';
 import { hooks } from './hooks';
 import { setCurrentNodeData } from './tools/node-data-store';
 
@@ -11,10 +11,7 @@ interface Data {
   children?: any;
 }
 
-export function h(
-  kind: string | Component | null,
-  data: Data
-): JSX.Element | null {
+export function h(kind: string | Component | null, data: Data): Node | Node[] {
   const children = coerceArray(data.children ?? []);
   let node: Node;
 

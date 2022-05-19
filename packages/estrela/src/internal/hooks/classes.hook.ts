@@ -1,7 +1,7 @@
 import { coerceObservable, Subscription } from '../../observables';
 import { Classes } from '../../types/node-data';
 import { coerceArray } from '../../utils';
-import { domApi } from '../domapi';
+import { domApi } from '../tools/domapi';
 import { Hook, HookData } from './Hook';
 
 const subscriptons = new Map<Node, Record<string, Subscription>>();

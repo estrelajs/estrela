@@ -6,9 +6,9 @@ export interface ButtonProps {
   click?: EventEmitter<void>;
 }
 
-const Button: Component<ButtonProps> = ({ disabled, icon, click }) => (
-  <button disabled={disabled} on:click={() => click?.next()}>
-    {icon && <i class={`fa-solid fa-${icon}`}></i>}
+const Button: Component<ButtonProps> = props => (
+  <button disabled={() => props.disabled} on:click={() => props.click?.next()}>
+    {() => props.icon && <i class={`fa-solid fa-${props.icon}`}></i>}
     <span>
       <slot />
     </span>

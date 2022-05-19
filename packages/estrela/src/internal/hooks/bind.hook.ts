@@ -1,5 +1,5 @@
 import { State, Subscription } from '../../observables';
-import { domApi } from '../domapi';
+import { domApi } from '../tools/domapi';
 import { Hook, HookData } from './Hook';
 
 const subscriptons = new Map<Node, Subscription>();

@@ -8,17 +8,17 @@ interface GithubCardProps {
   remove: EventEmitter<Repository>;
 }
 
-function GithubCard({ item, remove }: GithubCardProps) {
+function GithubCard(props: GithubCardProps) {
   return (
     <div class={styles.card}>
       <div>
-        <a href={item.html_url} target="_blank">
-          {item.full_name}
+        <a href={() => props.item.html_url} target="_blank">
+          {() => props.item.full_name}
         </a>
-        🌟<strong>{item.stargazers_count}</strong>
+        🌟<strong>{() => props.item.stargazers_count}</strong>
       </div>
-      <p>{item.description}</p>
-      <Button on:click={() => remove.next(item)}>Remove</Button>
+      <p>{() => props.item.description}</p>
+      <Button on:click={() => props.remove.next(props.item)}>Remove</Button>
     </div>
   );
 }

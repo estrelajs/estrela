@@ -6,14 +6,14 @@ import {
   isSubscribable,
   Subscribable,
   Subscription,
-} from '../observables';
-import { hooks } from './hooks';
-import { diffNodes, MoveType } from './tools/diff-nodes';
+} from '../../observables';
+import { hooks } from '../hooks';
+import { diffNodes, MoveType } from './diff-nodes';
 import {
   getCurrentNodeData,
   getOriginalNodeData,
   setCurrentNodeData,
-} from './tools/node-data-store';
+} from './node-data-store';
 
 export const domApi = {
   addEventListener(
