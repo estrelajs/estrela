@@ -11,72 +11,65 @@ interface State {
 
 export default function (): Visitor {
   const visitor: Visitor<State> = {
-    CallExpression(path, state) {
-      if (path.get('callee').isIdentifier({ name: 'getState' })) {
-        const param = path.node.arguments[0];
-        let object: t.Identifier | null = null;
-        let prop: string | null = null;
-
-        if (t.isIdentifier(param)) {
-          const scopeNode = path.scope.getBindingIdentifier(param.name);
-          if (state.states.includes(scopeNode)) {
-            object = t.identifier('_$');
-            prop = param.name;
-          }
-          if (state.props.includes(scopeNode)) {
-            object = state.propsParam;
-            prop = param.name;
-          }
-        } else if (
-          t.isMemberExpression(param) ||
-          t.isOptionalMemberExpression(param)
+    Identifier(path, state) {
+      const updateNode = (node: t.Identifier, isDolar?: boolean) => {
+        const scopeNode = path.scope.getBindingIdentifier(node.name);
+        if (
+          scopeNode === node ||
+          path.parentPath.isMemberExpression({ property: node })
         ) {
-          const member = param as t.MemberExpression;
-          if (t.isIdentifier(member.object)) {
-            const scopeNode = path.scope.getBindingIdentifier(
-              member.object.name
-            );
+          return false;
+        }
+        const getObject = (obj: t.Identifier) => {
+          return isDolar ? t.memberExpression(obj, t.identifier('$')) : obj;
+        };
+        if (state.states.includes(scopeNode)) {
+          path.skip();
+          path.replaceWith(
+            t.memberExpression(getObject(t.identifier('_$')), node)
+          );
+          return true;
+        }
+        if (state.props.includes(scopeNode)) {
+          path.skip();
+          path.replaceWith(
+            t.memberExpression(getObject(t.cloneNode(state.propsParam)), node)
+          );
+          return true;
+        }
+      };
+
+      if (/[^$]\$$/.test(path.node.name)) {
+        const node = t.identifier(path.node.name.replace(/\$$/, ''));
+        if (updateNode(node, true)) {
+          return;
+        }
+        if (
+          path.parentPath.isMemberExpression({ property: path.node }) ||
+          path.parentPath.isOptionalMemberExpression({ property: path.node })
+        ) {
+          const object = path.parentPath.node.object;
+          if (t.isIdentifier(object)) {
+            const scopeNode = path.scope.getBindingIdentifier(object.name);
             if (state.propsParam === scopeNode) {
-              object = state.propsParam;
-              prop = (member.property as t.Identifier)?.name ?? '0';
+              path.parentPath.replaceWith(
+                t.memberExpression(
+                  t.memberExpression(object, t.identifier('$')),
+                  node
+                )
+              );
+              return;
             }
           }
         }
-        if (object && prop) {
-          path.skip();
-          path.node.arguments = [object, t.stringLiteral(prop)];
-        }
       }
-    },
-
-    Identifier(path, state) {
-      const scopeNode = path.scope.getBindingIdentifier(path.node.name);
-      if (
-        scopeNode === path.node ||
-        path.parentPath.isMemberExpression({ property: path.node })
-      ) {
-        return;
-      }
-      if (state.states.includes(scopeNode)) {
-        path.replaceWith(t.memberExpression(t.identifier('_$'), path.node));
-        path.skip();
-      }
-      if (state.props.includes(scopeNode)) {
-        path.replaceWith(
-          t.memberExpression(t.cloneNode(state.propsParam), path.node)
-        );
-        path.skip();
-      }
+      updateNode(path.node);
     },
 
     JSXExpressionContainer(path, state) {
       const expPath = path.get('expression');
 
-      if (
-        expPath.isFunction() ||
-        (expPath.isCallExpression() &&
-          expPath.get('callee').isIdentifier({ name: 'getState' }))
-      ) {
+      if (expPath.isFunction()) {
         path.traverse(visitor, state);
         path.skip();
         return;
