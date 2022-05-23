@@ -11,6 +11,9 @@ const App = () => {
   // create a number state with initial value equal to 0.
   let count = 0;
 
+  // subscribe to "count" state changes.
+  count$.subscribe(console.log);
+
   // create an updater interval function.
   const interval = setInterval(() => count++, 1000);
 
@@ -25,15 +28,16 @@ const App = () => {
 It will convert the code above to:
 
 ```js
-import { h as _jsx, createProxyState as _$$ } from 'estrela/internal';
+import { h as _jsx, $$ as _$$ } from 'estrela/internal';
 import { state, onDestroy } from 'estrela';
 
 const App = () => {
   const _$ = /*#__PURE__*/_$$();
   _$.count = 0;
+  _$.$.count.subscribe(console.log);
   setInterval(() => _$.count++, 1000);
   onDestroy(() => clearInterval(interval));
-  return /*#__PURE__*/h('div', null, 'Count is ', [_$.$.count, _count => _count * 2]);
+  return /*#__PURE__*/h('div', null, 'Count is ', [() => _$.count * 2]);
 }
 ```
 
@@ -48,7 +52,7 @@ $ npm install --save-dev babel-plugin-estrela
 or using yarn:
 
 ```bash
-$ yarn add babel-plugin-estrela --dev
+$ yarn add --dev babel-plugin-estrela
 ```
 
 ## Estrela

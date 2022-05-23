@@ -5,15 +5,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
-    "useDefineForClassFields": true,
-    "paths": {
-      "estrela": [
-        "../estrela/src/index.ts"
-      ],
-      "estrela/*": [
-        "../estrela/src/*/index.ts"
-      ],
-    }
+    "useDefineForClassFields": true
   },
   "include": [
     "src"

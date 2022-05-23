@@ -1,8 +1,8 @@
 import * as babel from '@babel/core';
 import { Plugin } from 'vite';
-import estrelaPlugin from 'babel-plugin-estrela';
+import { Options } from 'babel-plugin-estrela';
 
-export default function (): Plugin {
+export default function (options?: Options): Plugin {
   return {
     name: 'vite-plugin-estrela',
     config() {
@@ -21,7 +21,7 @@ export default function (): Plugin {
           filename: id,
           sourceMaps: true,
           sourceType: 'module',
-          plugins: [estrelaPlugin()],
+          plugins: [['babel-plugin-estrela', options]],
         });
         if (result?.code) {
           return {

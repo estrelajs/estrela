@@ -12,7 +12,7 @@ import {
 import { Component } from '../../types/jsx';
 import { coerceArray } from '../../utils';
 import { h } from '../h';
-import { ProxyState } from '../proxy-state';
+import { ProxyState } from '../../proxy-state';
 import { VirtualNode } from './virtual-node';
 
 type ProxyTarget = Record<

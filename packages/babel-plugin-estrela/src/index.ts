@@ -1,10 +1,15 @@
-import { PluginObj } from '@babel/core';
+import { declare } from '@babel/helper-plugin-utils';
 import * as t from '@babel/types';
 import functionalTransform from './functional.transform';
 import jsxTransform from './jsx.transform';
+import { Options } from './options';
 import styledTransform from './styled.transform';
 
-export default function (): PluginObj {
+export type { Options } from './options';
+
+export default declare((api, options: Options) => {
+  const { autoDeclareStates = true } = options;
+
   return {
     name: 'babel-plugin-estrela',
     manipulateOptions(opts, parserOpts) {
@@ -15,18 +20,20 @@ export default function (): PluginObj {
         const imports = createImport(
           {
             h: '_jsx',
-            createProxyState: '_$$',
+            $$: '_$$',
           },
           'estrela/internal'
         );
         path.unshiftContainer('body', imports);
-        path.traverse(functionalTransform());
+        if (autoDeclareStates) {
+          path.traverse(functionalTransform(options));
+        }
         path.traverse(jsxTransform());
         path.traverse(styledTransform());
       },
     },
   };
-}
+});
 
 function createImport(props: Record<string, string>, from: string) {
   const imports = Object.entries(props).map(([prop, alias]) => {

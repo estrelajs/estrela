@@ -1,4 +1,4 @@
-import { createState, State } from '../observables';
+import { createState, State } from './observables';
 
 export type ProxyState<T extends Object> = T & {
   $: { [K in keyof T]: State<T[K]> };

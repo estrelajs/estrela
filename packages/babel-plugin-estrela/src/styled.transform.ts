@@ -1,9 +1,9 @@
 import { Visitor } from '@babel/core';
 import * as t from '@babel/types';
+import autoprefixer from 'autoprefixer';
 import postcss from 'postcss';
 import postcssNested from 'postcss-nested';
 import postcssPrefixer from 'postcss-prefix-selector';
-import autoprefixer from 'autoprefixer';
 
 export default function (): Visitor {
   return {

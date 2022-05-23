@@ -7,6 +7,7 @@ import { buildData } from './virtual-dom/data-builder';
 import { VirtualNode } from './virtual-dom/virtual-node';
 
 interface Data {
+  [key: string]: any;
   children?: JSX.Children;
 }
 

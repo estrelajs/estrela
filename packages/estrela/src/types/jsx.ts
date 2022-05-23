@@ -1,5 +1,6 @@
-import { ProxyState, VirtualNode } from '../internal';
+import { VirtualNode } from '../internal';
 import { EventEmitter, State, Subscribable } from '../observables';
+import { ProxyState } from '../proxy-state';
 
 /**
  * Based on JSX types for Surplus, Inferno and dom-expressions, adapted for Estrela.

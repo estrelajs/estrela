@@ -14,11 +14,11 @@
 
 <hr>
 
-Estrela is extremely easy to use, all the hard work is done by the babel plugin. That means there's no need for hooks like `useState`, `useEffect` and others.
+Estrela is extremely easy to use, all the hard work is done by the babel plugin. There's no need for hooks like `useState`, `useEffect` and others.
 
 To create a state variable, just declare it using the `let` keyword to specify that its value will change in the future.
 
-The component function will be called just once, so you can call any side effect, like data fetching, direct in the scope.
+The component function will be called just once, so you can call any side effect, like data fetching, direct in the function scope.
 
 ```tsx
 // main.tsx
@@ -34,16 +34,12 @@ function App() {
   return <Count count={count} />;
 }
 
-function Count({ count }: { count: number }) {
-  return <div>Count is {count}</div>;
+function Count(props: { count: number }) {
+  return <div>Count is {props.count}</div>;
 }
 
 render(<App />, document.getElementById('app')!);
 ```
-
-<!-- ## Documentation
-
-Coming soon... -->
 
 ## Installation
 

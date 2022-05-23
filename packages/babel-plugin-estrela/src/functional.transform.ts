@@ -2,6 +2,7 @@ import { Visitor } from '@babel/core';
 // @ts-ignore
 import annotateAsPure from '@babel/helper-annotate-as-pure';
 import * as t from '@babel/types';
+import { Options } from './options';
 
 interface State {
   propsParam: t.Identifier;
@@ -9,8 +10,51 @@ interface State {
   states: t.Identifier[];
 }
 
-export default function (): Visitor {
+export default function (options: Options): Visitor {
+  const { enableGetStateFunction = true, getStateWithDolarSuffix = true } =
+    options;
   const visitor: Visitor<State> = {
+    CallExpression(path, state) {
+      if (
+        enableGetStateFunction &&
+        path.get('callee').isIdentifier({ name: 'getState' })
+      ) {
+        const param = path.node.arguments[0];
+        let object: t.Identifier | null = null;
+        let prop: string | null = null;
+
+        if (t.isIdentifier(param)) {
+          const scopeNode = path.scope.getBindingIdentifier(param.name);
+          if (state.states.includes(scopeNode)) {
+            object = t.identifier('_$');
+            prop = param.name;
+          }
+          if (state.props.includes(scopeNode)) {
+            object = state.propsParam;
+            prop = param.name;
+          }
+        } else if (
+          t.isMemberExpression(param) ||
+          t.isOptionalMemberExpression(param)
+        ) {
+          const member = param as t.MemberExpression;
+          if (t.isIdentifier(member.object)) {
+            const scopeNode = path.scope.getBindingIdentifier(
+              member.object.name
+            );
+            if (state.propsParam === scopeNode) {
+              object = state.propsParam;
+              prop = (member.property as t.Identifier)?.name ?? '0';
+            }
+          }
+        }
+        if (object && prop) {
+          path.skip();
+          path.node.arguments = [object, t.stringLiteral(prop)];
+        }
+      }
+    },
+
     Identifier(path, state) {
       const updateNode = (node: t.Identifier, isDolar?: boolean) => {
         const scopeNode = path.scope.getBindingIdentifier(node.name);
@@ -38,8 +82,7 @@ export default function (): Visitor {
           return true;
         }
       };
-
-      if (/[^$]\$$/.test(path.node.name)) {
+      if (getStateWithDolarSuffix && /[^$]\$$/.test(path.node.name)) {
         const node = t.identifier(path.node.name.replace(/\$$/, ''));
         if (updateNode(node, true)) {
           return;
@@ -68,18 +111,17 @@ export default function (): Visitor {
 
     JSXExpressionContainer(path, state) {
       const expPath = path.get('expression');
-
-      if (expPath.isFunction()) {
+      if (
+        expPath.isFunction() ||
+        (expPath.isCallExpression() &&
+          expPath.get('callee').isIdentifier({ name: 'getState' }))
+      ) {
         path.traverse(visitor, state);
         path.skip();
         return;
       }
 
-      if (expPath.isExpression() && hasStates()) {
-        expPath.replaceWith(t.arrowFunctionExpression([], expPath.node));
-      }
-
-      function hasStates(): boolean {
+      const hasStates = () => {
         const node = path.node;
         let hasState = false;
 
@@ -103,6 +145,10 @@ export default function (): Visitor {
         });
 
         return hasState;
+      };
+
+      if (expPath.isExpression() && hasStates()) {
+        expPath.replaceWith(t.arrowFunctionExpression([], expPath.node));
       }
     },
 
