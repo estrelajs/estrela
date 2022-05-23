@@ -1,5 +1,10 @@
 import { EventEmitter, Ref, setRef, State, styled } from 'estrela';
-import { TodoData } from './Todo.model';
+
+export interface TodoData {
+  id: number;
+  text: string;
+  completed: boolean;
+}
 
 export interface TodoProps {
   todo: TodoData;
@@ -21,7 +26,7 @@ function Todo({ todo, complete, remove }: TodoProps) {
 
   setRef<TodoRef>({
     doSomething() {
-      console.log('logged to console!');
+      console.log('Called "doSomething" on Todo');
     },
   });
 
@@ -34,7 +39,7 @@ function Todo({ todo, complete, remove }: TodoProps) {
   );
 }
 
-export default styled(Todo)/* css */ `
+export default styled(Todo)`
   .todo {
     display: flex;
     align-items: center;
