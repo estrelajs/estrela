@@ -1,4 +1,4 @@
-import { getState, onDestroy } from 'estrela';
+import { onDestroy, State } from 'estrela';
 import { debounceTime, filter, from, switchMap, tap } from 'rxjs';
 import Button from './Button';
 import GithubCard from './GithubCard';
@@ -11,9 +11,9 @@ function App() {
   let githubList: Repositories | undefined = [];
   let searchQuery = '';
 
-  getState(inputRef).subscribe(console.log);
+  inputRef$.subscribe(console.log);
 
-  const subscription = from(getState(searchQuery))
+  const subscription = from(searchQuery$ as State<string>)
     .pipe(
       filter(query => query.length > 2),
       debounceTime(500),
@@ -47,7 +47,7 @@ function App() {
         <input
           id="search"
           ref={ref => (inputRef = ref)}
-          bind={getState(searchQuery)}
+          bind={searchQuery$}
           placeholder="Search for github repository..."
         />
       </div>

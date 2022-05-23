@@ -16,7 +16,7 @@ export function buildData(
   }, data);
 
   return Object.entries(data).reduce((data, [attr, arg]) => {
-    const strictKeys = ['bind', 'class', 'key', 'ref', 'slot', 'style'];
+    const strictKeys = ['bind', 'class', 'ref', 'slot', 'style'];
 
     // bind
     if (strictKeys.includes(attr)) {

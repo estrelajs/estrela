@@ -1,11 +1,17 @@
 import { Subscribable } from '../../observables';
-import { NodeMetadata, PropertiesOf, VirtualNodeData } from '../../types/data';
+import {
+  Key,
+  NodeMetadata,
+  PropertiesOf,
+  VirtualNodeData,
+} from '../../types/data';
 import { Component } from '../../types/jsx';
 import { domApi } from '../domapi';
 import { hooks } from '../hooks';
 import { ComponentRef } from './component-ref';
 
 export class VirtualNode {
+  key?: Key;
   kind?: string | Component;
   data?: VirtualNodeData;
   children?: VirtualNode[];
@@ -21,6 +27,9 @@ export class VirtualNode {
 
   clone(): VirtualNode {
     const node = new VirtualNode();
+    if (this.key) {
+      node.key = this.key;
+    }
     if (this.kind) {
       node.kind = this.kind;
     }

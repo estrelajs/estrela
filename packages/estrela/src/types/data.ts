@@ -23,7 +23,6 @@ export interface VirtualNodeData {
   class?: SyncOrAsync<string | string[] | Classes>;
   classes?: Classes;
   events?: Events;
-  key?: Key;
   props?: Props;
   ref?: Ref<Node>;
   slot?: string;

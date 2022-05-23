@@ -5,14 +5,14 @@
     "node": ">=v14.0.0"
   },
   "workspaces": [
-    "packages/babel-plugin-estrela",
-    "packages/estrela",
-    "packages/playground",
-    "packages/vite-plugin-estrela"
+    "packages/**"
   ],
   "scripts": {
     "dev": "cd packages/playground && yarn dev",
     "build:estrela": "cd packages/estrela && yarn build",
+    "build:babel-plugin-estrela": "cd packages/babel-plugin-estrela && yarn build",
+    "build:vite-plugin-estrela": "cd packages/vite-plugin-estrela && yarn build",
+    "postinstall": "yarn build:babel-plugin-estrela && yarn build:vite-plugin-estrela",
     "docs": "cd docs && yarn dev"
   }
 }

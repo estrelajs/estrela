@@ -28,11 +28,11 @@ export function diffChildren(oldList: VirtualNode[], newList: VirtualNode[]) {
 
   // first pass to check item in old list: if it's removed or not
   for (const item of oldList) {
-    if (item.data?.key) {
-      if (!newKeyIndex.hasOwnProperty(item.data?.key)) {
+    if (item.key) {
+      if (!newKeyIndex.hasOwnProperty(item.key)) {
         children.push(null);
       } else {
-        const newItemIndex = newKeyIndex[item.data?.key];
+        const newItemIndex = newKeyIndex[item.key];
         children.push(newList[newItemIndex]);
       }
     } else {
@@ -61,10 +61,10 @@ export function diffChildren(oldList: VirtualNode[], newList: VirtualNode[]) {
   j = i = 0;
   while (i < newList.length) {
     const item = newList[i];
-    const itemKey = item.data?.key;
+    const itemKey = item.key;
 
     const simulateItem = simulateList[j];
-    const simulateItemKey = simulateItem?.data?.key;
+    const simulateItemKey = simulateItem?.key;
 
     if (simulateItem) {
       if (itemKey === simulateItemKey) {
@@ -119,7 +119,7 @@ function makeKeyIndexAndFree(list: VirtualNode[]) {
   const free: VirtualNode[] = [];
   for (let i = 0; i < list.length; i++) {
     const item = list[i];
-    const itemKey = item.data?.key;
+    const itemKey = item.key;
     if (itemKey && !keyIndex.hasOwnProperty(itemKey)) {
       keyIndex[itemKey] = i;
     } else {

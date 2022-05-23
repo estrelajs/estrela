@@ -1,4 +1,4 @@
-import { createState, getState, styled } from 'estrela';
+import { createState, State, styled } from 'estrela';
 import Todo, { TodoRef } from './Todo';
 import { TodoData } from './Todo.model';
 
@@ -14,7 +14,7 @@ function App() {
     id = todos.reduce((max, todo) => Math.max(max, todo.id + 1), 0);
   }
 
-  getState(todos).subscribe(todos => {
+  (todos$ as State<TodoData[]>).subscribe(todos => {
     localStorage.setItem('todos', JSON.stringify(todos));
   });
 
@@ -56,7 +56,7 @@ function App() {
         <div class="add-todo">
           <input
             placeholder="Enter todo"
-            bind={getState(todoText)}
+            bind={todoText$}
             on:keydown={e => e.key === 'Enter' && addTodo()}
           />
           <button on:click={addTodo}>➕</button>
@@ -77,7 +77,7 @@ function App() {
   );
 }
 
-export default styled(App)/* css */ `
+export default styled(App)`
   .header {
     display: flex;
     justify-content: center;

@@ -1,4 +1,4 @@
-import { EventEmitter, getState, Ref, setRef, styled } from 'estrela';
+import { EventEmitter, Ref, setRef, State, styled } from 'estrela';
 import { TodoData } from './Todo.model';
 
 export interface TodoProps {
@@ -15,7 +15,7 @@ export interface TodoRef {
 function Todo({ todo, complete, remove }: TodoProps) {
   let completed = todo.completed;
 
-  getState(completed).subscribe(value => {
+  (completed$ as State<boolean>).subscribe(value => {
     complete.emit(value);
   });
 
@@ -27,7 +27,7 @@ function Todo({ todo, complete, remove }: TodoProps) {
 
   return (
     <div class="todo">
-      <input type="checkbox" bind={getState(completed)} />
+      <input type="checkbox" bind={completed$} />
       <span class:completed={completed}>{todo.text}</span>
       <button on:click={() => remove?.emit(todo)}>🗑️</button>
     </div>

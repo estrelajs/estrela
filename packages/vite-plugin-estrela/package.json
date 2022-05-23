@@ -8,7 +8,7 @@
     "build": "yarn clean && yarn compile && tsc",
     "clean": "rimraf dist",
     "compile": "esbuild $(esbuild-config)",
-    "prepublish": "yarn build"
+    "prepublishOnly": "yarn build"
   },
   "keywords": [],
   "author": "",
