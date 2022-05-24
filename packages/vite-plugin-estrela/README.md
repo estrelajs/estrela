@@ -13,7 +13,7 @@ $ npm install --save-dev @babel/core vite-plugin-estrela
 or using yarn:
 
 ```bash
-$ yarn add @babel/core vite-plugin-estrela --dev
+$ yarn add --dev @babel/core vite-plugin-estrela
 ```
 
 ## Usage

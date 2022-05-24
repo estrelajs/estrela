@@ -365,6 +365,17 @@ autoprefixer@^10.4.7:
     picocolors "^1.0.0"
     postcss-value-parser "^4.2.0"
 
+babel-plugin-estrela@^0.3.1:
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/babel-plugin-estrela/-/babel-plugin-estrela-0.3.1.tgz#02d88af3ef221ebbb8b4794e60726d814a85fae2"
+  integrity sha512-uT7zGp+sXVscUYzOv6X7A2i6miSPteiO71cLAO2OnfLZRoCq/fpm195dCofGNt5zFYL8arUW0IhdbUB53mgAuw==
+  dependencies:
+    "@babel/core" "^7.18.0"
+    autoprefixer "^10.4.7"
+    postcss "^8.4.14"
+    postcss-nested "^5.0.6"
+    postcss-prefix-selector "^1.15.0"
+
 balanced-match@^1.0.0:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/balanced-match/-/balanced-match-1.0.2.tgz#e83e3a7e3f300b34cb9d87f615fa0cbf357690ee"
@@ -1405,6 +1416,14 @@ validate-npm-package-license@^3.0.1:
   dependencies:
     spdx-correct "^3.0.0"
     spdx-expression-parse "^3.0.0"
+
+vite-plugin-estrela@^1.4.4:
+  version "1.4.4"
+  resolved "https://registry.yarnpkg.com/vite-plugin-estrela/-/vite-plugin-estrela-1.4.4.tgz#694454079e0a1052fb1796734b094d43d1afa490"
+  integrity sha512-2UqMS0SN6YD9RwPyW/w2rFKxe4JmlhL0W+tH/D1Jmk/wHD39wAooShuy6bIPVlVBfcgjlljHiDA/QV9lMpQD7A==
+  dependencies:
+    "@babel/core" "^7.18.0"
+    babel-plugin-estrela "^0.3.0"
 
 vite@^2.9.0:
   version "2.9.9"

@@ -54,7 +54,15 @@ export default defineConfig({
         {
           title: 'Docs',
           collapsable: false,
-          children: ['', 'get-started', 'state'],
+          children: [
+            '',
+            'get-started',
+            'state',
+            'syntax',
+            'component',
+            'router',
+            'store',
+          ],
         },
       ],
     },

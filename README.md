@@ -41,6 +41,10 @@ function Count(props: { count: number }) {
 render(<App />, document.getElementById('app')!);
 ```
 
+## Documentation
+
+Check the [documentation](https://estrelajs.github.io/) for more information.
+
 ## Installation
 
 Start a new Estrela project by running the following `degit` command:
