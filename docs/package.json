@@ -9,8 +9,8 @@
   },
   "repository": "https://github.com/estrelajs/estrela/estrela",
   "scripts": {
-    "dev": "vuepress dev src",
-    "build": "vuepress build src",
+    "dev": "vuepress dev .",
+    "build": "vuepress build .",
     "deploy": "./deploy.sh"
   },
   "license": "MIT",

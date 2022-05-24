@@ -1,5 +1,5 @@
 import { defineConfig } from 'vuepress/config';
-import { description } from '../../package.json';
+import { description } from '../package.json';
 
 export default defineConfig({
   /**
@@ -32,6 +32,7 @@ export default defineConfig({
    */
   themeConfig: {
     repo: 'estrelajs/estrela',
+    docsBranch: 'main',
     logo: '/logo.png',
     docsDir: 'docs',
     editLinks: true,
