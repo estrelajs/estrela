@@ -17,6 +17,7 @@ export default defineConfig({
    * ref：https://v1.vuepress.vuejs.org/config/#head
    */
   head: [
+    ['link', { rel: 'icon', href: '/favicon.ico' }],
     ['meta', { name: 'theme-color', content: '#009DFF' }],
     ['meta', { name: 'apple-mobile-web-app-capable', content: 'yes' }],
     [
