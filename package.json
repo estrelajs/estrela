@@ -8,11 +8,12 @@
     "packages/**"
   ],
   "scripts": {
-    "dev": "cd packages/playground && yarn dev",
     "build:estrela": "cd packages/estrela && yarn build",
     "build:babel-plugin-estrela": "cd packages/babel-plugin-estrela && yarn build",
     "build:vite-plugin-estrela": "cd packages/vite-plugin-estrela && yarn build",
-    "postinstall": "yarn build:babel-plugin-estrela && yarn build:vite-plugin-estrela",
-    "docs": "cd docs && yarn dev"
+    "dev": "cd packages/playground && yarn dev",
+    "docs": "cd docs && yarn dev",
+    "docs:deploy": "cd docs && yarn deploy",
+    "postinstall": "yarn build:babel-plugin-estrela && yarn build:vite-plugin-estrela"
   }
 }

@@ -30,10 +30,6 @@ The following example creates a global state and renders a simple template to di
 
 <iframe src="https://stackblitz.com/edit/estrelajs-state?ctl=1&embed=1&file=src/main.tsx&hideExplorer=1&hideNavigation=1&theme=light" style="width:100%;height:500px"></iframe>
 
-::: warning
-The `render` function adds the given template to the parent element. If you call it twice, it won't update the previous one but add the template again.
-:::
-
 ## Selectors
 
 Selectors combine states to create new state. It's useful to create side effects like server data fetching.
@@ -60,4 +56,21 @@ const age = createState(0);
 
 // Will log the value of `name` and `age` when they change or when `log` emits an event.
 createSelector(log, () => console.log(`${name.$} (${age.$})`)).subscribe();
+```
+
+## RxJs
+
+You can convert Estrela states into Rxjs observables by calling `from` and passing the state as parameter.
+
+```js
+import { createState } from 'estrela';
+import { from } from 'rxjs';
+import { filter } from 'rxjs/operators';
+
+const count = createState(0);
+
+// will only log even numbers.
+from(count)
+  .pipe(filter(value => value % 2 === 0))
+  .subscribe(value => console.log(value));
 ```

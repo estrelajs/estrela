@@ -39,7 +39,7 @@ export default defineConfig({
     editLinks: true,
     editLinkText: 'Help us improve documentation!',
     lastUpdated: true,
-    smoothScroll: true,
+    smoothScroll: false,
     searchPlaceholder: 'Search...',
     nav: [
       {
@@ -62,8 +62,8 @@ export default defineConfig({
             'state',
             'syntax',
             'component',
-            'router',
             'store',
+            'router',
           ],
         },
       ],

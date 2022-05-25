@@ -2,7 +2,7 @@
   "name": "babel-plugin-estrela",
   "description": "A babel plugin to process estrela jsx/tsx files",
   "author": "Eduardo Rosostolato",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
