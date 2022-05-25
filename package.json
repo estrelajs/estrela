@@ -13,7 +13,10 @@
     "build:vite-plugin-estrela": "cd packages/vite-plugin-estrela && yarn build",
     "dev": "cd packages/playground && yarn dev",
     "docs": "cd docs && yarn dev",
-    "docs:deploy": "cd docs && yarn deploy",
-    "postinstall": "yarn build:babel-plugin-estrela && yarn build:vite-plugin-estrela"
+    "postinstall": "yarn build:babel-plugin-estrela && yarn build:vite-plugin-estrela",
+    "publish:docs": "cd docs && yarn deploy",
+    "publish:estrela": "cd packages/estrela && yarn publish",
+    "publish:babel-plugin-estrela": "cd packages/babel-plugin-estrela && yarn publish",
+    "publish:vite-plugin-estrela": "cd packages/vite-plugin-estrela && yarn publish"
   }
 }

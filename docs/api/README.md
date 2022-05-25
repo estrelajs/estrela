@@ -2,7 +2,7 @@
 sidebar: auto
 ---
 
-# Config
+# API
 
 ## foo
 

@@ -1,6 +1,6 @@
 # Component
 
-Components are the building blocks of the application and are the main way to build a web application. In Estrela, components are defined by a function that returns a template.
+Components are the building blocks and the main way to build a web application. In Estrela, components are defined by a function that returns a template.
 
 ```jsx
 function App() {

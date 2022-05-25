@@ -4,7 +4,7 @@ States are the main concept of Estrela. Every part of the DOM tree that changes 
 
 ## Create State
 
-You can create a new state by calling the `createState` and optionally pass an initial value as parameter. The `$` property will return the current value of the state, `next` and `update` will update the state and `subscribe` will observe the state and emit on change.
+You can create a new state by calling `createState()` and optionally pass an initial value as parameter. The `$` property will return the current value of the state, `next()` and `update()` will update the state, and `subscribe()` will notify when state changes.
 
 ```js
 import { createState } from 'estrela';
@@ -23,7 +23,7 @@ const subscription = count.subscribe(value => {
 ```
 
 ::: tip
-Calling `subscribe` will return a new `Subscription` object. To prevent memory leak, It's highly recommended to run `Subscription.unsubscribe()` to clear the observers when the state is no longer needed.
+Calling `subscribe()` will return a new `Subscription` object. To prevent memory leak, It's highly recommended to run `Subscription.unsubscribe()` to clear the observers when the state is no longer needed.
 :::
 
 The following example creates a global state and renders a simple template to display its value. Note that we are updating the value from within `setInterval` and there's no need to call `render` again, Estrela automatically updates the DOM when `count` emits a new value.
