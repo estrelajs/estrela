@@ -5,16 +5,22 @@ import { Routes } from './route';
 import { routeUrl } from './router.store';
 
 export interface RouterProps {
+  base?: string;
   routes: Routes;
 }
 
 export const Router: Component<RouterProps> = props => {
-  function getRoute(url: string, routes: Routes): JSX.Element | null {
-    const [path, query] = url.split('?');
-
-    if (typeof routes !== 'object') {
+  function getRoute(
+    routes: Routes,
+    url: string,
+    base = '/'
+  ): JSX.Element | null {
+    const baseRegex = new RegExp(`^${base}`);
+    if (!routes || typeof routes !== 'object' || !baseRegex.test(url)) {
       return null;
     }
+
+    const [path, query] = url.replace(new RegExp(`^${base}`), '/').split('?');
 
     for (const [key, route] of Object.entries(routes)) {
       const keys: string[] = [];
@@ -48,6 +54,6 @@ export const Router: Component<RouterProps> = props => {
   }
 
   return h(null, {
-    children: createSelector(routeUrl, props.$.routes, getRoute),
+    children: createSelector(props.$.routes, routeUrl, props.$.base, getRoute),
   });
 };

@@ -4,13 +4,14 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "./deploy.sh"
   },
   "devDependencies": {
     "typescript": "^4.5.4",
     "vite": "^2.9.0",
-    "vite-plugin-estrela": "^1.4.4"
+    "vite-plugin-estrela": "^0.3.1"
   },
   "dependencies": {
     "rxjs": "^7.5.5"

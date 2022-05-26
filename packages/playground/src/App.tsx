@@ -30,7 +30,7 @@ function Menu() {
 }
 
 function App() {
-  return <Router routes={routes} />;
+  return <Router base="/estrela/" routes={routes} />;
 }
 
 export default App;

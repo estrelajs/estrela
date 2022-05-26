@@ -1,7 +1,7 @@
 import { createState, State } from './observables';
 
 export type ProxyState<T extends Object> = T & {
-  $: { [K in keyof T]: State<T[K]> };
+  $: { [K in keyof T]-?: State<T[K]> };
 };
 
 type ProxyTarget<T> = Record<keyof T, State<any>>;
