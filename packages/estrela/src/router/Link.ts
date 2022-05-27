@@ -9,11 +9,11 @@ export interface LinkProps {
 export const Link: Component<LinkProps> = props => {
   function click(e: MouseEvent) {
     e.preventDefault();
-    navigateTo(props.to);
+    navigateTo(props.to.replace(/^\//, ''));
   }
   return h('a', {
     children: h('slot', {}),
-    href: () => props.to,
+    href: () => props.to.replace(/^\//, ''),
     'on:click': click,
   });
 };

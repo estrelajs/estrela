@@ -1,6 +1,6 @@
 import { h } from '../internal';
 import { createSelector } from '../observables';
-import { Component } from '../types/jsx';
+import { Props } from '../types/jsx';
 import { Routes } from './route';
 import { routeUrl } from './router.store';
 
@@ -9,19 +9,18 @@ export interface RouterProps {
   routes: Routes;
 }
 
-export const Router: Component<RouterProps> = props => {
-  function getRoute(
+export function Router(props: Props<RouterProps>) {
+  const getRoute = (
     routes: Routes,
     url: string,
     base = '/'
-  ): JSX.Element | null {
+  ): JSX.Element | null => {
     const baseRegex = new RegExp(`^${base}`);
     if (!routes || typeof routes !== 'object' || !baseRegex.test(url)) {
       return null;
     }
 
     const [path, query] = url.replace(new RegExp(`^${base}`), '/').split('?');
-
     for (const [key, route] of Object.entries(routes)) {
       const keys: string[] = [];
       const paths = key.split('/').map(path => {
@@ -33,9 +32,9 @@ export const Router: Component<RouterProps> = props => {
         }
         return path;
       });
+
       const regex = new RegExp(`^${paths.join('/')}$`);
       const match = regex.exec(path);
-
       if (match !== null) {
         const params = match.slice(1).reduce((params, value, index) => {
           if (keys[index]) {
@@ -43,6 +42,7 @@ export const Router: Component<RouterProps> = props => {
           }
           return params;
         }, {} as Record<string, string>);
+
         const queryParams = query
           ? new URLSearchParams(query)
           : new URLSearchParams();
@@ -51,9 +51,9 @@ export const Router: Component<RouterProps> = props => {
     }
 
     return null;
-  }
+  };
 
   return h(null, {
     children: createSelector(props.$.routes, routeUrl, props.$.base, getRoute),
   });
-};
+}
