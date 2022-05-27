@@ -135,6 +135,48 @@ function ShowCount({ count, reset }) {
 }
 ```
 
+## Context
+
+As you already know, you can share data with global states. However, if you want to restrict the data to a specific component tree, you can use the `Context` API.
+
+```jsx
+import { getContext, setContext } from 'estrela';
+
+function MyContent({ theme }) {
+  // use "theme$" to provide the prop state reference
+  // instead of just the current value.
+  setContext('theme', theme$);
+  return (
+    <div>
+      ...
+      <Button />
+    </div>
+  );
+}
+
+function Button({ click }) {
+  // get "theme" state reference.
+  const theme = getContext('theme');
+  return (
+    <button
+      on:click={click}
+      style:background={() => (theme.$ === 'dark' ? '#333' : '#fff')}
+    >
+      Click me!
+    </button>
+  );
+}
+
+function App() {
+  return (
+    <>
+      <MyContent theme="dark" />
+      <MyContent theme="light" />
+    </>
+  );
+}
+```
+
 ## Children
 
 Children are content that comes from outside of components. You can render children content from the `children` property or use the `<slot />` element.
@@ -147,7 +189,11 @@ function Button({ children }) {
 
 // Using the slot element
 function Button() {
-  return <button><slot /></button>;
+  return (
+    <button>
+      <slot />
+    </button>
+  );
 }
 ```
 
