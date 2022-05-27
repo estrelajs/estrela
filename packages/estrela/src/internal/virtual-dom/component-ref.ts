@@ -9,10 +9,11 @@ import {
   State,
   Subscription,
 } from '../../observables';
+import { ProxyState } from '../../proxy-state';
+import { Key } from '../../types/data';
 import { Component } from '../../types/jsx';
 import { coerceArray } from '../../utils';
 import { h } from '../h';
-import { ProxyState } from '../../proxy-state';
 import { VirtualNode } from './virtual-node';
 
 type ProxyTarget = Record<
@@ -22,20 +23,20 @@ type ProxyTarget = Record<
 
 export class ComponentRef {
   private readonly cleanup = createSubscription();
-  private readonly hooks: Record<string, () => void> = {};
+  private readonly hooks: Record<string, Array<() => void>> = {};
   private readonly props = this.createProps();
   private readonly propsCleanup = new Map<string, Subscription>();
   private readonly states: State<any>[] = [];
   private template: VirtualNode | null = null;
 
-  constructor(private node: VirtualNode) {}
+  constructor(public node: VirtualNode) {}
 
   dispose(): void {
     if (this.template) {
       this.node.children = [this.template];
     }
 
-    this.hooks['destroy']?.();
+    this.hooks['destroy']?.forEach(hook => hook());
     this.states.forEach(state => state.complete());
     Object.values(this.props.$).forEach(state => (state as any).complete());
     this.propsCleanup.forEach(subscription => subscription.unsubscribe());
@@ -51,7 +52,7 @@ export class ComponentRef {
     this.template = this.buildTemplate(template);
     ComponentRef.currentRef = null;
 
-    return this.template.createElement();
+    return this.template.createElement(this.node.context);
   }
 
   getChildrenElements(): Node[] {
@@ -69,7 +70,6 @@ export class ComponentRef {
     this.node = node;
     const props = node.data?.props ?? {};
     const oldProps = oldNode.data?.props ?? {};
-
     if (oldProps === props) {
       return;
     }
@@ -102,7 +102,9 @@ export class ComponentRef {
   }
 
   pushHook(key: string, hook: () => void): void {
-    this.hooks[key] = hook;
+    const hooks = this.hooks[key] ?? [];
+    hooks.push(hook);
+    this.hooks[key] = hooks;
   }
 
   pushState(state: State<any>): void {
@@ -116,6 +118,46 @@ export class ComponentRef {
     } else if (nodeRef) {
       nodeRef(ref);
     }
+  }
+
+  private buildTemplate(template: VirtualNode): VirtualNode {
+    const visitor = (node: VirtualNode): VirtualNode => {
+      if (node.kind === 'slot') {
+        const fragment = h();
+        const originalChildren = node.children;
+
+        fragment.observable = createSelector(() => {
+          const slot = node.data?.attrs?.name as string | undefined;
+          const select = node.data?.attrs?.select as string | undefined;
+          let content: VirtualNode[] = coerceArray(this.props.children);
+          if (select) {
+            content = content.filter(child => child.kind === select);
+          } else if (slot) {
+            content = content.filter(child => child.data?.slot === slot);
+          }
+          if (content.length === 0) {
+            return originalChildren;
+          }
+          return content;
+        });
+
+        return fragment;
+      }
+
+      const styledComponent = this.node.kind as any;
+      if (typeof styledComponent.styleId === 'string') {
+        node.data ??= {};
+        node.data.attrs ??= {};
+        node.data.attrs[`_${styledComponent.styleId}`] = '';
+      }
+
+      if (node.children) {
+        node.children = node.children.map(visitor);
+      }
+
+      return node;
+    };
+    return visitor(template);
   }
 
   private createProps(): ProxyState<any> {
@@ -155,44 +197,6 @@ export class ComponentRef {
         return true;
       },
     }) as any;
-  }
-
-  private buildTemplate(template: VirtualNode): VirtualNode {
-    const visitor = (node: VirtualNode): VirtualNode => {
-      if (node.kind === 'slot') {
-        const fragment = h();
-        const originalChildren = node.children;
-        fragment.observable = createSelector(() => {
-          const slot = node.data?.attrs?.name as string | undefined;
-          const select = node.data?.attrs?.select as string | undefined;
-          let content: VirtualNode[] = coerceArray(this.props.children);
-
-          if (select) {
-            content = content.filter(child => child.kind === select);
-          } else if (slot) {
-            content = content.filter(child => child.data?.slot === slot);
-          }
-
-          if (content.length === 0) {
-            return originalChildren;
-          }
-
-          return content;
-        });
-        return fragment;
-      }
-      const styledComponent = this.node.kind as any;
-      if (styledComponent.styleId) {
-        node.data ??= {};
-        node.data.attrs ??= {};
-        node.data.attrs[`_${styledComponent.styleId}`] = '';
-      }
-      if (node.children) {
-        node.children = node.children.map(visitor);
-      }
-      return node;
-    };
-    return visitor(template);
   }
 
   static currentRef: ComponentRef | null = null;

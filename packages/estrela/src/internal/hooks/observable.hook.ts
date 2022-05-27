@@ -70,7 +70,7 @@ function hook(oldNode: VirtualNode, node?: VirtualNode): void {
 
 function setEmptyText(node: VirtualNode): void {
   const text = h('#');
-  const element = text.createElement();
+  const element = text.createElement({});
   node.element?.appendChild(element);
   node.children = [text];
 }

@@ -17,6 +17,7 @@ export class VirtualNode {
   children?: VirtualNode[];
   componentRef?: ComponentRef;
   content?: any;
+  context: Record<Key, any> = {};
   element?: Node;
   listener?: (e: Event) => void;
   observable?: Promise<any> | Subscribable<any>;
@@ -48,7 +49,8 @@ export class VirtualNode {
     return node;
   }
 
-  createElement(): Node {
+  createElement(context: Record<Key, any>): Node {
+    this.context = context;
     let element: Node;
 
     if (this.element) {
@@ -71,7 +73,7 @@ export class VirtualNode {
       element.appendChild(this.componentRef.createElement());
     } else {
       this.children?.forEach(child => {
-        element.appendChild(child.createElement());
+        element.appendChild(child.createElement(this.context));
       });
     }
 
@@ -127,7 +129,7 @@ export class VirtualNode {
       });
       return;
     }
-    const child = this.element ?? this.createElement();
+    const child = this.element ?? this.createElement(this.context);
     parent.insertBefore(child, parent.childNodes[index]);
   }
 
@@ -149,7 +151,7 @@ export class VirtualNode {
   replaceElement(other: VirtualNode): void {
     this.emitRemove();
     const meta = this.getMetadata();
-    const element = other?.element ?? other.createElement();
+    const element = other?.element ?? other.createElement(this.context);
 
     if (meta.parent) {
       if (meta.isFragment) {
