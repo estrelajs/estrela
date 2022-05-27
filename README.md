@@ -3,7 +3,7 @@
 <p align="center">
   <img src="images/logo.png" alt="estrela-logo" width="120px" height="120px"/>
   <br>
-  <p align="center">Estrela is a Javascript library to develop reactive web apps.</p>
+  <p align="center">Estrela is a Javascript framework to develop reactive web apps.</p>
 </p>
 
 <p align="center">
@@ -41,10 +41,6 @@ function Count(props: { count: number }) {
 render(<App />, document.getElementById('app')!);
 ```
 
-## Documentation
-
-Check the [documentation](https://estrelajs.github.io/) for more information.
-
 ## Installation
 
 Start a new Estrela project by running the following `degit` command:
@@ -61,6 +57,14 @@ $ yarn dev
 $ npm i
 $ npm run dev
 ```
+
+## Documentation
+
+Check the [documentation](https://estrelajs.github.io/) for more information.
+
+## Examples
+
+See it in action on this [Todo App](https://estrelajs.github.io/estrela/todo) example. You can find source code for this example [here](https://github.com/estrelajs/estrela/tree/main/packages/playground/src/todo).
 
 ## Contributing
 
