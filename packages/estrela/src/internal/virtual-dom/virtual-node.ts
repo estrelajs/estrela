@@ -19,7 +19,6 @@ export class VirtualNode {
   content?: any;
   context: Record<Key, any> = {};
   element?: Node;
-  listener?: (e: Event) => void;
   observable?: Promise<any> | Subscribable<any>;
 
   constructor(data?: PropertiesOf<VirtualNode>) {

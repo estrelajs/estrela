@@ -4,11 +4,14 @@ import {
   isState,
   State,
 } from '../../observables';
+import { Events } from '../../types/data';
 import { toCamelCase } from '../../utils';
 import { VirtualNode } from '../virtual-dom/virtual-node';
 import { Hook } from './Hook';
 
 type EventFilter = (event: Event, element: HTMLElement) => boolean;
+
+const EVENT_MAP = new WeakMap<Node, Events>();
 
 const EVENT_FILTERS: Record<string, EventFilter> = {
   alt(event) {
@@ -48,46 +51,43 @@ export const eventsHook: Hook = {
 
 function hook(oldNode: VirtualNode, node?: VirtualNode): void {
   const oldEvents = oldNode.data?.events;
-  const oldListener = oldNode.listener;
   const oldelement = oldNode.element as Element | undefined;
   const events = node?.data?.events;
   const element = node?.element as Element | undefined;
   let name: string;
 
   // remove existing listeners which no longer used
-  if (oldelement && oldEvents && oldListener) {
+  if (oldelement && oldEvents) {
     for (name in oldEvents) {
       // remove listener if existing listener removed
       if (!events?.[name]) {
-        oldelement.removeEventListener(name, oldListener);
+        oldelement.removeEventListener(name, eventListener, false);
       }
     }
   }
 
   // add new listeners which has not already attached
   if (node && element && events) {
-    // reuse existing listener or create new
-    const listener = (node.listener = oldNode.listener || createListener(node));
+    EVENT_MAP.set(element, events);
 
     // if element changed or added we add all needed listeners unconditionally
     for (name in events) {
       // add listener if new listener added
       if (!oldEvents?.[name]) {
-        const event = events[name];
-        element.addEventListener(name, listener, {
-          capture: event.filters.includes('capture'),
-          once: event.filters.includes('once'),
-          passive: event.filters.includes('passive'),
-        });
+        element.addEventListener(name, eventListener, false);
       }
     }
   }
 }
 
-function createListener(node: VirtualNode) {
-  return function handler(event: Event) {
-    handleEvent(event, node);
-  };
+function eventListener(event: Event) {
+  const events = EVENT_MAP.get(event.target as Element);
+  if (events) {
+    const handler = events?.[event.type]?.handler;
+    if (handler) {
+      invokeHandler(handler, event);
+    }
+  }
 }
 
 function invokeHandler(
