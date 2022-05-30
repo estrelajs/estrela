@@ -4,7 +4,7 @@ import estrela from 'vite-plugin-estrela';
 
 export default defineConfig({
   base: '/estrela/',
-  plugins: [estrela()],
+  plugins: [estrela({ autoDeclareStates: false })],
   resolve: {
     alias: [
       {

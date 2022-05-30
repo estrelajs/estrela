@@ -1,6 +1,9 @@
-import { createState, render } from 'estrela';
+import { createState, EventEmitter, render } from 'estrela';
 
-const random = max => Math.round(Math.random() * 1000) % max;
+interface RowData {
+  id: number;
+  label: string;
+}
 
 const A = [
   'pretty',
@@ -60,8 +63,10 @@ const N = [
 
 let nextId = 1;
 
-const buildData = count => {
-  const data = new Array(count);
+const random = (max: number) => Math.round(Math.random() * 1000) % max;
+
+const buildData = (count: number) => {
+  const data: RowData[] = new Array(count);
 
   for (let i = 0; i < count; i++) {
     data[i] = {
@@ -75,7 +80,7 @@ const buildData = count => {
   return data;
 };
 
-const data = createState([]);
+const data = createState<RowData[]>([]);
 const selected = createState(0);
 
 const actions = {
@@ -97,7 +102,7 @@ const actions = {
         const r = newData[i];
         newData[i] = { id: r.id, label: r.label + ' !!!' };
       }
-      return { data: newData, selected };
+      return newData;
     }),
   clear: () => {
     data.next([]);
@@ -114,20 +119,20 @@ const actions = {
       ]);
     }
   },
-  remove: id => {
+  remove: (id: number) => {
     data.update(items => {
       const idx = items.findIndex(d => d.id === id);
       return [...items.slice(0, idx), ...items.slice(idx + 1)];
     });
   },
-  select: id => {
+  select: (id: number) => {
     selected.next(id);
   },
 };
 
-const Row = props => {
+const Row = (props: { item: RowData }) => {
   return (
-    <tr class:danger={() => props.item.id === selected.$}>
+    <tr class:danger={() => selected.$ === props.item.id}>
       <td class="col-md-1">{() => props.item.id}</td>
       <td class="col-md-4">
         <a on:click={() => actions.select(props.item.id)}>
@@ -144,13 +149,17 @@ const Row = props => {
   );
 };
 
-const Button = props => (
+const Button = (props: {
+  id: string;
+  title: string;
+  click: EventEmitter<void>;
+}) => (
   <div class="col-sm-6 smallpad">
     <button
       type="button"
       class="btn btn-primary btn-block"
       id={() => props.id}
-      on:click={() => props.tap.emit()}
+      on:click={() => props.click.emit()}
     >
       {() => props.title}
     </button>
@@ -168,28 +177,28 @@ const Jumbotron = () => (
           <Button
             id="run"
             title="Create 1,000 rows"
-            on:tap={() => actions.run()}
+            on:click={() => actions.run()}
           />
           <Button
             id="runlots"
             title="Create 10,000 rows"
-            on:tap={() => actions.runLots()}
+            on:click={() => actions.runLots()}
           />
           <Button
             id="add"
             title="Append 1,000 rows"
-            on:tap={() => actions.add()}
+            on:click={() => actions.add()}
           />
           <Button
             id="update"
             title="Update every 10th row"
-            on:tap={() => actions.update()}
+            on:click={() => actions.update()}
           />
-          <Button id="clear" title="Clear" on:tap={() => actions.clear()} />
+          <Button id="clear" title="Clear" on:click={() => actions.clear()} />
           <Button
             id="swaprows"
             title="Swap Rows"
-            on:tap={() => actions.swapRows()}
+            on:click={() => actions.swapRows()}
           />
         </div>
       </div>
@@ -211,4 +220,4 @@ const Main = () => {
   );
 };
 
-render(<Main />, document.getElementById('main'));
+render(<Main />, document.getElementById('main')!);

@@ -1,4 +1,5 @@
 import { createObservable, isObservable, Observable } from './observable';
+import { createSelector } from './selector';
 import { Observer, Subscribable } from './types';
 
 const noop = () => {};
@@ -49,4 +50,16 @@ export function isPromise<T>(x: any): x is Promise<T> {
 
 export function isSubscribable<T>(x: any): x is Subscribable<T> {
   return x && typeof x.subscribe === 'function';
+}
+
+export function tryParseObservable<T>(
+  promise: (() => T) | PromiseLike<T> | Subscribable<T>
+): Observable<T> {
+  if (typeof promise === 'function') {
+    return createSelector(promise);
+  }
+  if (isPromise(promise) || isObservable(promise)) {
+    return coerceObservable(promise);
+  }
+  throw new Error('Invalid observable');
 }

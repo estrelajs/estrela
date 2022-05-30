@@ -1,4 +1,3 @@
-import { ComponentRef } from '../internal';
 import { createSubscriber } from './subscriber';
 import { createSubscription } from './subscription';
 import { symbol_observable } from './symbol';
@@ -72,7 +71,7 @@ export function createState(initialValue?: any): State<any> {
     type: 'state',
   };
 
-  ComponentRef.currentRef?.pushState(state);
+  // ComponentRef.currentRef?.pushState(state);
   return state;
 }
 

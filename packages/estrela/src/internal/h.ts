@@ -1,115 +1,125 @@
-import { createSelector, isPromise, isSubscribable } from '../observables';
-import { Key } from '../types/data';
-import { Component } from '../types/jsx';
-import { coerceArray, isTruthy } from '../utils';
-import { domApi } from './domapi';
-import { buildData } from './virtual-dom/data-builder';
-import { VirtualNode } from './virtual-dom/virtual-node';
+import { Observable, tryParseObservable } from '../observables';
+import { Component } from '../types/types';
+import { coerceArray } from '../utils';
+import { ComponentNode } from './component-node';
+import { nodeHooks } from './hooks';
+import { nodeApi } from './node-api';
+import { PROPS_SYMBOL } from './symbols';
 
-interface Data {
+interface JsxProps {
   [key: string]: any;
-  children?: JSX.Children;
+  children?: any;
 }
 
-export function h(): VirtualNode;
-export function h(kind: Node): VirtualNode;
-export function h(kind: '#' | '!', content?: string): VirtualNode;
 export function h(
-  kind: string | Component | null,
-  data: Data,
-  key?: Key
-): VirtualNode;
-export function h(
-  kind: string | Component | Node | null = null,
-  data: string | Data = {},
-  key?: Key
-): VirtualNode {
-  if (kind === '#') {
-    kind = '#text';
-  }
-  if (kind === '!') {
-    kind = '#comment';
-  }
-  if (kind === '#text' || kind === '!#comment') {
-    const content = typeof data === 'object' ? null : data;
-    return new VirtualNode({ kind, content });
-  }
-  if (kind instanceof Node) {
-    return node2vnode(kind);
-  }
+  kind: string | Component,
+  props: JsxProps = {},
+  key?: string
+): JSX.Element {
   if (typeof kind === 'function') {
-    return new VirtualNode({
-      key,
-      kind,
-      children: [],
-      data: buildData(data as Data, true),
-    });
+    return new ComponentNode(kind, props);
+  }
+  if (kind === '#' || kind === '#text') {
+    return document.createTextNode(String(props.children ?? ''));
+  }
+  if (kind === '!' || kind === '#comment') {
+    return document.createComment(String(props.children ?? ''));
   }
 
-  data = data as Data;
-  const children = coerceArray(data.children ?? []).flatMap(child =>
-    coerceArray(child)
-      .filter(isTruthy)
-      .flatMap(c => {
-        if (typeof c === 'function') {
-          c = createSelector(c);
-        }
-        if (c instanceof Node) {
-          return node2vnode(c);
-        }
-        if (c instanceof VirtualNode) {
-          const node = c.clone();
-          if (!node.kind && !node.observable) {
-            return node.children ?? [];
-          }
-          return node;
-        }
-        if (isPromise(c) || isSubscribable(c)) {
-          return new VirtualNode({ observable: c });
-        }
-        return h('#', String(c));
-      })
-  );
+  const node = document.createElement(kind);
+  Reflect.defineMetadata(PROPS_SYMBOL, props, node);
+  nodeHooks.forEach(hook => hook.create?.(node));
 
-  if (kind) {
-    return new VirtualNode({
-      key,
-      kind: kind,
-      data: buildData(data as Data),
-      children,
+  coerceArray(props.children ?? []).forEach(child => {
+    try {
+      const observable = tryParseObservable(child);
+      child = createObservableNode(node, observable);
+    } catch {}
+    coerceArray(child).forEach(child => {
+      nodeApi.appendChild(node, coerceChild(child));
     });
-  }
-
-  return new VirtualNode({
-    children: children.length === 0 ? [h('#')] : children,
   });
+
+  return node;
 }
 
-function node2vnode(node: Node): VirtualNode {
-  if (domApi.isText(node)) {
-    return new VirtualNode({
-      kind: '#text',
-      content: node.textContent,
-      element: node,
-    });
+function coerceChild(child: any): JSX.Element {
+  return child instanceof Node || child instanceof ComponentNode
+    ? child
+    : h('#', { children: child });
+}
+
+function createObservableNode(
+  parent: Node,
+  obj: Observable<any>
+): JSX.Element[] {
+  let nodes: JSX.Element[] = [];
+  const subscription = obj.subscribe(
+    value => {
+      const nextNodes = coerceArray(value).flat().map(coerceChild);
+      if (nextNodes.length === 0) {
+        nextNodes.push(h('#'));
+      }
+      if (nodes.length === 0) {
+        nodes = nextNodes;
+      } else {
+        nodes = patchChildren(parent, nodes, nextNodes);
+      }
+    },
+    { initialEmit: true }
+  );
+  if (nodes.length === 0) {
+    nodes = [h('#')];
   }
-  if (domApi.isComment(node)) {
-    return new VirtualNode({
-      kind: '#comment',
-      content: node.textContent,
-      element: node,
-    });
+  return nodes;
+}
+
+function patchChildren(
+  parent: Node,
+  children: JSX.Element[],
+  nextChildren: JSX.Element[]
+): JSX.Element[] {
+  const result: JSX.Element[] = [];
+  const currentLength = children.length;
+  const nextLength = nextChildren.length;
+
+  for (let i = 0; i < nextLength; i++) {
+    if (i < currentLength) {
+      const node = patchNode(parent, children[i], nextChildren[i]);
+      result.push(node);
+    } else {
+      nodeApi.insertAfter(parent, nextChildren[i], result.at(-1) ?? null);
+      result.push(nextChildren[i]);
+    }
   }
-  const children = Array.from(node.childNodes ?? []).map(node2vnode);
-  if (domApi.isDocumentFragment(node)) {
-    return new VirtualNode({
-      children,
-      element: node,
-    });
+  for (let i = currentLength - 1; i >= nextLength; i--) {
+    nodeApi.removeChild(parent, children[i]);
   }
-  return new VirtualNode({
-    kind: node.nodeName.toLowerCase(),
-    children,
-    element: node,
-  });
+  return result;
+}
+
+function patchNode(
+  parent: Node,
+  node: JSX.Element,
+  nextNode: JSX.Element
+): JSX.Element {
+  if (nodeApi.isSame(node, nextNode)) {
+    if (node instanceof ComponentNode) {
+      node.patch((nextNode as ComponentNode).data);
+      return node;
+    }
+    nextNode = nextNode as Node;
+    if (nodeApi.isTextElement(node)) {
+      if (node.textContent !== nextNode.textContent) {
+        node.textContent = nextNode.textContent;
+      }
+    } else {
+      const children = Array.from(node.childNodes);
+      const nextChildren = Array.from(nextNode.childNodes);
+      patchChildren(parent, children, nextChildren);
+    }
+    return node;
+  }
+  nodeApi.replaceChild(parent, nextNode, node);
+  return nextNode;
 }

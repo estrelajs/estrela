@@ -1,7 +1,8 @@
-import { ComponentRef } from './internal';
 import { State, isState, createState } from './observables';
 import { ProxyState } from './proxy-state';
-import { Key } from './types/data';
+import { Key } from './types/types';
+
+const ComponentRef = null as any;
 
 /** Call the callback function when component is destroyed. */
 export function onDestroy(callback: () => void): void {

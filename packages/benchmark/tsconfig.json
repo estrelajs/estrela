@@ -6,7 +6,6 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "useDefineForClassFields": true,
-    "allowJs": true,
     "paths": {
       "estrela": [
         "../estrela/src/index.ts"

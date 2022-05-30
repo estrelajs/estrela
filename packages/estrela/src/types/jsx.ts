@@ -1,6 +1,7 @@
-import { VirtualNode } from '../internal';
+import { ComponentNode } from '../internal';
 import { EventEmitter, State, Subscribable } from '../observables';
 import { ProxyState } from '../proxy-state';
+import { Component, EventHandler, HTMLEventHandler } from './types';
 
 /**
  * Based on JSX types for Surplus, Inferno and dom-expressions, adapted for Estrela.
@@ -9,12 +10,6 @@ import { ProxyState } from '../proxy-state';
  * https://github.com/infernojs/inferno/blob/master/packages/inferno/src/core/types.ts
  * https://github.com/ryansolid/dom-expressions/blob/main/packages/dom-expressions/src/jsx.d.ts
  */
-
-export interface Component<P = {}, C = JSX.Children> {
-  (
-    props: P extends { children: any } ? Props<P> : Props<P> & { children?: C }
-  ): JSX.Element | null;
-}
 
 export type Props<T extends Object> = ProxyState<T>;
 
@@ -32,29 +27,19 @@ type EmittersOf<P> = {
   [K in keyof P]: P[K] extends EventEmitter<any> | undefined ? K : never;
 }[keyof P];
 
-export type EventHandler<T> = ((value: T) => void) | EventEmitter<T> | State<T>;
-
-export type HTMLEventHandler<T, E extends Event> = EventHandler<
-  E & { target: T }
->;
-
-export type Ref<T> = ((data: T | undefined) => void) | State<T | undefined>;
-
 declare global {
   namespace JSX {
-    type Element = VirtualNode;
+    type Element = Node | ComponentNode;
     type Child =
-      | Node
-      | Element
-      | Array<Children>
-      | Subscribable<any>
-      | Promise<any>
       | string
       | number
       | boolean
-      | null
-      | undefined;
+      | Element
+      | Selector
+      | Subscribable<any>
+      | Promise<any>;
     type Children = Child | Array<Child>;
+    type Selector = () => Children;
     type LibraryManagedAttributes<C, P> = PropsOf<P>;
     interface ElementChildrenAttribute {
       children: any;

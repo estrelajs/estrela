@@ -1,4 +1,8 @@
-export function render(node: JSX.Element, parent: Element): void {
-  const element = node.createElement({});
-  parent.appendChild(element);
+import { nodeApi } from './internal';
+
+export function render(template: JSX.Element, parent: Element): void {
+  if (!parent) {
+    throw new Error('Parent element is not defined');
+  }
+  nodeApi.appendChild(parent, template);
 }
