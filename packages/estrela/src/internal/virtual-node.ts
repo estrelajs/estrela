@@ -8,7 +8,7 @@ import {
   tryParseObservable,
 } from '../observables';
 import { ProxyState } from '../proxy-state';
-import { coerceArray } from '../utils';
+import { coerceArray, isFalsy } from '../utils';
 import { insert, mapNodeTree, patchChildren } from './node-api';
 
 export type NodeInsertion = [any, number | null];
@@ -167,10 +167,9 @@ export class VirtualNode {
         { initialEmit: true }
       );
     } catch {
-      if (data === null || data === undefined) {
+      if (isFalsy(data)) {
         element.removeAttribute(key);
-      }
-      if (data === true) {
+      } else if (data === true) {
         element.setAttribute(key, '');
       } else {
         element.setAttribute(key, data);
