@@ -44,6 +44,10 @@ export function coerceObservable<T>(
   });
 }
 
+export function isNextable<T>(x: any): x is { next: (value: T) => void } {
+  return x && typeof x.next === 'function';
+}
+
 export function isPromise<T>(x: any): x is Promise<T> {
   return x && typeof x.then === 'function';
 }

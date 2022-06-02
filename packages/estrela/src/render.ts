@@ -1,8 +1,8 @@
-import { nodeApi } from './internal';
+import { VirtualNode } from './internal';
 
-export function render(template: JSX.Element, parent: Element): void {
+export function render(template: VirtualNode, parent: Element): void {
   if (!parent) {
     throw new Error('Parent element is not defined');
   }
-  nodeApi.appendChild(parent, template);
+  template.mount(parent);
 }

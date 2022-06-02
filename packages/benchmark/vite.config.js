@@ -3,7 +3,7 @@ import { defineConfig } from 'vite';
 import estrela from 'vite-plugin-estrela';
 
 export default defineConfig({
-  plugins: [estrela({ autoDeclareStates: false })],
+  // plugins: [estrela({ autoDeclareStates: false })],
   resolve: {
     alias: [
       {

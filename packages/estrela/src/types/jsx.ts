@@ -1,7 +1,7 @@
-import { ComponentNode } from '../internal';
 import { EventEmitter, State, Subscribable } from '../observables';
 import { ProxyState } from '../proxy-state';
 import { Component, EventHandler, HTMLEventHandler } from './types';
+import { VirtualNode } from '../internal/virtual-node';
 
 /**
  * Based on JSX types for Surplus, Inferno and dom-expressions, adapted for Estrela.
@@ -29,7 +29,7 @@ type EmittersOf<P> = {
 
 declare global {
   namespace JSX {
-    type Element = Node | ComponentNode;
+    type Element = VirtualNode;
     type Child =
       | string
       | number

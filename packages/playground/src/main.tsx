@@ -1,64 +1,39 @@
-import { createObservable, createState, render } from 'estrela';
+import { createState, render } from 'estrela';
+import { h, template } from 'estrela/internal';
 
-const timer = createObservable<JSX.Element>(subscriber => {
-  let count = 0;
+const _tmpl = template(
+    '<div><h1>Hello World!</h1><div><button id="add">Add</button><button id="addlot">Add 10,000</button><button id="remove">Remove</button></div><ul></ul></div>'
+  ),
+  _tmpl1 = template('<li></li>');
 
-  const next = () => {
-    const minutes = String(Math.floor(count / 60)).padStart(2, '0');
-    const seconds = String(count % 60).padStart(2, '0');
-    subscriber.next(
-      <span>
-        {minutes}:{seconds}
-      </span>
-    );
-  };
-  next();
+const list = createState(['item 1']);
 
-  const interval = setInterval(() => {
-    count++;
-    next();
-  }, 1000);
-
-  return () => clearInterval(interval);
-});
-
-const fruits = createState<string[]>([]);
-
-function Row(props: { id: number; label: string }) {
-  return (
-    <tr>
-      <td>{() => props.id}</td>
-      <td>{() => props.label}</td>
-    </tr>
-  );
+function Row(props: { item: string }) {
+  return h(_tmpl1, {
+    0: { class: 'item', children: [[() => props.item, null]] },
+  });
 }
 
 function App() {
-  return (
-    <div>
-      {/* <h1>Hello World!</h1>
-      <div>⏱️ {timer}</div>
-      <p>This is a simple example of a Estrela component</p> */}
-      <div class="button">
-        <button on:click={() => fruits.update(list => [...list, 'apple'])}>
-          Add fruit
-        </button>
-        <button on:click={() => fruits.update(list => list.slice(0, -1))}>
-          Remove fruit
-        </button>
-        <button on:click={() => fruits.next(Array(1000).fill('apple'))}>
-          Set 1,000 fruits
-        </button>
-      </div>
-      <table>
-        <tbody>
-          <Row id={0} label="Header" />
-          {() => fruits.$.map((fruit, i) => <Row id={i + 1} label={fruit} />)}
-          <Row id={-1} label="footer" />
-        </tbody>
-      </table>
-    </div>
-  );
+  return h(_tmpl, {
+    4: {
+      'on:click': () => list.update(l => [...l, `item ${l.length + 1}`]),
+    },
+    6: {
+      'on:click': () =>
+        list.next(
+          Array(10000)
+            .fill(null)
+            .map((_, i) => `item ${i + 1}`)
+        ),
+    },
+    8: {
+      'on:click': () => list.update(l => l.slice(0, -1)),
+    },
+    10: {
+      children: [[() => list.$.map(item => h(Row, { item })), null]],
+    },
+  });
 }
 
-render(<App />, document.getElementById('app')!);
+render(h(App, {}), document.getElementById('app')!);
