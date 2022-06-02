@@ -1,8 +1,8 @@
 import { VirtualNode } from './internal';
 
-export function render(template: VirtualNode, parent: Element): void {
+export function render(template: VirtualNode, parent: Element): Node {
   if (!parent) {
     throw new Error('Parent element is not defined');
   }
-  template.mount(parent);
+  return template.mount(parent);
 }

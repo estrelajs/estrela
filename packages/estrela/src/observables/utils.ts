@@ -52,18 +52,12 @@ export function isPromise<T>(x: any): x is Promise<T> {
   return x && typeof x.then === 'function';
 }
 
-export function isSubscribable<T>(x: any): x is Subscribable<T> {
-  return x && typeof x.subscribe === 'function';
+export function isSelectable<T>(
+  x: any
+): x is (() => T) | Promise<T> | Observable<T> {
+  return typeof x === 'function' || isPromise(x) || isObservable(x);
 }
 
-export function tryParseObservable<T>(
-  promise: (() => T) | PromiseLike<T> | Subscribable<T>
-): Observable<T> {
-  if (typeof promise === 'function') {
-    return createSelector(promise);
-  }
-  if (isPromise(promise) || isObservable(promise)) {
-    return coerceObservable(promise);
-  }
-  throw new Error('Invalid observable');
+export function isSubscribable<T>(x: any): x is Subscribable<T> {
+  return x && typeof x.subscribe === 'function';
 }

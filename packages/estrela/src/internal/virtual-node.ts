@@ -1,15 +1,21 @@
 import {
   createEventEmitter,
   createState,
+  createSubscription,
   EventEmitter,
   isEventEmitter,
   isState,
   State,
-  tryParseObservable,
 } from '../observables';
-import { ProxyState } from '../proxy-state';
+import { Key } from '../types/types';
 import { coerceArray, isFalsy } from '../utils';
-import { insert, mapNodeTree, patchChildren } from './node-api';
+import { effect } from './effect';
+import {
+  coerceNode,
+  insertChild,
+  mapNodeTree,
+  patchChildren,
+} from './node-api';
 
 export type NodeInsertion = [any, number | null];
 
@@ -25,67 +31,93 @@ type ProxyTarget = Record<
 
 export class VirtualNode {
   root: Node | null = null;
-  tree: Record<any, Node> = {};
+  props: Record<string, any> = {};
+
+  private cleanup = createSubscription();
 
   get nextSibling(): Node | null {
-    return this.root ? this.root.nextSibling : null;
+    return this.root?.nextSibling ?? null;
   }
 
   constructor(
     readonly template: Node | ((props?: any) => VirtualNode),
-    readonly data: any = {}
+    public data: any = {}
   ) {}
 
   mount(parent: Node, before: Node | null = null): Node {
+    // is Component
     if (typeof this.template === 'function') {
-      const template = this.template(this.createProps());
-      this.root = template.mount(parent, before);
-      return this.root;
+      this.props = this.createProps(this.data);
+      const template = this.template(this.props);
+      return (this.root = template.mount(parent, before));
     }
+
+    // is Node
     this.root = this.template.cloneNode(true);
-    this.tree = mapNodeTree(this.root);
+    const tree = mapNodeTree(this.root);
 
-    for (let i in this.data) {
-      const node = this.tree[i];
-      const data = this.data[i];
-      this.handlerData(node, data);
+    for (let key in this.data) {
+      const node = tree[Number(key)];
+      const data = this.data[key];
+      this.handleNode(tree, node, data);
     }
 
-    return insert(parent, this.root, before);
+    insertChild(parent, this.root, before);
+    delete this.data;
+    return this.root;
+  }
+
+  patchProps(props: any) {
+    if (typeof this.template === 'function') {
+      for (let key in props) {
+        if (!key.startsWith('on:') && this.props[key] !== props[key]) {
+          this.props.$[key].next(props[key]);
+        }
+      }
+    }
   }
 
   unmount(parent: Node) {
     if (this.root) {
       parent.removeChild(this.root);
       this.root = null;
-      this.tree = {};
     }
+
+    for (let key in this.props) {
+      const prop = this.props[key];
+      if (isState(prop) || isEventEmitter(prop)) {
+        prop.complete();
+      }
+    }
+
+    this.cleanup.unsubscribe();
   }
 
-  private createProps(): ProxyState<any> {
+  private createProps(data: any) {
     const getProxyState = (target: ProxyTarget, prop: string) => {
       if (prop in target) {
         return target[prop];
       }
       let state: State<any> | EventEmitter<any>;
-      if (this.data.hasOwnProperty(`on:${prop}`)) {
+      if (data.hasOwnProperty(`on:${prop}`)) {
         state = createEventEmitter();
-        // this.cleanup.add(
-        state.subscribe(e => {
-          const handler = this.data[`on:${prop}`];
-          if (isState(handler) || isEventEmitter(handler)) {
-            handler.next(e);
-          } else if (typeof handler === 'function') {
-            handler(e);
-          }
-        });
-        // );
+        this.cleanup.add(
+          state.subscribe(e => {
+            const handler = data[`on:${prop}`];
+            if (isState(handler) || isEventEmitter(handler)) {
+              handler.next(e);
+            } else if (typeof handler === 'function') {
+              handler(e);
+            }
+          })
+        );
       } else {
-        state = createState(this.data[prop]);
+        state = createState(data[prop]);
       }
       target[prop] = state;
       return state;
     };
+
     return new Proxy({} as ProxyTarget, {
       get(target, prop) {
         if (prop === '$') {
@@ -108,52 +140,49 @@ export class VirtualNode {
     }) as any;
   }
 
-  private handlerData(node: Node, data: any) {
+  private handleNode(tree: Record<Key, Node>, node: Node, data: any) {
     for (let key in data) {
       if (key === 'children') {
-        data.children?.forEach((insertion: NodeInsertion) =>
-          this.insert(node, insertion)
-        );
+        data.children.forEach(([data, path]: NodeInsertion) => {
+          const before = tree[path ?? -1] ?? null;
+          this.insert(node, data, before);
+        });
       } else if (key.startsWith('on:')) {
         const eventName = key.substring(3);
         node.addEventListener(eventName, data[key]);
+        this.cleanup.add(() => node.removeEventListener(eventName, data[key]));
       } else {
         this.setAttribute(node, key, data[key]);
       }
     }
   }
 
-  private insert(parent: Node, insertion: NodeInsertion) {
-    const [data, beforeIndex] = insertion;
-    const before = this.tree[beforeIndex ?? -1] ?? null;
-    try {
-      let nodes: VirtualNode[];
-      const subscription = tryParseObservable(data).subscribe(
-        value => {
-          const nextNodes = VirtualNode.create(value);
+  private insert(parent: Node, data: any, before: Node | null) {
+    let nodes: (Node | VirtualNode)[];
+
+    if (typeof data === 'function') {
+      let lastValue = {} as { value?: any };
+      const subscription = effect<JSX.Children>(data).subscribe(value => {
+        if (!lastValue.hasOwnProperty('value') || lastValue.value !== value) {
+          lastValue = { value };
+          const nextNodes = coerceArray(value).flat().map(coerceNode);
           if (nodes) {
             nodes = patchChildren(parent, nodes, nextNodes);
           } else {
             nodes = nextNodes;
-            nextNodes.forEach(n => n.mount(parent, before));
           }
-        },
-        { initialEmit: true }
-      );
-    } catch {
-      coerceArray(data)
-        .flat()
-        .forEach(item => {
-          if (data instanceof VirtualNode) {
-            item.mount(parent, before);
-          } else if (item instanceof Node) {
-            insert(parent, item, before);
-          } else {
-            const node = document.createTextNode(item);
-            insert(parent, node, before);
-          }
-        });
+        }
+      });
+      this.cleanup.add(subscription);
+      // @ts-expect-error
+      if (!nodes || nodes.length === 0) {
+        nodes = [document.createComment('')];
+      }
+    } else {
+      nodes = coerceArray(data).flat().map(coerceNode);
     }
+
+    nodes.forEach(node => insertChild(parent, node, before));
   }
 
   private setAttribute(node: Node, key: string, data: any) {
@@ -161,33 +190,27 @@ export class VirtualNode {
     if (!element.setAttribute) {
       return;
     }
-    try {
-      const subscription = tryParseObservable(data).subscribe(
-        value => this.setAttribute(node, key, value),
-        { initialEmit: true }
-      );
-    } catch {
-      if (isFalsy(data)) {
+    const setAttribute = (value: any) => {
+      if (isFalsy(value)) {
         element.removeAttribute(key);
-      } else if (data === true) {
+      } else if (value === true) {
         element.setAttribute(key, '');
       } else {
-        element.setAttribute(key, data);
+        element.setAttribute(key, value);
       }
+    };
+    if (typeof data === 'function') {
+      let lastValue = {} as { value?: any };
+      const subscription = effect(data).subscribe(value => {
+        if (!lastValue.hasOwnProperty('value') || lastValue.value !== value) {
+          lastValue = { value };
+          setAttribute(value);
+        }
+      });
+      this.cleanup.add(subscription);
+    } else {
+      setAttribute(data);
     }
-  }
-
-  static create(data: any): VirtualNode[] {
-    if (data instanceof VirtualNode) {
-      return [data];
-    }
-    if (data instanceof Node) {
-      return [new VirtualNode(data)];
-    }
-    if (Array.isArray(data)) {
-      return data.flatMap(VirtualNode.create);
-    }
-    return [new VirtualNode(document.createTextNode(data))];
   }
 }
 

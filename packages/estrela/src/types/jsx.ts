@@ -1,6 +1,6 @@
 import { EventEmitter, State, Subscribable } from '../observables';
 import { ProxyState } from '../proxy-state';
-import { Component, EventHandler, HTMLEventHandler } from './types';
+import { Component, EventHandler, HTMLEventHandler, Key } from './types';
 import { VirtualNode } from '../internal/virtual-node';
 
 /**
@@ -34,6 +34,7 @@ declare global {
       | string
       | number
       | boolean
+      | Node
       | Element
       | Selector
       | Subscribable<any>
@@ -45,7 +46,7 @@ declare global {
       children: any;
     }
     interface IntrinsicAttributes {
-      key?: string | number | symbol;
+      key?: Key;
     }
     interface Directives {}
     type DirectiveAttributes = {
@@ -59,7 +60,7 @@ declare global {
     };
     interface DOMAttributes<T> extends DirectiveAttributes {
       ref?: State<T | null> | ((el: T) => void);
-      key?: string | number | symbol;
+      key?: Key;
       children?: Children;
       innerHTML?: string;
       innerText?: string | number;
