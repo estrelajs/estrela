@@ -32,7 +32,17 @@ import { h, template } from 'estrela/internal';
 //       'on:click': () => list.update(l => l.slice(0, -1)),
 //     },
 //     10: {
-//       children: [[() => list.$.map(item => h(Row, { item })), null]],
+//       children: [
+//         [
+//           () =>
+//             list.$.map(item =>
+//               h(_tmpl1, {
+//                 0: { class: 'item', children: [[item, null]] },
+//               })
+//             ),
+//           null,
+//         ],
+//       ],
 //     },
 //   });
 // }
@@ -43,6 +53,11 @@ setInterval(() => count.next(count.$ + 1), 1000);
 const _tmpl = template(
   '<div><h1>Hello World!</h1><div>Count is <!>!</div></div>'
 );
-const root = h(_tmpl, { 3: { children: [[() => count.$, 5]] } });
+function App(props: { count: number }) {
+  return h(_tmpl, {
+    0: { class: () => (props.count % 2 === 0 ? 'even' : 'odd') },
+    3: { children: [[() => props.count, 5]] },
+  });
+}
 
-render(root, document.getElementById('app')!);
+render(h(App, { count: () => count.$ }), document.getElementById('app')!);

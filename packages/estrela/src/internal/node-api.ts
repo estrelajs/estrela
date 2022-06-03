@@ -93,7 +93,7 @@ function patch(
   }
   if (node instanceof VirtualNode && next instanceof VirtualNode) {
     if (node.template === next.template) {
-      node.patchProps(next.data);
+      node.patch(next.data);
       return node;
     }
   }

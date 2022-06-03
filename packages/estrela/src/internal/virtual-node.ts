@@ -7,6 +7,7 @@ import {
   State,
   Subscription,
 } from '../observables';
+import { ProxyState } from '../proxy-state';
 import { Key } from '../types/types';
 import { coerceArray, isFalsy } from '../utils';
 import { effect } from './effect';
@@ -15,25 +16,27 @@ import {
   insertChild,
   mapNodeTree,
   patchChildren,
+  removeChild,
 } from './node-api';
 
-export type NodeInsertion = [any, number | null];
+type NodeInsertion = [JSX.Children, number | null];
+
+type ProxyTarget = Record<Key, State<any> | EventEmitter<any>>;
 
 export interface NodeData {
-  [key: string]: any;
+  [key: Key]: any;
   children?: NodeInsertion[];
 }
 
-type ProxyTarget = Record<
-  string | number | symbol,
-  State<any> | EventEmitter<any>
->;
-
 export class VirtualNode {
   root: Node | null = null;
-  props: Record<string, any> = {};
 
   private cleanup = new Subscription();
+  private props: ProxyState<NodeData> = {} as any;
+
+  get isComponent(): boolean {
+    return typeof this.template === 'function';
+  }
 
   get nextSibling(): Node | null {
     return this.root?.nextSibling ?? null;
@@ -41,15 +44,17 @@ export class VirtualNode {
 
   constructor(
     readonly template: Node | ((props?: any) => VirtualNode),
-    public data: any = {}
+    public data?: NodeData
   ) {}
 
   mount(parent: Node, before: Node | null = null): Node {
+    this.props = this.createProps(this.data ?? {});
+
     // is Component
     if (typeof this.template === 'function') {
-      this.props = this.createProps(this.data);
       const template = this.template(this.props);
-      return (this.root = template.mount(parent, before));
+      this.root = template.mount(parent, before);
+      return this.root;
     }
 
     // is Node
@@ -67,33 +72,43 @@ export class VirtualNode {
     return this.root;
   }
 
-  patchProps(props: any) {
-    if (typeof this.template === 'function') {
-      for (let key in props) {
-        if (!key.startsWith('on:') && this.props[key] !== props[key]) {
-          this.props.$[key].next(props[key]);
-        }
+  patch(data: NodeData) {
+    if (!this.isComponent) {
+      data = this.normalizeData(data);
+    }
+    for (let key in data) {
+      const value = data[key];
+      if (
+        !key.startsWith('on:') &&
+        typeof value !== 'function' &&
+        this.props[key] !== value
+      ) {
+        this.props.$[key].next(value);
       }
     }
   }
 
   unmount(parent: Node) {
-    if (this.root) {
-      parent.removeChild(this.root);
-      this.root = null;
-    }
-
     for (let key in this.props) {
       const prop = this.props[key];
       if (isCompletable(prop)) {
         prop.complete();
       }
     }
-
+    if (this.root) {
+      removeChild(parent, this.root);
+    }
     this.cleanup.unsubscribe();
+    this.data = {};
+    this.props = {} as any;
+    this.root = null;
   }
 
-  private createProps(data: any) {
+  private createProps(data: NodeData): ProxyState<NodeData> {
+    if (!this.isComponent) {
+      data = this.normalizeData(data);
+    }
+
     const getProxyState = (target: ProxyTarget, prop: string) => {
       if (prop in target) {
         return target[prop];
@@ -112,7 +127,11 @@ export class VirtualNode {
           })
         );
       } else {
+        const value = data[prop];
         state = createState(data[prop]);
+        if (typeof value === 'function') {
+          this.cleanup.add(effect(value).subscribe(state));
+        }
       }
       target[prop] = state;
       return state;
@@ -137,10 +156,10 @@ export class VirtualNode {
         state.next(value);
         return true;
       },
-    }) as any;
+    }) as ProxyState<NodeData>;
   }
 
-  private handleNode(tree: Record<Key, Node>, node: Node, data: any) {
+  private handleNode(tree: Record<Key, Node>, node: Node, data: any): void {
     for (let key in data) {
       if (key === 'children') {
         data.children.forEach(([data, path]: NodeInsertion) => {
@@ -157,7 +176,7 @@ export class VirtualNode {
     }
   }
 
-  private insert(parent: Node, data: any, before: Node | null) {
+  private insert(parent: Node, data: any, before: Node | null): void {
     let nodes: (Node | VirtualNode)[];
 
     if (typeof data === 'function') {
@@ -166,6 +185,9 @@ export class VirtualNode {
         if (!lastValue.hasOwnProperty('value') || lastValue.value !== value) {
           lastValue = { value };
           const nextNodes = coerceArray(value).flat().map(coerceNode);
+          if (nextNodes.length === 0) {
+            nextNodes.push(document.createComment(''));
+          }
           if (nodes) {
             nodes = patchChildren(parent, nodes, nextNodes);
           } else {
@@ -185,7 +207,34 @@ export class VirtualNode {
     nodes.forEach(node => insertChild(parent, node, before));
   }
 
-  private setAttribute(node: Node, key: string, data: any) {
+  private normalizeData(data: NodeData): NodeData {
+    const result: NodeData = {};
+    for (let key in data) {
+      const props = data[key];
+      for (let prop in props) {
+        if (prop.startsWith('on:') || typeof props[prop] === 'function') {
+          continue;
+        }
+        if (prop === 'children') {
+          for (let i = 0; i < props.children.length; i++) {
+            if (typeof props.children[i][0] === 'function') {
+              continue;
+            }
+            const name = `${key}:${prop}:${i}`;
+            result[name] = props.children[i][0];
+            props.children[i][0] = () => this.props[name];
+          }
+        } else {
+          const name = `${key}:${prop}`;
+          result[name] = props[prop];
+          props[prop] = () => this.props[name];
+        }
+      }
+    }
+    return result;
+  }
+
+  private setAttribute(node: Node, key: string, data: any): void {
     const element = node as Element;
     if (!element.setAttribute) {
       return;
@@ -216,7 +265,7 @@ export class VirtualNode {
 
 export function h(
   template: Node | ((props?: any) => VirtualNode),
-  data: any
+  data: NodeData
 ): VirtualNode {
   return new VirtualNode(template, data);
 }
