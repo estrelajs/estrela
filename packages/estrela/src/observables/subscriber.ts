@@ -1,7 +1,7 @@
-import { Observer, SubscriberLike } from './types';
+import { PartialObserver, SubscriberLike } from './types';
 
 export class Subscriber<T> implements SubscriberLike<T> {
-  protected observers = new Set<Observer<any>>();
+  private observers = new Set<PartialObserver<T>>();
   private _closed = false;
   private _hasError = false;
   public thrownError?: any;
@@ -19,19 +19,37 @@ export class Subscriber<T> implements SubscriberLike<T> {
   }
 
   next(value: T): void {
-    this.observers.forEach(observer => observer.next(value));
+    this.observers.forEach(observer => {
+      typeof observer === 'function' ? observer(value) : observer.next?.(value);
+    });
   }
 
   error(err: any): void {
-    this.observers.forEach(observer => observer.error(err));
+    this.observers.forEach(
+      observer => typeof observer === 'object' && observer.error?.(err)
+    );
     this.observers.clear();
     this._hasError = true;
     this.thrownError = err;
   }
 
   complete(): void {
-    this.observers.forEach(observer => observer.complete());
+    this.observers.forEach(
+      observer => typeof observer === 'object' && observer.complete?.()
+    );
     this.observers.clear();
     this._closed = true;
+  }
+
+  protected add(observer?: PartialObserver<T>): void {
+    if (observer) {
+      this.observers.add(observer);
+    }
+  }
+
+  protected remove(observer?: PartialObserver<T>): void {
+    if (observer) {
+      this.observers.delete(observer);
+    }
   }
 }

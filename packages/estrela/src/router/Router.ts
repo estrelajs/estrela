@@ -1,6 +1,6 @@
 import { h } from '../internal';
 import { createSelector } from '../observables';
-import { ProxyState } from '../proxy-state';
+import { StateProxy } from '../state-proxy';
 import { Routes } from './route';
 import { routeUrl } from './router.store';
 
@@ -9,7 +9,7 @@ export interface RouterProps {
   routes: Routes;
 }
 
-export function Router(props: ProxyState<RouterProps>) {
+export function Router(props: StateProxy<RouterProps>) {
   const getRoute = (
     routes: Routes,
     url: string,

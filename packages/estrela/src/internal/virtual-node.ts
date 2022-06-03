@@ -1,15 +1,7 @@
-import {
-  createEventEmitter,
-  createState,
-  EventEmitter,
-  isCompletable,
-  isNextable,
-  State,
-  Subscription,
-} from '../observables';
-import { ProxyState } from '../proxy-state';
+import { isCompletable, Subscription } from '../observables';
+import { StateProxy } from '../state-proxy';
 import { Key } from '../types/types';
-import { coerceArray, isFalsy } from '../utils';
+import { coerceArray } from '../utils';
 import { effect } from './effect';
 import {
   coerceNode,
@@ -17,11 +9,11 @@ import {
   mapNodeTree,
   patchChildren,
   removeChild,
+  setAttribute,
 } from './node-api';
+import { StateProxyHandler } from './proxy-handler';
 
 type NodeInsertion = [JSX.Children, number | null];
-
-type ProxyTarget = Record<Key, State<any> | EventEmitter<any>>;
 
 export interface NodeData {
   [key: Key]: any;
@@ -31,7 +23,8 @@ export interface NodeData {
 export class VirtualNode {
   private cleanup = new Subscription();
   private nodes: Node[] = [];
-  private props: ProxyState<NodeData> = {} as any;
+  private props: StateProxy<NodeData> = {} as any;
+  private componentNode?: VirtualNode;
 
   get isComponent(): boolean {
     return typeof this.template === 'function';
@@ -55,8 +48,8 @@ export class VirtualNode {
 
     // is Component
     if (typeof this.template === 'function') {
-      const template = this.template(this.props);
-      this.nodes = template.mount(parent, before);
+      this.componentNode = this.template(this.props);
+      this.nodes = this.componentNode.mount(parent, before);
       return this.nodes;
     }
 
@@ -94,73 +87,30 @@ export class VirtualNode {
 
   unmount(parent: Node) {
     for (let key in this.props) {
-      const prop = this.props[key];
+      const prop = this.props.$[key];
       if (isCompletable(prop)) {
         prop.complete();
       }
     }
-    if (this.nodes) {
+    this.props = {} as any;
+    this.cleanup.unsubscribe();
+    this.cleanup = new Subscription();
+    if (this.componentNode) {
+      this.componentNode.unmount(parent);
+    } else {
       this.nodes.forEach(node => removeChild(parent, node));
     }
-    this.cleanup.unsubscribe();
-    this.data = {};
-    this.props = {} as any;
     this.nodes = [];
   }
 
-  private createProps(data: NodeData): ProxyState<NodeData> {
+  private createProps(data: NodeData): StateProxy<NodeData> {
     if (!this.isComponent) {
       data = this.normalizeData(data);
     }
-
-    const getProxyState = (target: ProxyTarget, prop: string) => {
-      if (prop in target) {
-        return target[prop];
-      }
-      let state: State<any> | EventEmitter<any>;
-      if (data.hasOwnProperty(`on:${prop}`)) {
-        state = createEventEmitter();
-        this.cleanup.add(
-          state.subscribe(e => {
-            const handler = data[`on:${prop}`];
-            if (isNextable(handler)) {
-              handler.next(e);
-            } else if (typeof handler === 'function') {
-              handler(e);
-            }
-          })
-        );
-      } else {
-        const value = data[prop];
-        state = createState(data[prop]);
-        if (typeof value === 'function') {
-          this.cleanup.add(effect(value).subscribe(state));
-        }
-      }
-      target[prop] = state;
-      return state;
-    };
-
-    return new Proxy({} as ProxyTarget, {
-      get(target, prop) {
-        if (prop === '$') {
-          return new Proxy(
-            {},
-            { get: (_, prop) => getProxyState(target, String(prop)) }
-          );
-        }
-        const state = getProxyState(target, String(prop));
-        return state instanceof State ? state.$ : state;
-      },
-      set(target, prop, value) {
-        if (prop === '$') {
-          return false;
-        }
-        const state = getProxyState(target, String(prop));
-        state.next(value);
-        return true;
-      },
-    }) as ProxyState<NodeData>;
+    return new Proxy(
+      {} as StateProxy<NodeData>,
+      new StateProxyHandler(data, this.cleanup)
+    );
   }
 
   private handleNode(tree: Record<Key, Node>, node: Node, data: any): void {
@@ -172,8 +122,9 @@ export class VirtualNode {
         });
       } else if (key.startsWith('on:')) {
         const eventName = key.substring(3);
-        node.addEventListener(eventName, data[key]);
-        this.cleanup.add(() => node.removeEventListener(eventName, data[key]));
+        const handler = data[key];
+        node.addEventListener(eventName, handler);
+        this.cleanup.add(() => node.removeEventListener(eventName, handler));
       } else {
         this.setAttribute(node, key, data[key]);
       }
@@ -182,8 +133,8 @@ export class VirtualNode {
 
   private insert(parent: Node, data: any, before: Node | null): void {
     if (typeof data === 'function') {
+      let lastValue: any = undefined;
       let nodes: (Node | VirtualNode)[] = [];
-      let lastValue = {} as { value?: any };
 
       // insert placeholder node
       const placeholder = document.createComment('');
@@ -191,8 +142,8 @@ export class VirtualNode {
 
       // subscribe effect
       const subscription = effect<JSX.Children>(data).subscribe(value => {
-        if (!lastValue.hasOwnProperty('value') || lastValue.value !== value) {
-          lastValue = { value };
+        if (lastValue !== value) {
+          lastValue = value;
           nodes = patchChildren(
             parent,
             nodes,
@@ -251,26 +202,17 @@ export class VirtualNode {
     if (!element.setAttribute) {
       return;
     }
-    const setAttribute = (value: any) => {
-      if (isFalsy(value)) {
-        element.removeAttribute(key);
-      } else if (value === true) {
-        element.setAttribute(key, '');
-      } else {
-        element.setAttribute(key, value);
-      }
-    };
     if (typeof data === 'function') {
-      let lastValue = {} as { value?: any };
+      let lastValue: any = undefined;
       const subscription = effect(data).subscribe(value => {
-        if (!lastValue.hasOwnProperty('value') || lastValue.value !== value) {
-          lastValue = { value };
-          setAttribute(value);
+        if (lastValue !== value) {
+          lastValue = value;
+          setAttribute(element, key, value);
         }
       });
       this.cleanup.add(subscription);
     } else {
-      setAttribute(data);
+      setAttribute(element, key, data);
     }
   }
 }

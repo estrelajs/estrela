@@ -1,7 +1,7 @@
+import { VirtualNode } from '../internal';
 import { EventEmitter, State, Subscribable } from '../observables';
-import { ProxyState } from '../proxy-state';
+import { StateProxy } from '../state-proxy';
 import { Component, EventHandler, HTMLEventHandler, Key } from './types';
-import { VirtualNode } from '../internal/virtual-node';
 
 /**
  * Based on JSX types for Surplus, Inferno and dom-expressions, adapted for Estrela.
@@ -11,7 +11,7 @@ import { VirtualNode } from '../internal/virtual-node';
  * https://github.com/ryansolid/dom-expressions/blob/main/packages/dom-expressions/src/jsx.d.ts
  */
 
-export type Props<T extends Object> = ProxyState<T>;
+export type Props<T extends Object> = StateProxy<T>;
 
 type PropsOf<P> = {
   [K in keyof Omit<P, '$' | EmittersOf<P>>]: P[K];

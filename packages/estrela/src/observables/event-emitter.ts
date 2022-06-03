@@ -1,13 +1,9 @@
 import { Subscriber } from './subscriber';
 import { Subscription } from './subscription';
 import { symbol_observable } from './symbol';
-import { ObservableLike, Observer } from './types';
-import { coerceObserver } from './utils';
+import { PartialObserver, Subscribable } from './types';
 
-export class EventEmitter<T>
-  extends Subscriber<T>
-  implements ObservableLike<T>
-{
+export class EventEmitter<T> extends Subscriber<T> implements Subscribable<T> {
   constructor(private _async: boolean) {
     super();
   }
@@ -29,12 +25,9 @@ export class EventEmitter<T>
     }
   }
 
-  subscribe(
-    observer?: ((value: T) => void) | Partial<Observer<T>>
-  ): Subscription {
-    const obs = coerceObserver(observer);
-    this.observers.add(obs);
-    return new Subscription(() => this.observers.delete(obs));
+  subscribe(observer?: PartialObserver<T>): Subscription {
+    this.add(observer);
+    return new Subscription(() => this.remove(observer));
   }
 }
 

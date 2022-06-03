@@ -1,12 +1,11 @@
 import { Subscriber } from './subscriber';
 import { Subscription } from './subscription';
 import { symbol_observable } from './symbol';
-import { ObservableLike, Observer } from './types';
-import { coerceObserver } from './utils';
+import { PartialObserver, Subscribable } from './types';
 
 export const STATE_CALLS = new Set<State<any>>();
 
-export class State<T> extends Subscriber<T> implements ObservableLike<T> {
+export class State<T> extends Subscriber<T> implements Subscribable<T> {
   get $(): T {
     STATE_CALLS.add(this);
     return this._value;
@@ -40,15 +39,16 @@ export class State<T> extends Subscriber<T> implements ObservableLike<T> {
   }
 
   subscribe(
-    observer?: ((value: T) => void) | Partial<Observer<T>>,
+    observer?: PartialObserver<T>,
     options: { initialEmit?: boolean } = {}
   ) {
-    const obs = coerceObserver(observer);
-    this.observers.add(obs);
+    this.add(observer);
     if (options.initialEmit) {
-      obs.next(this._value);
+      typeof observer === 'function'
+        ? observer(this._value)
+        : observer?.next?.(this._value);
     }
-    return new Subscription(() => this.observers.delete(obs));
+    return new Subscription(() => this.remove(observer));
   }
 }
 

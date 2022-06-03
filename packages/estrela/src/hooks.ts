@@ -1,5 +1,5 @@
-import { State, createState } from './observables';
-import { ProxyState } from './proxy-state';
+import { createState, State } from './observables';
+import { StateProxy } from './state-proxy';
 import { Key } from './types/types';
 
 const ComponentRef = null as any;
@@ -13,7 +13,7 @@ export function onDestroy(callback: () => void): void {
 /** Get the state reference of a local variable. */
 export function getState<T>(state: T): State<T>;
 /** Get the state reference from a proxy state. */
-export function getState<T>(state: ProxyState<T>, name: keyof T): State<T>;
+export function getState<T>(state: StateProxy<T>, name: keyof T): State<T>;
 export function getState(state: any, name?: any): State<any> {
   throwIfOutsideComponent();
   return name && state?.$?.[name] instanceof State

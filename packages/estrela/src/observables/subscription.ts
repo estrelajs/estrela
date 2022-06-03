@@ -1,6 +1,6 @@
-import { SubscriptionLike, TeardownLogic } from './types';
+import { TeardownLogic, Unsubscribable } from './types';
 
-export class Subscription implements SubscriptionLike {
+export class Subscription implements Unsubscribable {
   private _closed = false;
   private _finalizers = new Set<TeardownLogic>();
 

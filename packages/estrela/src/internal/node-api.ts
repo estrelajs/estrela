@@ -1,3 +1,4 @@
+import { isFalsy } from '../utils';
 import { VirtualNode } from './virtual-node';
 
 export function coerceNode(node: JSX.Child): Node | VirtualNode {
@@ -40,6 +41,16 @@ export function replaceChild(
 ): void {
   insertChild(parent, node, child);
   removeChild(parent, child);
+}
+
+export function setAttribute(element: Element, attr: string, value: any): void {
+  if (isFalsy(value)) {
+    element.removeAttribute(attr);
+  } else if (value === true) {
+    element.setAttribute(attr, '');
+  } else {
+    element.setAttribute(attr, value);
+  }
 }
 
 export function mapNodeTree(
