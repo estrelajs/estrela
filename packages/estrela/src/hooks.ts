@@ -1,4 +1,4 @@
-import { State, isState, createState } from './observables';
+import { State, createState } from './observables';
 import { ProxyState } from './proxy-state';
 import { Key } from './types/types';
 
@@ -16,7 +16,9 @@ export function getState<T>(state: T): State<T>;
 export function getState<T>(state: ProxyState<T>, name: keyof T): State<T>;
 export function getState(state: any, name?: any): State<any> {
   throwIfOutsideComponent();
-  return name && isState(state?.$?.[name]) ? state.$[name] : createState(state);
+  return name && state?.$?.[name] instanceof State
+    ? state.$[name]
+    : createState(state);
 }
 
 /** Get component context. */

@@ -14,11 +14,11 @@ export interface Unsubscribable {
   unsubscribe(): void;
 }
 
-export type TeardownLogic = Subscription | Unsubscribable | (() => void);
+export type TeardownLogic = (() => void) | Unsubscribable | Subscription;
 
 export interface SubscriptionLike extends Unsubscribable {
-  unsubscribe(): void;
   readonly closed: boolean;
+  unsubscribe(): void;
 }
 
 // OBSERVABLE INTERFACES
@@ -29,12 +29,11 @@ export interface Subscribable<T> {
 
 /**
  * An object that implements the `Symbol.observable` interface.
+ [Symbol.observable]: () => Subscribable<T>;
  */
 export interface ObservableLike<T> extends Subscribable<T> {
-  [Symbol.observable]: () => Subscribable<T>;
   subscribe(
-    observer?: ((value: T) => void) | Partial<Observer<T>>,
-    options?: { initialEmit?: boolean }
+    observer?: ((value: T) => void) | Partial<Observer<T>>
   ): Subscription;
 }
 
@@ -46,10 +45,7 @@ export interface Observer<T> {
   complete: () => void;
 }
 
-export interface SubjectObserver<T> {
+export interface SubscriberLike<T> extends Observer<T> {
   readonly closed: boolean;
   readonly observed: boolean;
-  next: (value: T) => void;
-  error: (err: any) => void;
-  complete: () => void;
 }

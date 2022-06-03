@@ -1,16 +1,10 @@
-import {
-  createObservable,
-  createSubscription,
-  Observable,
-  State,
-  STATE_CALLS,
-} from '../observables';
+import { Observable, State, STATE_CALLS, Subscription } from '../observables';
 
 export function effect<T>(fn: () => T): Observable<T> {
-  const subscription = createSubscription();
   const states: State<any>[] = [];
+  const subscription = new Subscription();
 
-  return createObservable(subscriber => {
+  return new Observable(subscriber => {
     const updater = () => {
       STATE_CALLS.clear();
       const result = fn();

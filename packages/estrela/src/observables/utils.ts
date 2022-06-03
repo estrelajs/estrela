@@ -1,6 +1,4 @@
-import { createObservable, isObservable, Observable } from './observable';
-import { createSelector } from './selector';
-import { Observer, Subscribable } from './types';
+import { Observer } from './types';
 
 const noop = () => {};
 
@@ -20,44 +18,10 @@ export function coerceObserver<T>(
   return { next, error, complete };
 }
 
-export function coerceObservable<T>(
-  promise: T | Promise<T> | Subscribable<T>
-): Observable<T> {
-  if (isObservable(promise)) {
-    return promise;
-  }
-  return createObservable(subscriber => {
-    if (isSubscribable(promise)) {
-      promise.subscribe(subscriber);
-    } else if (isPromise(promise)) {
-      const then = promise.then(value => {
-        subscriber.next(value);
-        subscriber.complete();
-      });
-      if (then.catch) {
-        then.catch(err => subscriber.error(err));
-      }
-    } else {
-      subscriber.next(promise);
-      subscriber.complete();
-    }
-  });
+export function isCompletable(x: any): x is { complete(): void } {
+  return x && typeof x.complete === 'function';
 }
 
-export function isNextable<T>(x: any): x is { next: (value: T) => void } {
+export function isNextable<T>(x: any): x is { next(value: T): void } {
   return x && typeof x.next === 'function';
-}
-
-export function isPromise<T>(x: any): x is Promise<T> {
-  return x && typeof x.then === 'function';
-}
-
-export function isSelectable<T>(
-  x: any
-): x is (() => T) | Promise<T> | Observable<T> {
-  return typeof x === 'function' || isPromise(x) || isObservable(x);
-}
-
-export function isSubscribable<T>(x: any): x is Subscribable<T> {
-  return x && typeof x.subscribe === 'function';
 }

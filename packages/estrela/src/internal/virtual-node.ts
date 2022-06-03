@@ -1,11 +1,11 @@
 import {
   createEventEmitter,
   createState,
-  createSubscription,
   EventEmitter,
-  isEventEmitter,
-  isState,
+  isCompletable,
+  isNextable,
   State,
+  Subscription,
 } from '../observables';
 import { Key } from '../types/types';
 import { coerceArray, isFalsy } from '../utils';
@@ -33,7 +33,7 @@ export class VirtualNode {
   root: Node | null = null;
   props: Record<string, any> = {};
 
-  private cleanup = createSubscription();
+  private cleanup = new Subscription();
 
   get nextSibling(): Node | null {
     return this.root?.nextSibling ?? null;
@@ -85,7 +85,7 @@ export class VirtualNode {
 
     for (let key in this.props) {
       const prop = this.props[key];
-      if (isState(prop) || isEventEmitter(prop)) {
+      if (isCompletable(prop)) {
         prop.complete();
       }
     }
@@ -104,7 +104,7 @@ export class VirtualNode {
         this.cleanup.add(
           state.subscribe(e => {
             const handler = data[`on:${prop}`];
-            if (isState(handler) || isEventEmitter(handler)) {
+            if (isNextable(handler)) {
               handler.next(e);
             } else if (typeof handler === 'function') {
               handler(e);
@@ -127,7 +127,7 @@ export class VirtualNode {
           );
         }
         const state = getProxyState(target, String(prop));
-        return isState(state) ? state.$ : state;
+        return state instanceof State ? state.$ : state;
       },
       set(target, prop, value) {
         if (prop === '$') {
