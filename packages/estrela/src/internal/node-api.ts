@@ -15,7 +15,7 @@ export function insertChild(
   child: Node | VirtualNode,
   before: Node | VirtualNode | null = null
 ): void {
-  const beforeNode = before instanceof VirtualNode ? before.root : before;
+  const beforeNode = before instanceof VirtualNode ? before.firstChild : before;
   if (child instanceof VirtualNode) {
     child.mount(parent, beforeNode);
   } else if (beforeNode) {
@@ -42,8 +42,12 @@ export function replaceChild(
   removeChild(parent, child);
 }
 
-export function mapNodeTree(tree: Node): Record<number, Node> {
-  let index = 0;
+export function mapNodeTree(
+  tree: Node,
+  options?: { skipRoot?: boolean }
+): Record<number, Node> {
+  const { skipRoot = false } = options ?? {};
+  let index = skipRoot ? -1 : 0;
   const result: Record<number, Node> = {};
   const walk = (node: Node) => {
     result[index++] = node;
@@ -54,13 +58,15 @@ export function mapNodeTree(tree: Node): Record<number, Node> {
     }
   };
   walk(tree);
+  delete result[-1];
   return result;
 }
 
 export function patchChildren(
   parent: Node,
   children: (Node | VirtualNode)[],
-  nextChildren: (Node | VirtualNode)[]
+  nextChildren: (Node | VirtualNode)[],
+  before: Node | null
 ): (Node | VirtualNode)[] {
   const result: (Node | VirtualNode)[] = [];
   const currentLength = children.length;
@@ -72,7 +78,6 @@ export function patchChildren(
       result.push(node);
     } else {
       const node = nextChildren[i];
-      const before = result.at(-1)?.nextSibling ?? null;
       insertChild(parent, nextChildren[i], before);
       result.push(node);
     }
@@ -108,8 +113,8 @@ function patch(
   return next;
 }
 
-export function template(html: string): Node {
+export function template(html: string): DocumentFragment {
   const template = document.createElement('template');
   template.innerHTML = html;
-  return template.content.firstChild as Node;
+  return template.content;
 }

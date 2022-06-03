@@ -29,37 +29,40 @@ export interface NodeData {
 }
 
 export class VirtualNode {
-  root: Node | null = null;
-
   private cleanup = new Subscription();
+  private nodes: Node[] = [];
   private props: ProxyState<NodeData> = {} as any;
 
   get isComponent(): boolean {
     return typeof this.template === 'function';
   }
 
+  get firstChild(): Node | null {
+    return this.nodes[0] ?? null;
+  }
+
   get nextSibling(): Node | null {
-    return this.root?.nextSibling ?? null;
+    return this.nodes.at(-1)?.nextSibling ?? null;
   }
 
   constructor(
-    readonly template: Node | ((props?: any) => VirtualNode),
+    readonly template: DocumentFragment | ((props?: any) => VirtualNode),
     public data?: NodeData
   ) {}
 
-  mount(parent: Node, before: Node | null = null): Node {
+  mount(parent: Node, before: Node | null = null): Node[] {
     this.props = this.createProps(this.data ?? {});
 
     // is Component
     if (typeof this.template === 'function') {
       const template = this.template(this.props);
-      this.root = template.mount(parent, before);
-      return this.root;
+      this.nodes = template.mount(parent, before);
+      return this.nodes;
     }
 
     // is Node
-    this.root = this.template.cloneNode(true);
-    const tree = mapNodeTree(this.root);
+    const clone = this.template.cloneNode(true);
+    const tree = mapNodeTree(clone, { skipRoot: true });
 
     for (let key in this.data) {
       const node = tree[Number(key)];
@@ -67,12 +70,13 @@ export class VirtualNode {
       this.handleNode(tree, node, data);
     }
 
-    insertChild(parent, this.root, before);
+    this.nodes = Array.from(clone.childNodes);
+    insertChild(parent, clone, before);
     delete this.data;
-    return this.root;
+    return this.nodes;
   }
 
-  patch(data: NodeData) {
+  patch(data?: NodeData) {
     if (!this.isComponent) {
       data = this.normalizeData(data);
     }
@@ -95,13 +99,13 @@ export class VirtualNode {
         prop.complete();
       }
     }
-    if (this.root) {
-      removeChild(parent, this.root);
+    if (this.nodes) {
+      this.nodes.forEach(node => removeChild(parent, node));
     }
     this.cleanup.unsubscribe();
     this.data = {};
     this.props = {} as any;
-    this.root = null;
+    this.nodes = [];
   }
 
   private createProps(data: NodeData): ProxyState<NodeData> {
@@ -177,37 +181,38 @@ export class VirtualNode {
   }
 
   private insert(parent: Node, data: any, before: Node | null): void {
-    let nodes: (Node | VirtualNode)[];
-
     if (typeof data === 'function') {
+      let nodes: (Node | VirtualNode)[] = [];
       let lastValue = {} as { value?: any };
+
+      // insert placeholder node
+      const placeholder = document.createComment('');
+      insertChild(parent, placeholder, before);
+
+      // subscribe effect
       const subscription = effect<JSX.Children>(data).subscribe(value => {
         if (!lastValue.hasOwnProperty('value') || lastValue.value !== value) {
           lastValue = { value };
-          const nextNodes = coerceArray(value).flat().map(coerceNode);
-          if (nextNodes.length === 0) {
-            nextNodes.push(document.createComment(''));
-          }
-          if (nodes) {
-            nodes = patchChildren(parent, nodes, nextNodes);
-          } else {
-            nodes = nextNodes;
-          }
+          nodes = patchChildren(
+            parent,
+            nodes,
+            coerceArray(value).flat().map(coerceNode),
+            placeholder
+          );
         }
       });
-      this.cleanup.add(subscription);
-      // @ts-expect-error
-      if (!nodes || nodes.length === 0) {
-        nodes = [document.createComment('')];
-      }
-    } else {
-      nodes = coerceArray(data).flat().map(coerceNode);
-    }
 
-    nodes.forEach(node => insertChild(parent, node, before));
+      // add cleanup
+      this.cleanup.add(subscription);
+    } else {
+      // insert node
+      coerceArray(data)
+        .flat()
+        .forEach(node => insertChild(parent, coerceNode(node), before));
+    }
   }
 
-  private normalizeData(data: NodeData): NodeData {
+  private normalizeData(data?: NodeData): NodeData {
     const result: NodeData = {};
     for (let key in data) {
       const props = data[key];
@@ -264,7 +269,7 @@ export class VirtualNode {
 }
 
 export function h(
-  template: Node | ((props?: any) => VirtualNode),
+  template: DocumentFragment | ((props?: any) => VirtualNode),
   data: NodeData
 ): VirtualNode {
   return new VirtualNode(template, data);
