@@ -214,15 +214,21 @@ export class VirtualNode {
 
   private normalizeData(data?: NodeData): NodeData {
     const result: NodeData = {};
+
+    const isStatic = (value: any, key?: string) =>
+      key?.startsWith('on:') ||
+      value instanceof VirtualNode ||
+      typeof value === 'function';
+
     for (let key in data) {
       const props = data[key];
       for (let prop in props) {
-        if (prop.startsWith('on:') || typeof props[prop] === 'function') {
+        if (isStatic(props[prop], prop)) {
           continue;
         }
         if (prop === 'children') {
           for (let i = 0; i < props.children.length; i++) {
-            if (typeof props.children[i][0] === 'function') {
+            if (isStatic(props.children[i][0])) {
               continue;
             }
             const name = `${key}:${prop}:${i}`;
@@ -236,6 +242,7 @@ export class VirtualNode {
         }
       }
     }
+
     return result;
   }
 
