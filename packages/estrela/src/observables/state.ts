@@ -30,14 +30,6 @@ export class State<T> extends Subscriber<T> implements Subscribable<T> {
     return this.next(this._value);
   }
 
-  error(err: any) {
-    super.error(err);
-  }
-
-  complete() {
-    super.complete();
-  }
-
   subscribe(
     observer?: PartialObserver<T>,
     options: { initialEmit?: boolean } = {}

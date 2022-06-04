@@ -6,6 +6,7 @@ const _tmpl = template(
   ),
   _tmpl1 = template('<li></li>');
 
+let nextId = 1;
 const list = createState<number[]>([]);
 
 function Row(props: { id: number }) {
@@ -18,7 +19,7 @@ function Row(props: { id: number }) {
 function App() {
   return h(_tmpl, {
     4: {
-      'on:click': () => list.update(items => [...items, items.length + 1]),
+      'on:click': () => list.update(items => [...items, nextId++]),
     },
     6: {
       'on:click': () =>

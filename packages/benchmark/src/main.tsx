@@ -63,9 +63,7 @@ const N = [
 ];
 
 let nextId = 1;
-
 const random = (max: number) => Math.round(Math.random() * 1000) % max;
-
 const buildData = (count: number) => {
   const data: RowData[] = new Array(count);
 
@@ -83,6 +81,7 @@ const buildData = (count: number) => {
 
 const data = createState<RowData[]>([]);
 const selected = createState(0);
+const version = '0.10.0';
 
 const actions = {
   run: () => {
@@ -190,7 +189,7 @@ const Button = (props: {
   });
 
 const Jumbotron_tmpl = template(
-  '<div class="jumbotron"><div class="row"><div class="col-md-6"><h1>Estrela Hooks keyed</h1></div><div class="col-md-6"><div class="row"></div></div></div></div>'
+  '<div class="jumbotron"><div class="row"><div class="col-md-6"><h1>Estrela v<!> keyed</h1></div><div class="col-md-6"><div class="row"></div></div></div></div>'
 );
 // return (
 //   <div class="jumbotron">
@@ -233,7 +232,8 @@ const Jumbotron_tmpl = template(
 // );
 const Jumbotron = () =>
   h(Jumbotron_tmpl, {
-    6: {
+    3: { children: [[version, 5]] },
+    8: {
       children: [
         [
           h(Button, {
@@ -297,9 +297,11 @@ const Main_tmpl = template(
 // );
 const Main = () =>
   h(Main_tmpl, {
-    0: { children: [[h(Jumbotron, {}), 1]] },
+    0: {
+      children: [[h(Jumbotron, {}), 1]],
+    },
     2: {
-      children: [[() => data.$.map(item => h(Row, { item, key: item.id }))]],
+      children: [[() => data.$.map(item => h(Row, { item }, item.id))]],
     },
   });
 

@@ -73,57 +73,6 @@ export function mapNodeTree(
   return result;
 }
 
-export function patchChildren(
-  parent: Node,
-  children: (Node | VirtualNode)[],
-  nextChildren: (Node | VirtualNode)[],
-  before: Node | null
-): (Node | VirtualNode)[] {
-  const result: (Node | VirtualNode)[] = [];
-  const currentLength = children.length;
-  const nextLength = nextChildren.length;
-
-  for (let i = 0; i < nextLength; i++) {
-    if (i < currentLength) {
-      const node = patch(parent, children[i], nextChildren[i]);
-      result.push(node);
-    } else {
-      const node = nextChildren[i];
-      insertChild(parent, node, before);
-      result.push(node);
-    }
-  }
-  for (let i = currentLength - 1; i >= nextLength; i--) {
-    removeChild(parent, children[i]);
-  }
-  return result;
-}
-
-function patch(
-  parent: Node,
-  node: Node | VirtualNode,
-  next: Node | VirtualNode
-): Node | VirtualNode {
-  if (node === next) {
-    return node;
-  }
-  if (node instanceof VirtualNode && next instanceof VirtualNode) {
-    if (node.template === next.template) {
-      node.patch(next.data);
-      return node;
-    }
-  }
-  if (node instanceof Text) {
-    const nextContent = next instanceof Node ? next.textContent : String(next);
-    if (node.textContent !== nextContent) {
-      node.textContent = nextContent;
-    }
-    return node;
-  }
-  replaceChild(parent, next, node);
-  return next;
-}
-
 export function template(html: string): DocumentFragment {
   const template = document.createElement('template');
   template.innerHTML = html;

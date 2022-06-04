@@ -3,14 +3,15 @@ import { StateProxy } from '../state-proxy';
 import { Key } from '../types/types';
 import { coerceArray } from '../utils';
 import { effect } from './effect';
+import { addEventListener } from './events';
 import {
   coerceNode,
   insertChild,
   mapNodeTree,
-  patchChildren,
   removeChild,
   setAttribute,
 } from './node-api';
+import { patchChildren } from './patch';
 import { StateProxyHandler } from './proxy-handler';
 
 type NodeInsertion = [JSX.Children, number | null];
@@ -24,7 +25,7 @@ export class VirtualNode {
   private cleanup = new Subscription();
   private mounted = false;
   private nodes: Node[] = [];
-  private props: StateProxy<NodeData> = {} as any;
+  private props?: StateProxy<NodeData>;
   private componentNode?: VirtualNode;
 
   get isComponent(): boolean {
@@ -44,6 +45,23 @@ export class VirtualNode {
     public data?: NodeData,
     public key?: Key
   ) {}
+
+  dispose(): void {
+    if (this.componentNode) {
+      this.componentNode.dispose();
+    }
+    for (let key in this.props) {
+      const prop = this.props.$[key];
+      if (isCompletable(prop)) {
+        prop.complete();
+      }
+    }
+    delete this.props;
+    this.cleanup.unsubscribe();
+    this.cleanup = new Subscription();
+    this.mounted = false;
+    this.nodes = [];
+  }
 
   mount(parent: Node, before: Node | null = null): Node[] {
     if (this.mounted) {
@@ -86,31 +104,20 @@ export class VirtualNode {
       if (
         !key.startsWith('on:') &&
         typeof value !== 'function' &&
-        this.props[key] !== value
+        this.props?.[key] !== value
       ) {
-        this.props.$[key].next(value);
+        this.props?.$[key].next(value);
       }
     }
   }
 
   unmount(parent: Node) {
-    for (let key in this.props) {
-      const prop = this.props.$[key];
-      if (isCompletable(prop)) {
-        prop.complete();
-      }
-    }
-    this.props = {} as any;
-    this.cleanup.unsubscribe();
-    this.cleanup = new Subscription();
     if (this.componentNode) {
       this.componentNode.unmount(parent);
     } else {
       this.nodes.forEach(node => removeChild(parent, node));
     }
-    delete this.key;
-    this.nodes = [];
-    this.mounted = false;
+    this.dispose();
   }
 
   private createProps(data: NodeData): StateProxy<NodeData> {
@@ -132,9 +139,7 @@ export class VirtualNode {
         });
       } else if (key.startsWith('on:')) {
         const eventName = key.substring(3);
-        const handler = data[key];
-        node.addEventListener(eventName, handler);
-        this.cleanup.add(() => node.removeEventListener(eventName, handler));
+        this.cleanup.add(addEventListener(node, eventName, data[key]));
       } else {
         this.setAttribute(node, key, data[key]);
       }
@@ -144,7 +149,7 @@ export class VirtualNode {
   private insert(parent: Node, data: any, before: Node | null): void {
     if (typeof data === 'function') {
       let lastValue: any = undefined;
-      let nodes: (Node | VirtualNode)[] = [];
+      let lastNodes: any = new Map();
 
       // insert placeholder node
       const placeholder = document.createComment('');
@@ -154,9 +159,9 @@ export class VirtualNode {
       const subscription = effect<JSX.Children>(data).subscribe(value => {
         if (lastValue !== value) {
           lastValue = value;
-          nodes = patchChildren(
+          lastNodes = patchChildren(
             parent,
-            nodes,
+            lastNodes,
             coerceArray(value).flat().map(coerceNode),
             placeholder
           );
@@ -194,12 +199,12 @@ export class VirtualNode {
             }
             const name = `${key}:${prop}:${i}`;
             result[name] = props.children[i][0];
-            props.children[i][0] = () => this.props[name];
+            props.children[i][0] = () => this.props?.[name];
           }
         } else {
           const name = `${key}:${prop}`;
           result[name] = props[prop];
-          props[prop] = () => this.props[name];
+          props[prop] = () => this.props?.[name];
         }
       }
     }
