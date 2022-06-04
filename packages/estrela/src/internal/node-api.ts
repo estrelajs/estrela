@@ -89,7 +89,7 @@ export function patchChildren(
       result.push(node);
     } else {
       const node = nextChildren[i];
-      insertChild(parent, nextChildren[i], before);
+      insertChild(parent, node, before);
       result.push(node);
     }
   }

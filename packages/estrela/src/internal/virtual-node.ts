@@ -22,6 +22,7 @@ export interface NodeData {
 
 export class VirtualNode {
   private cleanup = new Subscription();
+  private mounted = false;
   private nodes: Node[] = [];
   private props: StateProxy<NodeData> = {} as any;
   private componentNode?: VirtualNode;
@@ -40,11 +41,18 @@ export class VirtualNode {
 
   constructor(
     readonly template: DocumentFragment | ((props?: any) => VirtualNode),
-    public data?: NodeData
+    public data?: NodeData,
+    public key?: Key
   ) {}
 
   mount(parent: Node, before: Node | null = null): Node[] {
+    if (this.mounted) {
+      this.nodes.forEach(node => insertChild(parent, node, before));
+      return this.nodes;
+    }
+
     this.props = this.createProps(this.data ?? {});
+    this.mounted = true;
 
     // is Component
     if (typeof this.template === 'function') {
@@ -100,7 +108,9 @@ export class VirtualNode {
     } else {
       this.nodes.forEach(node => removeChild(parent, node));
     }
+    delete this.key;
     this.nodes = [];
+    this.mounted = false;
   }
 
   private createProps(data: NodeData): StateProxy<NodeData> {
@@ -219,7 +229,8 @@ export class VirtualNode {
 
 export function h(
   template: DocumentFragment | ((props?: any) => VirtualNode),
-  data: NodeData
+  data: NodeData,
+  key?: Key
 ): VirtualNode {
-  return new VirtualNode(template, data);
+  return new VirtualNode(template, data, key);
 }

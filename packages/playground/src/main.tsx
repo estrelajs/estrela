@@ -2,47 +2,40 @@ import { createState, render } from 'estrela';
 import { h, template } from 'estrela/internal';
 
 const _tmpl = template(
-    '<div><h1>Hello World!</h1><div><button id="add">Add</button><button id="addlot">Add 10,000</button><button id="remove">Remove</button></div><ul><li>Header</li><li>Footer</li></ul></div>'
+    '<div><h1>Hello World!</h1><div><button id="add">Add</button><button id="addlot">Add 10,000</button><button id="remove">Remove</button><button id="shuffle">Suffle</button></div><ul><li>Header</li><li>Footer</li></ul></div>'
   ),
   _tmpl1 = template('<li></li>');
 
-const list = createState<any[]>([]);
+const list = createState<number[]>([]);
 
-function Row(props: { item: string }) {
+function Row(props: { id: number }) {
+  const random = Math.random();
   return h(_tmpl1, {
-    0: { class: 'item', children: [[() => props.item, null]] },
+    0: { class: 'item', children: [[() => `${props.id} - ${random}`, null]] },
   });
 }
 
 function App() {
   return h(_tmpl, {
     4: {
-      'on:click': () =>
-        list.update(l => Array(l.length + 1).fill(l.length + 1)),
+      'on:click': () => list.update(items => [...items, items.length + 1]),
     },
     6: {
       'on:click': () =>
         list.next(
           Array(10000)
             .fill(null)
-            .map((_, i) => `item ${i + 1}`)
+            .map((_, i) => i + 1)
         ),
     },
     8: {
-      'on:click': () => list.update(l => l.slice(0, -1)),
+      'on:click': () => list.update(items => items.slice(0, -1)),
     },
     10: {
-      children: [
-        [
-          () =>
-            list.$.map(item =>
-              h(_tmpl1, {
-                0: { class: 'item', children: [[item, null]] },
-              })
-            ),
-          13,
-        ],
-      ],
+      'on:click': () => list.update(items => items.reverse().slice()),
+    },
+    12: {
+      children: [[() => list.$.map(id => h(Row, { id }, id)), 15]],
     },
   });
 }
