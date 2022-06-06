@@ -11,7 +11,6 @@ export function patchChildren(
   before: Node | null
 ): Map<Key, NodeOrVNode> {
   const result = new Map<Key, NodeOrVNode>();
-  const replaces: [Comment, NodeOrVNode][] = [];
   const children = childrenMap.values();
 
   if (childrenMap.size > 0 && nextChildren.length === 0) {
@@ -40,11 +39,23 @@ export function patchChildren(
     return result;
   }
 
+  const replaces: [Comment, NodeOrVNode][] = [];
+  const nextChildrenMap = mapKeys(nextChildren);
+
   for (let i = 0; i < nextChildren.length; i++) {
+    let currChild = children.next().value;
+    let currKey = getKey(currChild, i);
+
+    while (currChild && !nextChildrenMap.has(currKey)) {
+      removeChild(parent, currChild);
+      childrenMap.delete(currKey);
+      currChild = children.next().value;
+      currKey = getKey(currChild, i);
+    }
+
     let child = nextChildren[i];
-    const key = getKey(child) ?? i;
+    const key = getKey(child, i);
     const origChild = childrenMap.get(key);
-    const currChild = children.next().value;
 
     if (currChild || origChild) {
       if (currChild === origChild) {
@@ -64,6 +75,7 @@ export function patchChildren(
     }
 
     result.set(key, child);
+    // childrenMap.delete(key);
   }
 
   replaces.forEach(([placeholder, child]) =>
@@ -103,7 +115,18 @@ function patch(
   return next;
 }
 
-function getKey(node?: NodeOrVNode): Key | undefined {
+function mapKeys(children: NodeOrVNode[]): Map<Key, NodeOrVNode> {
+  const result = new Map<Key, NodeOrVNode>();
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i];
+    const key = getKey(child, i);
+    result.set(key, child);
+  }
+  return result;
+}
+
+function getKey(node: NodeOrVNode | undefined, index: number): Key {
   const key = node instanceof VirtualNode ? node.key : (node as Element)?.id;
-  return key === '' ? undefined : key;
+  let result = key === '' ? undefined : key;
+  return result ?? `_$${index}$`;
 }

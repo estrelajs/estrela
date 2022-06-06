@@ -2,7 +2,7 @@ import { createState, render } from 'estrela';
 import { h, template } from 'estrela/internal';
 
 const _tmpl = template(
-    '<div><h1>Hello World!</h1><div><button id="add">Add</button><button id="addlot">Add 10,000</button><button id="remove">Remove</button><button id="shuffle">Suffle</button></div><ul><li>Header</li><li>Footer</li></ul></div>'
+    '<div><h1>Hello World!</h1><div><button>Add</button><button>Remove first</button><button>Remove last</button><button>Suffle</button></div><ul><li>Header</li><li>Footer</li></ul></div>'
   ),
   _tmpl1 = template('<li></li>');
 
@@ -22,12 +22,7 @@ function App() {
       'on:click': () => list.update(items => [...items, nextId++]),
     },
     6: {
-      'on:click': () =>
-        list.next(
-          Array(10000)
-            .fill(null)
-            .map((_, i) => i + 1)
-        ),
+      'on:click': () => list.update(items => items.slice(1)),
     },
     8: {
       'on:click': () => list.update(items => items.slice(0, -1)),
