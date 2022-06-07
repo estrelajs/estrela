@@ -142,23 +142,7 @@ function transformElement(
       }
     } else {
       result.template += `<${tagName}`;
-
-      // attributes
-      for (const prop in props) {
-        const value = props[prop];
-        if (value === true) {
-          result.template += ` ${prop}`;
-          delete props[prop];
-        }
-        if (typeof value === 'string' || typeof value === 'number') {
-          result.template += ` ${prop}="${value}"`;
-          delete props[prop];
-        }
-      }
-      if (Object.keys(props).length > 0) {
-        result.props[result.index] = props;
-      }
-
+      handleAttributes(props, result);
       result.template += '>';
       transformChildren(path, result);
       result.template += `</${tagName}>`;
@@ -185,6 +169,73 @@ function getChildren(path: NodePath<t.JSXElement>) {
       }
       return child.node;
     });
+}
+
+function handleAttributes(props: Record<string, any>, result: Result): void {
+  let klass = '';
+  let style = '';
+
+  for (const prop in props) {
+    const value = props[prop];
+
+    if (prop === 'class' && typeof value === 'string') {
+      klass += ` ${value}`;
+      delete props[prop];
+      continue;
+    }
+    if (/^class:/.test(prop)) {
+      if (value === true) {
+        const name = prop.replace(/^class:/, '');
+        klass += ` ${name}`;
+        delete props[prop];
+        continue;
+      }
+      if (value === false) {
+        delete props[prop];
+        continue;
+      }
+    }
+
+    if (prop === 'style' && typeof value === 'string') {
+      style += `${value}${value.at(-1) === ';' ? '' : ';'}`;
+      delete props[prop];
+      continue;
+    }
+    if (/^style:/.test(prop)) {
+      if (typeof value === 'string' || typeof value === 'number') {
+        const name = prop.replace(/^style:/, '');
+        style += `${name}:${value};`;
+        delete props[prop];
+        continue;
+      }
+    }
+
+    if (value === true) {
+      result.template += ` ${prop}`;
+      delete props[prop];
+    }
+    if (value === false) {
+      delete props[prop];
+    }
+    if (typeof value === 'string' || typeof value === 'number') {
+      result.template += ` ${prop}="${value}"`;
+      delete props[prop];
+    }
+  }
+
+  if (Object.keys(props).length > 0) {
+    result.props[result.index] = props;
+  }
+
+  klass = klass.trim();
+  style = style.trim();
+
+  if (klass) {
+    result.template += ` class="${klass}"`;
+  }
+  if (style) {
+    result.template += ` style="${style}"`;
+  }
 }
 
 function transformChildren(path: NodePath<JSXElement>, result: Result): void {

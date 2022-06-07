@@ -211,7 +211,7 @@ export class VirtualNode {
   }
 
   private setAttribute(node: Node, key: string, data: any): void {
-    const element = node as Element;
+    const element = node as HTMLElement;
     if (!element.setAttribute) {
       return;
     }

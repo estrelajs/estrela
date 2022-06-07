@@ -3,7 +3,7 @@ import { render } from 'estrela';
 function Row(props: { id: number }) {
   const random = Math.random();
   return (
-    <li class="item">
+    <li>
       {() => props.id} - {random}
     </li>
   );
@@ -11,11 +11,11 @@ function Row(props: { id: number }) {
 
 function App() {
   let list: number[] = [];
-  var nextId = 1;
+  let nextId = 1;
 
   return (
     <div>
-      <h1>Hello World!</h1>
+      <h1 style:color={nextId > 5 ? 'red' : ''}>Hello World!</h1>
       <div>
         <button on:click={() => (list = [...list, nextId++])}>Add</button>
         <button on:click={() => (list = list.slice(1))}>Remove first</button>

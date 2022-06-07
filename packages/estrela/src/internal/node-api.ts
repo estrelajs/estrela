@@ -43,7 +43,29 @@ export function replaceChild(
   removeChild(parent, child);
 }
 
-export function setAttribute(element: Element, attr: string, value: any): void {
+export function setAttribute(
+  element: HTMLElement,
+  attr: string,
+  value: any
+): void {
+  if (/$class:/.test(attr)) {
+    const klass = attr.replace(/^class:/, '');
+    if (isFalsy(value)) {
+      element.classList.remove(klass);
+    } else {
+      element.classList.add(klass);
+    }
+    return;
+  }
+
+  if (/^style:/.test(attr)) {
+    const style = attr.replace(/^style:/, '');
+    if (style in element.style) {
+      element.style[style as any] = value;
+    }
+    return;
+  }
+
   if (isFalsy(value)) {
     element.removeAttribute(attr);
   } else if (value === true) {
