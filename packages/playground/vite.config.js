@@ -1,10 +1,10 @@
 import path from 'path';
 import { defineConfig } from 'vite';
-import estrela from 'vite-plugin-estrela';
+import estrela from '../vite-plugin-estrela/src';
 
 export default defineConfig({
-  // base: '/estrela/',
-  // plugins: [estrela()],
+  base: '/estrela/',
+  plugins: [estrela()],
   resolve: {
     alias: [
       {

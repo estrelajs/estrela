@@ -30,7 +30,7 @@ type EmittersOf<P> = {
 declare global {
   namespace JSX {
     type Element = VirtualNode;
-    type Child =
+    type Children =
       | string
       | number
       | boolean
@@ -38,8 +38,10 @@ declare global {
       | Element
       | Selector
       | Subscribable<any>
-      | Promise<any>;
-    type Children = Child | Array<Child>;
+      | Promise<any>
+      | Children[]
+      | null
+      | undefined;
     type Selector = () => Children;
     type LibraryManagedAttributes<C, P> = PropsOf<P>;
     interface ElementChildrenAttribute {

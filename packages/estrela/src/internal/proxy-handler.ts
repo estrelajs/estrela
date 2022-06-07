@@ -2,7 +2,9 @@ import {
   createEventEmitter,
   createState,
   EventEmitter,
+  from,
   isNextable,
+  isSelectable,
   State,
   Subscription,
 } from '../observables';
@@ -29,10 +31,10 @@ export class StateProxyHandler implements ProxyHandler<any> {
   }
 
   private getState(target: any, prop: string): State<any> | EventEmitter<any> {
+    let state: State<any> | EventEmitter<any>;
     if (prop in target) {
       return target[prop];
     }
-    let state: State<any> | EventEmitter<any>;
     if (this.data.hasOwnProperty(`on:${prop}`)) {
       state = createEventEmitter();
       const subscription = state.subscribe(e => {
@@ -46,10 +48,15 @@ export class StateProxyHandler implements ProxyHandler<any> {
       this.cleanup?.add(subscription);
     } else {
       const value = this.data[prop];
-      state = createState(this.data[prop]);
+      state = createState();
       if (typeof value === 'function') {
-        const subscription = effect(value).subscribe(state);
-        this.cleanup?.add(subscription);
+        this.cleanup?.add(effect(value).subscribe(state));
+      } else if (value instanceof State) {
+        this.cleanup?.add(value.subscribe(state, { initialEmit: true }));
+      } else if (isSelectable(value)) {
+        this.cleanup?.add(from(value).subscribe(state));
+      } else {
+        state.next(value);
       }
     }
     target[prop] = state;

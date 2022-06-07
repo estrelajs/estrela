@@ -1,14 +1,14 @@
 import { isFalsy } from '../utils';
 import { VirtualNode } from './virtual-node';
 
-export function coerceNode(node: JSX.Child): Node | VirtualNode {
+export function coerceNode(node: JSX.Children): Node | VirtualNode {
   if (node instanceof VirtualNode) {
     return node;
   }
   if (node instanceof Node) {
     return node;
   }
-  return document.createTextNode(String(node));
+  return document.createTextNode(String(node ?? ''));
 }
 
 export function insertChild(

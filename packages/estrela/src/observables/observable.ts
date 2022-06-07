@@ -24,7 +24,7 @@ export class Observable<T> implements Subscribable<T> {
   constructor(
     private readonly cb: (
       subscriber: Observer<T>
-    ) => (() => void) | Unsubscribable | undefined
+    ) => (() => void) | Unsubscribable | void
   ) {}
 
   [symbol_observable]() {
@@ -34,6 +34,6 @@ export class Observable<T> implements Subscribable<T> {
   subscribe(observer?: PartialObserver<T>): Subscription {
     const subscriber = coerceObserver(observer);
     const cleanup = this.cb(subscriber);
-    return new Subscription(cleanup);
+    return new Subscription(cleanup ?? undefined);
   }
 }

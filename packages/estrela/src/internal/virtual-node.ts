@@ -151,10 +151,6 @@ export class VirtualNode {
       let lastValue: any = undefined;
       let lastNodes: any = new Map();
 
-      // insert placeholder node
-      const placeholder = document.createComment('');
-      insertChild(parent, placeholder, before);
-
       // subscribe effect
       const subscription = effect<JSX.Children>(data).subscribe(value => {
         if (lastValue !== value) {
@@ -163,7 +159,7 @@ export class VirtualNode {
             parent,
             lastNodes,
             coerceArray(value).flat().map(coerceNode),
-            placeholder
+            before
           );
         }
       });
@@ -174,7 +170,9 @@ export class VirtualNode {
       // insert node
       coerceArray(data)
         .flat()
-        .forEach(node => insertChild(parent, coerceNode(node), before));
+        .forEach(node => {
+          insertChild(parent, coerceNode(node), before);
+        });
     }
   }
 
