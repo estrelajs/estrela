@@ -4,6 +4,8 @@ import { State } from '../types';
 
 interface Result {
   index: number;
+  isLastChild: boolean;
+  parentIndex: number;
   props: Record<string, any>;
   template: string;
 }
@@ -20,10 +22,12 @@ type JSXChild =
 export function transformJSX(path: NodePath<JSXElement>): void {
   const result: Result = {
     index: 0,
+    isLastChild: false,
+    parentIndex: 0,
     props: {},
     template: '',
   };
-  transformElement(path, result);
+  transformElement(path, result, true);
   path.replaceWith(createVirtualNode(path, result));
 }
 
@@ -64,7 +68,7 @@ function createProps(props: Record<string, any>): t.ObjectExpression {
       value = createProps(props[prop]);
     }
     if (typeof value !== 'object') {
-      value = t.identifier(value);
+      value = t.stringLiteral(value);
     }
     result.push(t.objectProperty(t.stringLiteral(prop), value));
   }
@@ -112,20 +116,29 @@ function getAttrProps(path: NodePath<t.JSXElement>): Record<string, any> {
   return props;
 }
 
-function transformElement(path: NodePath<JSXElement>, result: Result): void {
+function transformElement(
+  path: NodePath<JSXElement>,
+  result: Result,
+  isRoot?: boolean
+): void {
   if (path.isJSXElement()) {
     const tagName = getTagName(path.node);
     const tagIsComponent = isComponent(tagName);
     const props = getAttrProps(path);
 
     if (tagIsComponent) {
-      result.props = props;
-      const children = getChildren(path);
-      if (children.length === 1) {
-        result.props.children = children[0];
-      }
-      if (children.length > 1) {
-        result.props.children = children;
+      if (isRoot) {
+        result.props = props;
+        const children = getChildren(path);
+        if (children.length === 1) {
+          result.props.children = children[0];
+        }
+        if (children.length > 1) {
+          result.props.children = children;
+        }
+      } else {
+        transformJSX(path);
+        replaceChild(path.node, result);
       }
     } else {
       result.template += `<${tagName}`;
@@ -160,13 +173,15 @@ function getChildren(path: NodePath<t.JSXElement>) {
   return path
     .get('children')
     .filter(isValidChild)
-    .map((child, i) => {
+    .map(child => {
       if (child.isJSXElement() || child.isJSXFragment()) {
         transformJSX(child);
       } else if (child.isJSXExpressionContainer()) {
         child.replaceWith(child.get('expression'));
       } else if (child.isJSXText()) {
         child.replaceWith(t.stringLiteral(child.node.value));
+      } else {
+        throw new Error('Unsupported JSX child');
       }
       return child.node;
     });
@@ -177,17 +192,14 @@ function transformChildren(path: NodePath<JSXElement>, result: Result): void {
   path
     .get('children')
     .filter(isValidChild)
-    .forEach((child, i, arr) =>
-      transformChild(child, result, parentIndex, i === arr.length - 1)
-    );
+    .forEach((child, i, arr) => {
+      result.parentIndex = parentIndex;
+      result.isLastChild = i === arr.length - 1;
+      transformChild(child, result);
+    });
 }
 
-function transformChild(
-  child: NodePath<JSXChild>,
-  result: Result,
-  parentIndex: number,
-  isLastChild: boolean
-) {
+function transformChild(child: NodePath<JSXChild>, result: Result) {
   result.index++;
   if (child.isJSXElement() || child.isJSXFragment()) {
     transformElement(child, result);
@@ -195,25 +207,30 @@ function transformChild(
     const expression = child.get('expression');
     if (expression.isStringLiteral()) {
       result.template += expression.node.value;
-      return;
+    } else {
+      replaceChild(expression.node as any, result);
     }
-    if (!isLastChild) {
-      result.template += '<!>';
-    }
-    result.props[parentIndex] ??= {};
-    result.props[parentIndex].children ??= [];
-    result.props[parentIndex].children.push(
-      t.arrayExpression([
-        expression.node as any,
-        isLastChild ? t.nullLiteral() : t.identifier(String(result.index)),
-      ])
-    );
   } else if (child.isJSXText()) {
     result.template += child.node.value;
-    child.replaceWith(t.stringLiteral(child.node.value));
   } else {
     throw new Error('Unsupported JSX child');
   }
+}
+
+function replaceChild(node: t.Expression, result: Result): void {
+  if (result.isLastChild) {
+    result.index--;
+  } else {
+    result.template += '<!>';
+  }
+  result.props[result.parentIndex!] ??= {};
+  result.props[result.parentIndex!].children ??= [];
+  result.props[result.parentIndex!].children.push(
+    t.arrayExpression([
+      node,
+      result.isLastChild ? t.nullLiteral() : t.identifier(String(result.index)),
+    ])
+  );
 }
 
 function getAttrName(attribute: t.JSXAttribute): string {
