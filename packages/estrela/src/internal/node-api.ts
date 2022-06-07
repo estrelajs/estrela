@@ -1,4 +1,4 @@
-import { isFalsy } from '../utils';
+import { isFalsy, toCamelCase, toKebabCase } from '../utils';
 import { VirtualNode } from './virtual-node';
 
 export function coerceNode(node: JSX.Children): Node | VirtualNode {
@@ -48,6 +48,23 @@ export function setAttribute(
   attr: string,
   value: any
 ): void {
+  if (attr === 'class') {
+    if (typeof value === 'string') {
+      element.className = value;
+    } else if (Array.isArray(value)) {
+      element.className = value.join(' ');
+    } else if (typeof value === 'object') {
+      element.className = Object.keys(value)
+        .reduce((acc, key) => {
+          if (value[key]) {
+            acc += ` ${key}`;
+          }
+          return acc;
+        }, '')
+        .trim();
+    }
+    return;
+  }
   if (/$class:/.test(attr)) {
     const klass = attr.replace(/^class:/, '');
     if (isFalsy(value)) {
@@ -58,8 +75,18 @@ export function setAttribute(
     return;
   }
 
+  if (attr === 'style') {
+    if (typeof value === 'string') {
+      element.style.cssText = value;
+    } else if (typeof value === 'object') {
+      Object.keys(value).forEach(key => {
+        element.style.setProperty(toKebabCase(key), value[key]);
+      });
+    }
+    return;
+  }
   if (/^style:/.test(attr)) {
-    const style = attr.replace(/^style:/, '');
+    const style = toCamelCase(attr.replace(/^style:/, ''));
     if (style in element.style) {
       element.style[style as any] = value;
     }

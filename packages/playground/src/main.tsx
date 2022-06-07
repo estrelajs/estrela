@@ -15,7 +15,7 @@ function App() {
 
   return (
     <div>
-      <h1 style:color={nextId > 5 ? 'red' : ''}>Hello World!</h1>
+      <h1 style={{ backgroundColor: nextId > 5 ? 'red' : '' }}>Hello World!</h1>
       <div>
         <button on:click={() => (list = [...list, nextId++])}>Add</button>
         <button on:click={() => (list = list.slice(1))}>Remove first</button>
