@@ -46,6 +46,16 @@ export class VirtualNode {
     public key?: Key
   ) {}
 
+  cloneNode(children?: boolean): VirtualNode {
+    const data = { ...this.data };
+    if (this.isComponent) {
+      return new VirtualNode(this.template, data, this.key);
+    } else {
+      const clone = (this.template as DocumentFragment).cloneNode(children);
+      return new VirtualNode(clone as DocumentFragment, data, this.key);
+    }
+  }
+
   dispose(): void {
     if (this.componentNode) {
       this.componentNode.dispose();

@@ -1,13 +1,19 @@
-import { render } from 'estrela';
+import { render, styled } from 'estrela';
 
 function Row(props: { id: number }) {
   const random = Math.random();
   return (
-    <li>
+    <li class="item">
       {() => props.id} - {random}
     </li>
   );
 }
+
+const StyledRow = styled(Row)`
+  .item {
+    background-color: red;
+  }
+`;
 
 function App() {
   let list: number[] = [];
@@ -25,7 +31,7 @@ function App() {
       <ul>
         <li>Header</li>
         {list.map(id => (
-          <Row key={id} id={id} />
+          <StyledRow key={id} id={id} />
         ))}
         <li>Footer</li>
       </ul>

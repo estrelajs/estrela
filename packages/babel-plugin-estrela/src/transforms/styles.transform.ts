@@ -12,24 +12,19 @@ export function transformStyles(path: NodePath<t.TaggedTemplateExpression>) {
     tag.get('callee').isIdentifier({ name: 'styled' });
 
   if (isStyledComponent) {
+    const idArg = tag.get('arguments')[1];
+    const styleId = idArg?.isStringLiteral()
+      ? idArg.node.value
+      : generateStyleId();
+    tag.node.arguments[1] = t.stringLiteral(styleId);
     const css = path
       .get('quasi')
       .get('quasis')
       .map(quasi => quasi.node.value.cooked ?? quasi.node.value.raw)
       .join(`/*$$*/`);
-    const styleId = generateStyleId();
-    const processedQuasis = processCss(css, styleId)
+    path.node.quasi.quasis = processCss(css, styleId)
       .split(`/*$$*/`)
       .map(str => t.templateElement({ raw: str, cooked: str }));
-    path.node.quasi.quasis = [
-      t.templateElement({ raw: '', cooked: '' }),
-      ...processedQuasis,
-    ];
-    path.node.quasi.expressions = [
-      t.stringLiteral(styleId),
-      ...path.node.quasi.expressions,
-    ];
-    path.skip();
   }
 }
 
