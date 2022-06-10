@@ -1,8 +1,12 @@
 import { isFalsy, toCamelCase, toKebabCase } from '../utils';
 import { VirtualNode } from './virtual-node';
 
-export function coerceNode(node: JSX.Children): Node | VirtualNode {
+export function coerceNode(
+  node: JSX.Children,
+  context: any
+): Node | VirtualNode {
   if (node instanceof VirtualNode) {
+    node.context = context;
     return node;
   }
   if (node instanceof Node) {
@@ -102,9 +106,7 @@ export function setAttribute(
   }
 }
 
-export function mapNodeTree(
-  tree: Node
-): Record<number, Node> {
+export function mapNodeTree(tree: Node): Record<number, Node> {
   let index = 0;
   const result: Record<number, Node> = {};
   const walk = (node: Node) => {

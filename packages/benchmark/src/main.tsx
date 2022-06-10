@@ -1,5 +1,4 @@
 import { createState, EventEmitter, render } from 'estrela';
-import { h, template } from 'estrela/internal';
 
 interface RowData {
   id: number;

@@ -22,7 +22,10 @@ export interface NodeData {
 }
 
 export class VirtualNode {
+  context: any = {};
+
   private cleanup = new Subscription();
+  private hooks: Record<string, (() => void)[]> = {};
   private mounted = false;
   private nodes: Node[] = [];
   private props?: StateProxy<NodeData>;
@@ -41,10 +44,16 @@ export class VirtualNode {
   }
 
   constructor(
-    readonly template: DocumentFragment | ((props?: any) => VirtualNode),
+    readonly template: DocumentFragment | ((props?: any, context?: any) => VirtualNode),
     public data?: NodeData,
     public key?: Key
-  ) { }
+  ) {}
+
+  addHook(name: 'init' | 'destroy', handler: () => void): void {
+    const hooks = this.hooks[name] ?? [];
+    hooks.push(handler);
+    this.hooks[name] = hooks;
+  }
 
   cloneNode(children?: boolean): VirtualNode {
     const data = { ...this.data };
@@ -84,8 +93,12 @@ export class VirtualNode {
 
     // is Component
     if (typeof this.template === 'function') {
-      this.componentNode = this.template(this.props);
+      VirtualNode.ref = this;
+      this.componentNode = this.template(this.props, this.context);
+      this.componentNode.context = this.context;
       this.nodes = this.componentNode.mount(parent, before);
+      this.hooks.init?.forEach(handler => handler());
+      VirtualNode.ref = null;
       return this.nodes;
     }
 
@@ -101,6 +114,8 @@ export class VirtualNode {
 
     this.nodes = Array.from(clone.childNodes);
     insertChild(parent, clone, before);
+    this.hooks.init?.forEach(handler => handler());
+
     delete this.data;
     return this.nodes;
   }
@@ -122,6 +137,7 @@ export class VirtualNode {
   }
 
   unmount(parent: Node) {
+    this.hooks.destroy?.forEach(handler => handler());
     if (this.componentNode) {
       this.componentNode.unmount(parent);
     } else {
@@ -178,7 +194,8 @@ export class VirtualNode {
       }
       if (node.type === 'number') {
         this.bindProp(node, 'value', state, {
-          getter: () => Number.isNaN(node.valueAsNumber) ? undefined : node.valueAsNumber,
+          getter: () =>
+            Number.isNaN(node.valueAsNumber) ? undefined : node.valueAsNumber,
           setter: value => value ?? '',
         });
       }
@@ -220,8 +237,9 @@ export class VirtualNode {
       this.bindProp(node, 'selectedIndex', state, {
         on: 'change',
         getter: () => node.options.item(node.selectedIndex)?.value,
-        setter: value => Array.from(node.options).findIndex(option => option.value === value),
-      })
+        setter: value =>
+          Array.from(node.options).findIndex(option => option.value === value),
+      });
     }
     if (node instanceof HTMLTextAreaElement) {
       this.bindProp(node, 'value', state);
@@ -283,12 +301,10 @@ export class VirtualNode {
       const subscription = effect<JSX.Children>(data).subscribe(value => {
         if (lastValue !== value) {
           lastValue = value;
-          lastNodes = patchChildren(
-            parent,
-            lastNodes,
-            coerceArray(value).flat().map(coerceNode),
-            before
-          );
+          const nextNodes = coerceArray(value)
+            .flat()
+            .map(node => coerceNode(node, this.context));
+          lastNodes = patchChildren(parent, lastNodes, nextNodes, before);
         }
       });
 
@@ -299,7 +315,7 @@ export class VirtualNode {
       coerceArray(data)
         .flat()
         .forEach(node => {
-          insertChild(parent, coerceNode(node), before);
+          insertChild(parent, coerceNode(node, this.context), before);
         });
     }
   }
@@ -357,6 +373,8 @@ export class VirtualNode {
       setAttribute(element, key, data);
     }
   }
+
+  static ref: VirtualNode | null = null;
 }
 
 export function h(

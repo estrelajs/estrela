@@ -1,8 +1,13 @@
 import { EventEmitter, State } from '../observables';
 import { StateProxy } from '../state-proxy';
 
-export interface Component<P = {}, C = JSX.Children> {
-  (props: P extends { children: any } ? P : P & { children?: C }): JSX.Element;
+export interface Component<Props = {}, Children = JSX.Children, Context = {}> {
+  (
+    props: Props extends { children: any }
+      ? Props
+      : Props & { children?: Children },
+    context: Context
+  ): JSX.Element;
 }
 
 export type EventHandler<T> = ((value: T) => void) | EventEmitter<T> | State<T>;

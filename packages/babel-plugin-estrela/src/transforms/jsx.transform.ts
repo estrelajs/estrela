@@ -69,7 +69,21 @@ function createProps(props: Record<string, any>): t.ObjectExpression {
       value = createProps(props[prop]);
     }
     if (typeof value !== 'object') {
-      value = t.stringLiteral(value);
+      if (typeof value === 'string') {
+        value = t.stringLiteral(value);
+      }
+      if (typeof value === 'number') {
+        value = t.numericLiteral(value);
+      }
+      if (typeof value === 'boolean') {
+        value = t.booleanLiteral(value);
+      }
+      if (typeof value === null) {
+        value = t.nullLiteral();
+      }
+      if (typeof value === 'undefined') {
+        value = t.identifier('undefined');
+      }
     }
     result.push(t.objectProperty(t.stringLiteral(prop), value));
   }
@@ -103,7 +117,7 @@ function getAttrProps(path: NodePath<t.JSXElement>): Record<string, any> {
               transformJSX(expression);
               props[name] = expression.node;
             } else if (expression.isExpression()) {
-              if (/^ref|on:.+|bind.*$/.test(name)) {
+              if (/^key|ref|on:.+|bind.*$/.test(name)) {
                 props[name] = expression.node;
               } else {
                 props[name] = t.arrowFunctionExpression([], expression.node);

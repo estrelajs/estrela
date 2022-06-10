@@ -1,49 +1,39 @@
 import { createStateProxy, render } from 'estrela';
 
-// function Row(props: { id: number }) {
-//   const random = Math.random();
-//   return (
-//     <li class="item">
-//       {() => props.id} - {random}
-//     </li>
-//   );
-// }
+function Row(props: { id: number }) {
+  const random = Math.random();
+  return (
+    <li class="item">
+      {props.id} - {random}
+    </li>
+  );
+}
 
-// const StyledRow = styled(Row)`
-//   .item {
-//     background-color: red;
-//   }
-// `;
+function App() {
+  let list: number[] = [];
+  let nextId = 1;
 
-// function App(props: { ref?: { test: string } }) {
-//   const divRef = createState<HTMLDivElement>();
-//   let list: number[] = [];
-//   let nextId = 1;
+  return (
+    <div>
+      <h1>Hello World!</h1>
+      <div>
+        <button on:click={() => (list = [...list, nextId++])}>Add</button>
+        <button on:click={() => (list = list.slice(1))}>Remove first</button>
+        <button on:click={() => (list = list.slice(0, -1))}>Remove last</button>
+        <button on:click={() => (list = list.reverse().slice())}>Suffle</button>
+      </div>
+      <ul>
+        <li>Header</li>
+        {list.map(id => (
+          <Row key={id} id={id} />
+        ))}
+        <li>Footer</li>
+      </ul>
+    </div>
+  );
+}
 
-//   divRef.subscribe(console.log);
-//   props.ref = { test: 'test' };
-
-//   return (
-//     <div>
-//       <h1 style={{ backgroundColor: nextId > 5 ? 'red' : '' }}>Hello World!</h1>
-//       <div ref={divRef}>
-//         <button on:click={() => (list = [...list, nextId++])}>Add</button>
-//         <button on:click={() => (list = list.slice(1))}>Remove first</button>
-//         <button on:click={() => (list = list.slice(0, -1))}>Remove last</button>
-//         <button on:click={() => (list = list.reverse().slice())}>Suffle</button>
-//       </div>
-//       <ul>
-//         <li>Header</li>
-//         {list.map(id => (
-//           <StyledRow key={id} id={id} />
-//         ))}
-//         <li>Footer</li>
-//       </ul>
-//     </div>
-//   );
-// }
-
-function App(props: { log: (value: any) => void }) {
+function Forms() {
   const state = createStateProxy({
     text: 'test',
     number: 0,
@@ -52,12 +42,9 @@ function App(props: { log: (value: any) => void }) {
     radio: 'apple',
     select: 'apple',
   });
-
   return (
     <>
-      <h1 ref={props.log} on:click={() => props.log('click')}>
-        Forms Test
-      </h1>
+      <h1>Forms Test</h1>
       <form>
         <div>
           <label>Input: </label>
@@ -114,8 +101,15 @@ function App(props: { log: (value: any) => void }) {
         </div>
         <div>Output: "{state.select}"</div>
       </form>
+
+      <table>
+        <tbody>
+          <Row id={1} />
+          <Row id={2} />
+        </tbody>
+      </table>
     </>
   );
 }
 
-render(<App log={console.log} />, document.getElementById('app')!);
+render(<Forms />, document.getElementById('app')!);

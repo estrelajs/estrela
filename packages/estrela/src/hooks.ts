@@ -1,13 +1,18 @@
+import { VirtualNode } from './internal';
 import { createState, State } from './observables';
 import { StateProxy } from './state-proxy';
 import { Key } from './types/types';
 
-const ComponentRef = null as any;
+/** Call the callback function when component is initialized. */
+export function onInit(callback: () => void): void {
+  throwIfOutsideComponent();
+  VirtualNode.ref?.addHook('init', callback);
+}
 
 /** Call the callback function when component is destroyed. */
 export function onDestroy(callback: () => void): void {
   throwIfOutsideComponent();
-  ComponentRef.currentRef?.pushHook('destroy', callback);
+  VirtualNode.ref?.addHook('destroy', callback);
 }
 
 /** Get the state reference of a local variable. */
@@ -21,30 +26,24 @@ export function getState(state: any, name?: any): State<any> {
     : createState(state);
 }
 
-/** Get component context. */
-export function getContext<T extends Object>(): T | undefined;
-export function getContext<T>(key: Key): T | undefined;
-export function getContext(key?: Key) {
-  throwIfOutsideComponent();
-  const node = ComponentRef.currentRef!.node;
-  return key ? node.context[key] : node.context;
-}
-
 /** Set component context. */
-export function setContext<T extends Object>(context: T): void;
-export function setContext<T>(key: Key, value: T): void;
+export function setContext(key: Key, value: any): void;
+export function setContext(context: any): void;
 export function setContext(keyOrContext: any, value?: any): void {
   throwIfOutsideComponent();
-  const node = ComponentRef.currentRef!.node;
+  const context = VirtualNode.ref?.context;
   if (typeof keyOrContext === 'object') {
-    node.context = keyOrContext;
+    VirtualNode.ref!.context = keyOrContext;
+  } else if (context && typeof context === 'object') {
+    VirtualNode.ref!.context = { ...VirtualNode.ref!.context };
+    VirtualNode.ref!.context[keyOrContext] = value;
   } else {
-    node.context[keyOrContext] = value;
+    VirtualNode.ref!.context = keyOrContext;
   }
 }
 
 function throwIfOutsideComponent() {
-  if (!ComponentRef.currentRef) {
+  if (!VirtualNode.ref) {
     throw new Error(
       'Out of Context! You can only use this function inside a component.'
     );
