@@ -15,10 +15,6 @@ export default defineConfig({
         replacement: path.resolve(__dirname, '../estrela/src/router'),
       },
       {
-        find: 'estrela/store',
-        replacement: path.resolve(__dirname, '../estrela/src/store'),
-      },
-      {
         find: 'estrela',
         replacement: path.resolve(__dirname, '../estrela/src'),
       },

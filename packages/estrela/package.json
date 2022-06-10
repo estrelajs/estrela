@@ -36,12 +36,6 @@
       "node": "./dist/csj/router.js",
       "require": "./dist/csj/router.js",
       "default": "./dist/esm/router.js"
-    },
-    "./store": {
-      "types": "./dist/types/store/index.d.ts",
-      "node": "./dist/csj/store.js",
-      "require": "./dist/csj/store.js",
-      "default": "./dist/esm/store.js"
     }
   },
   "scripts": {
