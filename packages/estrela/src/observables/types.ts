@@ -15,7 +15,7 @@ export interface Observer<T> {
 export type PartialObserver<T> = ((value: T) => void) | Partial<Observer<T>>;
 
 export interface Subscribable<T> {
-  subscribe(observer?: PartialObserver<T>): Unsubscribable;
+  subscribe(observer?: PartialObserver<T>, options?: any): Unsubscribable;
 }
 
 export interface SubscriberLike<T> extends Observer<T> {

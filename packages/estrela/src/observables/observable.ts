@@ -22,7 +22,7 @@ export function coerceObserver<T>(observer?: PartialObserver<T>): Observer<T> {
 
 export class Observable<T> implements Subscribable<T> {
   constructor(
-    private readonly cb: (
+    protected cb?: (
       subscriber: Observer<T>
     ) => (() => void) | Unsubscribable | void
   ) {}
@@ -33,7 +33,7 @@ export class Observable<T> implements Subscribable<T> {
 
   subscribe(observer?: PartialObserver<T>): Subscription {
     const subscriber = coerceObserver(observer);
-    const cleanup = this.cb(subscriber);
+    const cleanup = this.cb?.(subscriber);
     return new Subscription(cleanup ?? undefined);
   }
 }
