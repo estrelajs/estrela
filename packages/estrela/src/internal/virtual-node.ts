@@ -1,7 +1,7 @@
-import { isCompletable, Subscription } from '../observables';
+import { isCompletable, State, Subscription } from '../observables';
 import { StateProxy } from '../state-proxy';
 import { Key } from '../types/types';
-import { coerceArray } from '../utils';
+import { coerceArray, identity } from '../utils';
 import { effect } from './effect';
 import { addEventListener } from './events';
 import {
@@ -44,7 +44,7 @@ export class VirtualNode {
     readonly template: DocumentFragment | ((props?: any) => VirtualNode),
     public data?: NodeData,
     public key?: Key
-  ) {}
+  ) { }
 
   cloneNode(children?: boolean): VirtualNode {
     const data = { ...this.data };
@@ -91,7 +91,7 @@ export class VirtualNode {
 
     // is Node
     const clone = this.template.cloneNode(true);
-    const tree = mapNodeTree(clone, { skipRoot: true });
+    const tree = mapNodeTree(clone);
 
     for (let key in this.data) {
       const node = tree[Number(key)];
@@ -147,6 +147,21 @@ export class VirtualNode {
           const before = tree[path ?? -1] ?? null;
           this.insert(node, data, before);
         });
+      } else if (key === 'ref') {
+        const ref = data[key];
+        if (typeof ref === 'function') {
+          ref(node);
+        }
+        if (ref instanceof State) {
+          ref.next(node);
+        }
+      } else if (key === 'bind') {
+        this.bindInput(node, data[key]);
+      } else if (key.startsWith('bind:')) {
+        const prop = key.slice(5);
+        if (data[key] instanceof State) {
+          this.bindProp(node as any, prop, data[key], { updateAttr: false });
+        }
       } else if (key.startsWith('on:')) {
         const eventName = key.substring(3);
         this.cleanup.add(addEventListener(node, eventName, data[key]));
@@ -154,6 +169,109 @@ export class VirtualNode {
         this.setAttribute(node, key, data[key]);
       }
     }
+  }
+
+  private bindInput(node: Node, state: State<any>): void {
+    if (node instanceof HTMLInputElement) {
+      if (node.type === 'text') {
+        this.bindProp(node, 'value', state);
+      }
+      if (node.type === 'number') {
+        this.bindProp(node, 'value', state, {
+          getter: () => Number.isNaN(node.valueAsNumber) ? undefined : node.valueAsNumber,
+          setter: value => value ?? '',
+        });
+      }
+      if (node.type === 'date') {
+        this.bindProp(node, 'value', state, {
+          on: 'change',
+          getter: () => node.valueAsDate,
+          setter: (value: Date) => `${value.toISOString().slice(0, 10)}`,
+        });
+      }
+      if (node.type === 'time') {
+        this.bindProp(node, 'value', state, {
+          on: 'change',
+          getter: () => node.valueAsDate,
+          setter: (value: Date) => `${value.toISOString().slice(11, 16)}`,
+        });
+      }
+      if (node.type === 'checkbox') {
+        this.bindProp(node, 'checked', state, {
+          on: 'change',
+          getter: () => node.checked,
+          setter: value => Boolean(value),
+        });
+      }
+      if (node.type === 'radio') {
+        this.bindProp(node, 'checked', state, {
+          on: 'change',
+          getter: () => node.value,
+          setter: value => node.value === value,
+        });
+      }
+      if (node.type === 'file') {
+        this.bindProp(node, 'files', state, {
+          on: 'change',
+        });
+      }
+    }
+    if (node instanceof HTMLSelectElement) {
+      this.bindProp(node, 'selectedIndex', state, {
+        on: 'change',
+        getter: () => node.options.item(node.selectedIndex)?.value,
+        setter: value => Array.from(node.options).findIndex(option => option.value === value),
+      })
+    }
+    if (node instanceof HTMLTextAreaElement) {
+      this.bindProp(node, 'value', state);
+    }
+  }
+
+  private bindProp<T extends HTMLElement, R>(
+    node: T,
+    prop: keyof T & string,
+    state: State<R>,
+    {
+      getter = this.bindHandler<T, R>,
+      setter = identity as (value: any) => R,
+      on = 'both' as 'both' | 'input' | 'change',
+      updateAttr = true,
+      updateProp = true,
+    } = {}
+  ): void {
+    let lastValue: any = node[prop];
+
+    const bindUpdate = (value: any) => {
+      if (lastValue !== value) {
+        lastValue = value;
+        if (state.$ !== value) {
+          state.next(value);
+        }
+        value = setter(value);
+        if (updateProp && node[prop] !== value) {
+          node[prop] = value;
+        }
+        if (updateAttr) {
+          this.setAttribute(node, prop, value);
+        }
+      }
+    };
+
+    const subscription = state.subscribe(bindUpdate, { initialEmit: true });
+    const listener = (event: Event) => bindUpdate(getter(event as any));
+    if (on === 'change' || on === 'both') {
+      subscription.add(addEventListener(node, 'change', listener));
+    }
+    if (on === 'input' || on === 'both') {
+      subscription.add(addEventListener(node, 'input', listener));
+    }
+
+    this.cleanup.add(subscription);
+  }
+
+  private bindHandler<T, R>(event: Event & { target: T }): R {
+    return (event.target as any).value;
   }
 
   private insert(parent: Node, data: any, before: Node | null): void {
@@ -192,6 +310,7 @@ export class VirtualNode {
     const isStatic = (value: any, key?: string) =>
       key?.startsWith('on:') ||
       value instanceof VirtualNode ||
+      value instanceof State ||
       typeof value === 'function';
 
     for (let key in data) {

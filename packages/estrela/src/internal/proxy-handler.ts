@@ -48,14 +48,24 @@ export class StateProxyHandler implements ProxyHandler<any> {
       this.cleanup?.add(subscription);
     } else {
       const value = this.data[prop];
-      state = createState();
-      if (typeof value === 'function') {
-        this.cleanup?.add(effect(value).subscribe(state));
-      } else if (value instanceof State) {
-        this.cleanup?.add(value.subscribe(state, { initialEmit: true }));
-      } else if (isSelectable(value)) {
-        this.cleanup?.add(from(value).subscribe(state));
+      const bindState = this.data[`bind:${prop}`];
+
+      if (bindState instanceof State) {
+        state = this.data[`bind:${prop}`];
       } else {
+        state = createState();
+      }
+
+      if (typeof value === 'function') {
+        const subscription = effect(value).subscribe(state);
+        this.cleanup?.add(subscription);
+      } else if (value instanceof State) {
+        const subscription = value.subscribe(state, { initialEmit: true });
+        this.cleanup?.add(subscription);
+      } else if (isSelectable(value)) {
+        const subscription = from(value).subscribe(state);
+        this.cleanup?.add(subscription);
+      } else if (value !== undefined) {
         state.next(value);
       }
     }

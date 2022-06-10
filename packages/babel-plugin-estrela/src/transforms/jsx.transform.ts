@@ -1,5 +1,6 @@
 import { NodePath } from '@babel/core';
 import * as t from '@babel/types';
+import { selfClosingTags } from '../shared/tags';
 import { State } from '../types';
 
 interface Result {
@@ -101,8 +102,12 @@ function getAttrProps(path: NodePath<t.JSXElement>): Record<string, any> {
             ) {
               transformJSX(expression);
               props[name] = expression.node;
-            } else {
-              props[name] = value.get('expression').node;
+            } else if (expression.isExpression()) {
+              if (/^ref|on:.+|bind.*$/.test(name)) {
+                props[name] = expression.node;
+              } else {
+                props[name] = t.arrowFunctionExpression([], expression.node);
+              }
             }
           } else if (value.isJSXElement() || value.isJSXFragment()) {
             transformJSX(value);
@@ -124,6 +129,7 @@ function transformElement(
   if (path.isJSXElement()) {
     const tagName = getTagName(path.node);
     const tagIsComponent = isComponent(tagName);
+    const isSelfClosing = !tagIsComponent && selfClosingTags.includes(tagName);
     const props = getAttrProps(path);
 
     if (tagIsComponent) {
@@ -143,9 +149,11 @@ function transformElement(
     } else {
       result.template += `<${tagName}`;
       handleAttributes(props, result);
-      result.template += '>';
-      transformChildren(path, result);
-      result.template += `</${tagName}>`;
+      result.template += isSelfClosing ? '/>' : '>';
+      if (!isSelfClosing) {
+        transformChildren(path, result);
+        result.template += `</${tagName}>`;
+      }
     }
   } else {
     result.index--;
@@ -256,10 +264,12 @@ function transformChild(child: NodePath<JSXChild>, result: Result) {
     transformElement(child, result);
   } else if (child.isJSXExpressionContainer()) {
     const expression = child.get('expression');
-    if (expression.isStringLiteral()) {
+    if (expression.isStringLiteral() || expression.isNumericLiteral()) {
       result.template += expression.node.value;
+    } else if (expression.isExpression()) {
+      replaceChild(expression.node, result);
     } else {
-      replaceChild(expression.node as any, result);
+      throw new Error('Unsupported JSX child');
     }
   } else if (child.isJSXText()) {
     result.template += child.node.value;
@@ -278,7 +288,7 @@ function replaceChild(node: t.Expression, result: Result): void {
   result.props[result.parentIndex!].children ??= [];
   result.props[result.parentIndex!].children.push(
     t.arrayExpression([
-      node,
+      t.arrowFunctionExpression([], node),
       result.isLastChild ? t.nullLiteral() : t.identifier(String(result.index)),
     ])
   );

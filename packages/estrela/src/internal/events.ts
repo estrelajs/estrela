@@ -3,7 +3,7 @@ const listeners: Map<string, Map<Node, Function>> = new Map();
 export function addEventListener(
   target: Node,
   event: string,
-  listener: Function
+  listener: (event: Event) => void
 ): () => void {
   let eventMap = listeners.get(event);
   if (!eventMap) {

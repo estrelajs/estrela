@@ -103,14 +103,14 @@ export function setAttribute(
 }
 
 export function mapNodeTree(
-  tree: Node,
-  options?: { skipRoot?: boolean }
+  tree: Node
 ): Record<number, Node> {
-  const { skipRoot = false } = options ?? {};
-  let index = skipRoot ? -1 : 0;
+  let index = 0;
   const result: Record<number, Node> = {};
   const walk = (node: Node) => {
-    result[index++] = node;
+    if (!(node instanceof DocumentFragment)) {
+      result[index++] = node;
+    }
     let child = node.firstChild;
     while (child) {
       walk(child);
@@ -118,7 +118,6 @@ export function mapNodeTree(
     }
   };
   walk(tree);
-  delete result[-1];
   return result;
 }
 

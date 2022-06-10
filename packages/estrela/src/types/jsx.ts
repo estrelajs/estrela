@@ -1,6 +1,5 @@
 import { VirtualNode } from '../internal';
 import { EventEmitter, State, Subscribable } from '../observables';
-import { StateProxy } from '../state-proxy';
 import { Component, EventHandler, HTMLEventHandler, Key } from './types';
 
 /**
@@ -11,10 +10,10 @@ import { Component, EventHandler, HTMLEventHandler, Key } from './types';
  * https://github.com/ryansolid/dom-expressions/blob/main/packages/dom-expressions/src/jsx.d.ts
  */
 
-export type Props<T extends Object> = StateProxy<T>;
-
 type PropsOf<P> = {
   [K in keyof Omit<P, '$' | EmittersOf<P>>]: P[K];
+} & {
+  [K in `bind:${string}`]: State<any>;
 } & {
   [K in keyof Pick<P, EmittersOf<P>> as `on:${K & string}`]: P[K] extends
     | EventEmitter<infer E>
@@ -34,6 +33,7 @@ declare global {
       | string
       | number
       | boolean
+      | Date
       | Node
       | Element
       | Selector
@@ -51,6 +51,9 @@ declare global {
       key?: Key;
     }
     interface Directives {}
+    type BindAttributes = {
+      [K in `bind:${string}`]: State<any>;
+    };
     type DirectiveAttributes = {
       [Key in keyof Directives as `use:${Key}`]?: Directives[Key];
     };
@@ -60,8 +63,8 @@ declare global {
     type ClassAttributes = {
       [K in `class:${string}`]?: boolean;
     };
-    interface DOMAttributes<T> extends DirectiveAttributes {
-      ref?: State<T | null> | ((el: T) => void);
+    interface DOMAttributes<T> extends BindAttributes, DirectiveAttributes {
+      ref?: State<T | undefined> | ((el: T) => void);
       key?: Key;
       children?: Children;
       innerHTML?: string;
@@ -1852,7 +1855,6 @@ declare global {
         ClassAttributes,
         DOMAttributes<T> {
       accessKey?: string;
-      bind?: State<any>;
       class?: string | string[] | { [key: string]: boolean };
       contenteditable?: boolean | 'inherit';
       contextmenu?: string;
@@ -2116,6 +2118,7 @@ declare global {
       alt?: string;
       autocomplete?: string;
       autofocus?: boolean;
+      bind?: State<any>;
       capture?: boolean | string;
       checked?: boolean;
       crossorigin?: HTMLCrossorigin;
@@ -2283,6 +2286,7 @@ declare global {
     interface SelectHTMLAttributes<T> extends HTMLAttributes<T> {
       autocomplete?: string;
       autofocus?: boolean;
+      bind?: State<any>;
       disabled?: boolean;
       form?: string;
       multiple?: boolean;
@@ -2319,6 +2323,7 @@ declare global {
     interface TextareaHTMLAttributes<T> extends HTMLAttributes<T> {
       autocomplete?: string;
       autofocus?: boolean;
+      bind?: State<any>;
       cols?: number | string;
       dirname?: string;
       disabled?: boolean;

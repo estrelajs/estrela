@@ -27,7 +27,7 @@ export function styled<C extends Function>(
         memo = node.cloneNode(true);
         if (!memo.isComponent) {
           Object.values(
-            mapNodeTree(memo.template as any, { skipRoot: true })
+            mapNodeTree(memo.template as any)
           ).forEach(node => {
             (node as Element).setAttribute?.(`_${id}`, '');
           });

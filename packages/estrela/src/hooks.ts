@@ -43,12 +43,6 @@ export function setContext(keyOrContext: any, value?: any): void {
   }
 }
 
-/** Define Ref for the current component. */
-export function setRef<T>(ref: T): void {
-  throwIfOutsideComponent();
-  ComponentRef.currentRef?.setRef(ref);
-}
-
 function throwIfOutsideComponent() {
   if (!ComponentRef.currentRef) {
     throw new Error(
