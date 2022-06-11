@@ -23,7 +23,7 @@ export default declare((api, options: Options) => {
         enableGetStateFunction,
         getStateWithDolarSuffix,
       }),
-      // Function: transformComponent,
+      Function: transformComponent,
       JSXElement: transformJSX,
       JSXFragment: transformJSX,
       TaggedTemplateExpression: transformStyles,

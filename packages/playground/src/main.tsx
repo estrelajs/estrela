@@ -1,4 +1,4 @@
-import { createStateProxy, render } from 'estrela';
+import { render } from 'estrela';
 
 function Row(props: { id: number }) {
   const random = Math.random();
@@ -33,83 +33,83 @@ function App() {
   );
 }
 
-function Forms() {
-  const state = createStateProxy({
-    text: 'test',
-    number: 0,
-    date: new Date(),
-    checked: false,
-    radio: 'apple',
-    select: 'apple',
-  });
-  return (
-    <>
-      <h1>Forms Test</h1>
-      <form>
-        <div>
-          <label>Input: </label>
-          <input type="text" bind={state.$.text} />
-        </div>
-        <div>Output: "{state.text}"</div>
+// function Forms() {
+//   const state = createStateProxy({
+//     text: 'test',
+//     number: 0,
+//     date: new Date(),
+//     checked: false,
+//     radio: 'apple',
+//     select: 'apple',
+//   });
+//   return (
+//     <>
+//       <h1>Forms Test</h1>
+//       <form>
+//         <div>
+//           <label>Input: </label>
+//           <input type="text" bind={state.$.text} />
+//         </div>
+//         <div>Output: "{state.text}"</div>
 
-        <br />
+//         <br />
 
-        <div>
-          <label>Input: </label>
-          <input type="number" bind={state.$.number} />
-        </div>
-        <div>Output: {state.number}</div>
+//         <div>
+//           <label>Input: </label>
+//           <input type="number" bind={state.$.number} />
+//         </div>
+//         <div>Output: {state.number}</div>
 
-        <br />
+//         <br />
 
-        <div>
-          <label>Input: </label>
-          <input type="date" bind={state.$.date} />
-        </div>
-        <div>Output: {state.date}</div>
+//         <div>
+//           <label>Input: </label>
+//           <input type="date" bind={state.$.date} />
+//         </div>
+//         <div>Output: {state.date}</div>
 
-        <br />
+//         <br />
 
-        <div>
-          <label>Input: </label>
-          <input type="checkbox" bind={state.$.checked} />
-        </div>
-        <div>Output: {state.checked ? 'True' : 'False'}</div>
+//         <div>
+//           <label>Input: </label>
+//           <input type="checkbox" bind={state.$.checked} />
+//         </div>
+//         <div>Output: {state.checked ? 'True' : 'False'}</div>
 
-        <br />
+//         <br />
 
-        <div>
-          <label>Input: </label>
-          <input id="apple" type="radio" bind={state.$.radio} value="apple" />
-          <label for="apple">Apple</label>
-          <input id="orange" type="radio" bind={state.$.radio} value="orange" />
-          <label for="orange">Orange</label>
-          <input id="banana" type="radio" bind={state.$.radio} value="banana" />
-          <label for="banana">Banana</label>
-        </div>
-        <div>Output: "{state.radio}"</div>
+//         <div>
+//           <label>Input: </label>
+//           <input id="apple" type="radio" bind={state.$.radio} value="apple" />
+//           <label for="apple">Apple</label>
+//           <input id="orange" type="radio" bind={state.$.radio} value="orange" />
+//           <label for="orange">Orange</label>
+//           <input id="banana" type="radio" bind={state.$.radio} value="banana" />
+//           <label for="banana">Banana</label>
+//         </div>
+//         <div>Output: "{state.radio}"</div>
 
-        <br />
+//         <br />
 
-        <div>
-          <label>Input: </label>
-          <select bind={state.$.select}>
-            <option value="apple">Apple</option>
-            <option value="orange">Orange</option>
-            <option value="banana">Banana</option>
-          </select>
-        </div>
-        <div>Output: "{state.select}"</div>
-      </form>
+//         <div>
+//           <label>Input: </label>
+//           <select bind={state.$.select}>
+//             <option value="apple">Apple</option>
+//             <option value="orange">Orange</option>
+//             <option value="banana">Banana</option>
+//           </select>
+//         </div>
+//         <div>Output: "{state.select}"</div>
+//       </form>
 
-      <table>
-        <tbody>
-          <Row id={1} />
-          <Row id={2} />
-        </tbody>
-      </table>
-    </>
-  );
-}
+//       <table>
+//         <tbody>
+//           <Row id={1} />
+//           <Row id={2} />
+//         </tbody>
+//       </table>
+//     </>
+//   );
+// }
 
-render(<Forms />, document.getElementById('app')!);
+render(<App />, document.getElementById('app')!);

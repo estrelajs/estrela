@@ -12,11 +12,19 @@ interface ComponentState {
 }
 
 export function transformComponent(path: NodePath<t.Function>): void {
-  const state: State = path.state;
+  const { stateProxy } = path.state as State;
+  const states: t.Identifier[] = [];
+  const body = path.get('body');
   let returnValue: t.Expression | null = null;
   let funcName: string;
 
-  if (t.isVariableDeclarator(path.parent)) {
+  // find the function name
+  if (
+    t.isCallExpression(path.parent) &&
+    t.isIdentifier(path.parent.callee, { name: 'styled' })
+  ) {
+    funcName = 'Styled';
+  } else if (t.isVariableDeclarator(path.parent)) {
     funcName = t.isIdentifier(path.parent.id) ? path.parent.id.name : '';
   } else {
     funcName = t.isFunctionDeclaration(path.node)
@@ -24,20 +32,20 @@ export function transformComponent(path: NodePath<t.Function>): void {
       : '';
   }
 
-  // if function name is not capital, means it's not a component
-  if (!funcName[0] || funcName[0] !== funcName[0].toUpperCase()) {
+  // if function name is not Capital or it's not a block statement, return
+  if (
+    !funcName[0] ||
+    funcName[0] !== funcName[0].toUpperCase() ||
+    !body.isBlockStatement()
+  ) {
     return;
   }
 
   // find return statement
-  if (t.isBlockStatement(path.node.body)) {
-    for (const node of path.node.body.body) {
-      if (t.isReturnStatement(node)) {
-        returnValue = node.argument ?? null;
-      }
+  for (const node of body.node.body) {
+    if (t.isReturnStatement(node)) {
+      returnValue = node.argument ?? null;
     }
-  } else {
-    returnValue = path.node.body;
   }
 
   // if return statement is JSX element, means it's a component
@@ -46,24 +54,12 @@ export function transformComponent(path: NodePath<t.Function>): void {
     const props: t.Identifier[] = [];
     let propsParam: t.Identifier = t.identifier('_props');
 
-    // create new proxy state instance;
-    const body = path.get('body');
-    if (body.isBlockStatement()) {
-      const callExp = t.callExpression(state.stateProxy, []);
-      const declaration = t.variableDeclarator(t.identifier('_$'), callExp);
-      body.unshiftContainer(
-        'body',
-        t.variableDeclaration('const', [declaration])
-      );
-      annotateAsPure(callExp);
-    }
-
-    // props is an object
+    // when props is an object
     if (t.isIdentifier(param)) {
       propsParam = param;
     }
 
-    // props is destructured
+    // when props is destructured
     if (t.isObjectPattern(param)) {
       for (const prop of param.properties) {
         if (t.isObjectProperty(prop) && t.isIdentifier(prop.value)) {
@@ -75,12 +71,25 @@ export function transformComponent(path: NodePath<t.Function>): void {
       }
     }
 
+    // replace props param
     path.node.params[0] = propsParam;
-    body.traverse(visitor, { propsParam, props, states: [] });
+
+    // taverse the body to look for states
+    body.traverse(visitor, { propsParam, props, states });
+
+    // create new proxy state instance;
+    if (states.length > 0) {
+      const callExp = t.callExpression(stateProxy, []);
+      const declarator = t.variableDeclarator(t.identifier('_$'), callExp);
+      const declaration = t.variableDeclaration('const', [declarator]);
+      body.unshiftContainer('body', declaration);
+      annotateAsPure(callExp);
+    }
   }
 }
 
 const visitor: Visitor<ComponentState> = {
+  /** Convert `getState(state)` to `getState(_$, 'state')` */
   CallExpression(path, state) {
     const { enableGetStateFunction } = getOptions(path);
     if (
@@ -114,13 +123,20 @@ const visitor: Visitor<ComponentState> = {
           }
         }
       }
+
       if (object && prop) {
-        path.skip();
         path.node.arguments = [object, t.stringLiteral(prop)];
+        path.skip();
       }
     }
   },
 
+  /**
+   * Update references to the local state proxy or component props.
+   *
+   * @example
+   * <div ref={ref$}>{ state }</div> -> <div ref={_$.$.ref}>{ _$.state }</div>
+   */
   Identifier(path, state) {
     const { getStateWithDolarSuffix } = getOptions(path);
     const updateNode = (node: t.Identifier, isDolar?: boolean) => {
@@ -176,49 +192,7 @@ const visitor: Visitor<ComponentState> = {
     updateNode(path.node);
   },
 
-  JSXExpressionContainer(path, state) {
-    const expPath = path.get('expression');
-    if (
-      expPath.isFunction() ||
-      (expPath.isCallExpression() &&
-        expPath.get('callee').isIdentifier({ name: 'getState' }))
-    ) {
-      path.traverse(visitor, state);
-      path.skip();
-      return;
-    }
-
-    const hasStates = () => {
-      const node = path.node;
-      let hasState = false;
-
-      path.traverse({
-        Function(path) {
-          if (path.parent === node) {
-            path.skip();
-          }
-        },
-        Identifier(path) {
-          const scopeNode = path.scope.getBindingIdentifier(path.node.name);
-          if (
-            state.states.includes(scopeNode) ||
-            state.props.includes(scopeNode) ||
-            t.isNodesEquivalent(state.propsParam, path.node)
-          ) {
-            hasState = true;
-            path.stop();
-          }
-        },
-      });
-
-      return hasState;
-    };
-
-    if (expPath.isExpression() && hasStates()) {
-      expPath.replaceWith(t.arrowFunctionExpression([], expPath.node));
-    }
-  },
-
+  /** Add variable declarations to state proxy. */
   VariableDeclaration(path, state) {
     if (path.node.kind === 'let') {
       const nodes = path.node.declarations.reduce((acc, declaration) => {
