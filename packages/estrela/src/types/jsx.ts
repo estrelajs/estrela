@@ -2250,6 +2250,7 @@ declare global {
       label?: string;
     }
     interface OptionHTMLAttributes<T> extends HTMLAttributes<T> {
+      children?: string;
       disabled?: boolean;
       label?: string;
       selected?: boolean;

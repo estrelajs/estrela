@@ -149,12 +149,13 @@ function transformElement(
     if (tagIsComponent) {
       if (isRoot) {
         result.props = props;
-        const children = getChildren(path);
-        if (children.length === 1) {
-          result.props.children = children[0];
-        }
-        if (children.length > 1) {
-          result.props.children = children;
+        const children = getChildren(path) as any;
+        if (children.length) {
+          const childrenGetter = t.arrowFunctionExpression(
+            [],
+            children.length === 1 ? children[0] : t.arrayExpression(children)
+          );
+          result.props.children = childrenGetter;
         }
       } else {
         transformJSX(path);
@@ -162,7 +163,11 @@ function transformElement(
       }
     } else {
       result.template += `<${tagName}`;
-      handleAttributes(props, result);
+      if (tagName === 'slot') {
+        result.props[result.index] = props;
+      } else {
+        handleAttributes(props, result);
+      }
       result.template += isSelfClosing ? '/>' : '>';
       if (!isSelfClosing) {
         transformChildren(path, result);
@@ -175,7 +180,7 @@ function transformElement(
   }
 }
 
-function getChildren(path: NodePath<t.JSXElement>) {
+function getChildren(path: NodePath<t.JSXElement>): JSXChild[] {
   return path
     .get('children')
     .filter(isValidChild)
@@ -199,6 +204,10 @@ function handleAttributes(props: Record<string, any>, result: Result): void {
 
   for (const prop in props) {
     const value = props[prop];
+
+    if (prop === 'slot') {
+      continue;
+    }
 
     if (prop === 'class' && typeof value === 'string') {
       klass += ` ${value}`;

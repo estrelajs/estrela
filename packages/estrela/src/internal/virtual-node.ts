@@ -1,7 +1,7 @@
 import { isCompletable, State, Subscription } from '../observables';
 import { StateProxy } from '../state-proxy';
 import { Key } from '../types/types';
-import { coerceArray, identity } from '../utils';
+import { coerceArray, identity, isNil } from '../utils';
 import { effect } from './effect';
 import { addEventListener } from './events';
 import {
@@ -9,6 +9,7 @@ import {
   insertChild,
   mapNodeTree,
   removeChild,
+  replaceChild,
   setAttribute,
 } from './node-api';
 import { patchChildren } from './patch';
@@ -22,8 +23,7 @@ export interface NodeData {
 }
 
 export class VirtualNode {
-  context: any = {};
-
+  public context: any = {};
   private cleanup = new Subscription();
   private hooks: Record<string, (() => void)[]> = {};
   private mounted = false;
@@ -44,8 +44,10 @@ export class VirtualNode {
   }
 
   constructor(
-    readonly template: DocumentFragment | ((props?: any, context?: any) => VirtualNode),
-    public data?: NodeData,
+    readonly template:
+      | DocumentFragment
+      | ((props?: any, context?: any) => VirtualNode),
+    public data: NodeData,
     public key?: Key
   ) {}
 
@@ -68,6 +70,7 @@ export class VirtualNode {
   dispose(): void {
     if (this.componentNode) {
       this.componentNode.dispose();
+      delete this.componentNode;
     }
     for (let key in this.props) {
       const prop = this.props.$[key];
@@ -82,13 +85,17 @@ export class VirtualNode {
     this.nodes = [];
   }
 
-  mount(parent: Node, before: Node | null = null): Node[] {
+  mount(
+    parent: Node,
+    before: Node | null = null,
+    children?: State<any>
+  ): Node[] {
     if (this.mounted) {
       this.nodes.forEach(node => insertChild(parent, node, before));
       return this.nodes;
     }
 
-    this.props = this.createProps(this.data ?? {});
+    this.props = this.createProps(this.data);
     this.mounted = true;
 
     // is Component
@@ -96,7 +103,11 @@ export class VirtualNode {
       VirtualNode.ref = this;
       this.componentNode = this.template(this.props, this.context);
       this.componentNode.context = this.context;
-      this.nodes = this.componentNode.mount(parent, before);
+      this.nodes = this.componentNode.mount(
+        parent,
+        before,
+        this.props.$.children
+      );
       this.hooks.init?.forEach(handler => handler());
       VirtualNode.ref = null;
       return this.nodes;
@@ -109,14 +120,18 @@ export class VirtualNode {
     for (let key in this.data) {
       const node = tree[Number(key)];
       const data = this.data[key];
-      this.handleNode(tree, node, data);
+
+      if (node instanceof HTMLSlotElement) {
+        this.handlerSlot(node, data, children);
+      } else {
+        this.handleNode(node, data, tree);
+      }
     }
 
     this.nodes = Array.from(clone.childNodes);
     insertChild(parent, clone, before);
     this.hooks.init?.forEach(handler => handler());
 
-    delete this.data;
     return this.nodes;
   }
 
@@ -144,47 +159,6 @@ export class VirtualNode {
       this.nodes.forEach(node => removeChild(parent, node));
     }
     this.dispose();
-  }
-
-  private createProps(data: NodeData): StateProxy<NodeData> {
-    if (!this.isComponent) {
-      data = this.normalizeData(data);
-    }
-    return new Proxy(
-      {} as StateProxy<NodeData>,
-      new StateProxyHandler(data, this.cleanup)
-    );
-  }
-
-  private handleNode(tree: Record<Key, Node>, node: Node, data: any): void {
-    for (let key in data) {
-      if (key === 'children') {
-        data.children.forEach(([data, path]: NodeInsertion) => {
-          const before = tree[path ?? -1] ?? null;
-          this.insert(node, data, before);
-        });
-      } else if (key === 'ref') {
-        const ref = data[key];
-        if (typeof ref === 'function') {
-          ref(node);
-        }
-        if (ref instanceof State) {
-          ref.next(node);
-        }
-      } else if (key === 'bind') {
-        this.bindInput(node, data[key]);
-      } else if (key.startsWith('bind:')) {
-        const prop = key.slice(5);
-        if (data[key] instanceof State) {
-          this.bindProp(node as any, prop, data[key], { updateAttr: false });
-        }
-      } else if (key.startsWith('on:')) {
-        const eventName = key.substring(3);
-        this.cleanup.add(addEventListener(node, eventName, data[key]));
-      } else {
-        this.setAttribute(node, key, data[key]);
-      }
-    }
   }
 
   private bindInput(node: Node, state: State<any>): void {
@@ -292,6 +266,96 @@ export class VirtualNode {
     return (event.target as any).value;
   }
 
+  private createProps(data: NodeData): StateProxy<NodeData> {
+    if (!this.isComponent) {
+      data = this.normalizeData(data);
+    }
+    return new Proxy(
+      {} as StateProxy<NodeData>,
+      new StateProxyHandler(data, this.cleanup)
+    );
+  }
+
+  private handleNode(node: Node, data: any, tree: Record<Key, Node>): void {
+    for (let key in data) {
+      if (key === 'children') {
+        data.children.forEach(([data, path]: NodeInsertion) => {
+          const before = isNil(path) ? null : tree[path] ?? null;
+          this.insert(node, data, before);
+        });
+      } else if (key === 'ref') {
+        const ref = data[key];
+        if (typeof ref === 'function') {
+          ref(node);
+        }
+        if (ref instanceof State) {
+          ref.next(node);
+        }
+      } else if (key === 'bind') {
+        this.bindInput(node, data[key]);
+      } else if (key.startsWith('bind:')) {
+        const prop = key.slice(5);
+        if (data[key] instanceof State) {
+          this.bindProp(node as any, prop, data[key], { updateAttr: false });
+        }
+      } else if (key.startsWith('on:')) {
+        const eventName = key.substring(3);
+        this.cleanup.add(addEventListener(node, eventName, data[key]));
+      } else {
+        this.setAttribute(node, key, data[key]);
+      }
+    }
+  }
+
+  private handlerSlot(
+    node: HTMLSlotElement,
+    data: any,
+    children?: State<any>
+  ): void {
+    const parent = node.parentNode;
+    if (parent && children) {
+      const slotEffect = () => {
+        const availableChildren = coerceArray(children.$);
+        if (availableChildren.length === 0) {
+          return node;
+        }
+        let result: any[];
+        if (data.name) {
+          result = availableChildren.filter(child => {
+            return (
+              (child instanceof VirtualNode &&
+                child.data[0]?.slot === data.name) ||
+              (child instanceof HTMLElement && child.slot === data.name)
+            );
+          });
+        } else if (data.select) {
+          result = availableChildren.filter(child => {
+            if (typeof data.select === 'function') {
+              return (
+                child instanceof VirtualNode && child.template === data.select
+              );
+            }
+            if (
+              child instanceof VirtualNode &&
+              child.template instanceof Node
+            ) {
+              return child.template.firstChild?.nodeName === data.select;
+            }
+            if (child instanceof Node) {
+              return child.nodeName === data.select;
+            }
+          });
+        } else {
+          result = availableChildren;
+        }
+        return result?.map(child => child.cloneNode?.(true) ?? child) ?? node;
+      };
+      const before = document.createComment('');
+      replaceChild(parent, before, node);
+      this.insert(parent, slotEffect, before);
+    }
+  }
+
   private insert(parent: Node, data: any, before: Node | null): void {
     if (typeof data === 'function') {
       let lastValue: any = undefined;
@@ -330,7 +394,7 @@ export class VirtualNode {
       typeof value === 'function';
 
     for (let key in data) {
-      const props = data[key];
+      const props = { ...data[key] };
       for (let prop in props) {
         if (isStatic(props[prop], prop)) {
           continue;

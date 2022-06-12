@@ -1,4 +1,4 @@
-import { h } from '../internal';
+import { h, template } from '../internal';
 import { createSelector } from '../observables';
 import { StateProxy } from '../state-proxy';
 import { Routes } from './route';
@@ -53,7 +53,14 @@ export function Router(props: StateProxy<RouterProps>) {
     return null;
   };
 
-  return h(null, {
-    children: createSelector(props.$.routes, routeUrl, props.$.base, getRoute),
+  return h(template(''), {
+    '-1': {
+      children: [
+        [
+          createSelector(props.$.routes, routeUrl, props.$.base, getRoute),
+          null,
+        ],
+      ],
+    },
   });
 }

@@ -25,8 +25,10 @@ export function transformProgram(options: Options) {
           0
         );
         path.node.body.splice(index + 1, 0, state.tmplDeclaration);
-        imports.h = state.h.name;
         imports.template = state.template.name;
+      }
+      if (path.scope.hasBinding(state.h.name)) {
+        imports.h = state.h.name;
       }
       if (path.scope.hasBinding(state.stateProxy.name)) {
         imports.$$ = state.stateProxy.name;
