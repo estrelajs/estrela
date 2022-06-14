@@ -25,11 +25,14 @@ export interface NodeData {
 export class VirtualNode {
   public context: any = {};
   private cleanup = new Subscription();
-  private hooks: Record<string, (() => void)[]> = {};
+  private componentNode?: VirtualNode;
   private mounted = false;
   private nodes: Node[] = [];
   private props?: StateProxy<NodeData>;
-  private componentNode?: VirtualNode;
+  private hooks: Record<'init' | 'destroy', (() => void)[]> = {
+    init: [],
+    destroy: [],
+  };
 
   get isComponent(): boolean {
     return typeof this.template === 'function';
@@ -68,6 +71,9 @@ export class VirtualNode {
   }
 
   dispose(): void {
+    this.hooks.destroy.forEach(handler => handler());
+    this.hooks.destroy = [];
+    this.hooks.init = [];
     if (this.componentNode) {
       this.componentNode.dispose();
       delete this.componentNode;
@@ -79,10 +85,9 @@ export class VirtualNode {
       }
     }
     delete this.props;
+    this.mounted = false;
     this.cleanup.unsubscribe();
     this.cleanup = new Subscription();
-    this.mounted = false;
-    this.nodes = [];
   }
 
   mount(
@@ -96,7 +101,6 @@ export class VirtualNode {
     }
 
     this.props = this.createProps(this.data);
-    this.mounted = true;
 
     // is Component
     if (typeof this.template === 'function') {
@@ -108,6 +112,7 @@ export class VirtualNode {
         before,
         this.props.$.children
       );
+      this.mounted = true;
       this.hooks.init?.forEach(handler => handler());
       VirtualNode.ref = null;
       return this.nodes;
@@ -116,26 +121,29 @@ export class VirtualNode {
     // is Node
     const clone = this.template.cloneNode(true);
     const tree = mapNodeTree(clone);
+    this.nodes = Array.from(clone.childNodes);
+    insertChild(parent, clone, before);
+    this.mounted = true;
 
     for (let key in this.data) {
-      const node = tree[Number(key)];
+      const index = Number(key);
+      const isRoot = index === -1;
+      const node = isRoot ? parent : tree[index];
       const data = this.data[key];
 
       if (node instanceof HTMLSlotElement) {
-        this.handlerSlot(node, data, children);
+        this.handleSlot(node, data, children, isRoot);
       } else {
-        this.handleNode(node, data, tree);
+        this.handleNode(node, data, tree, isRoot);
       }
     }
 
-    this.nodes = Array.from(clone.childNodes);
-    insertChild(parent, clone, before);
     this.hooks.init?.forEach(handler => handler());
-
     return this.nodes;
   }
 
-  patch(data?: NodeData) {
+  patch(data: NodeData): void {
+    this.data = data;
     if (!this.isComponent) {
       data = this.normalizeData(data);
     }
@@ -151,14 +159,10 @@ export class VirtualNode {
     }
   }
 
-  unmount(parent: Node) {
-    this.hooks.destroy?.forEach(handler => handler());
-    if (this.componentNode) {
-      this.componentNode.unmount(parent);
-    } else {
-      this.nodes.forEach(node => removeChild(parent, node));
-    }
+  unmount(parent: Node): void {
     this.dispose();
+    this.nodes.forEach(node => removeChild(parent, node));
+    this.nodes = [];
   }
 
   private bindInput(node: Node, state: State<any>): void {
@@ -276,12 +280,17 @@ export class VirtualNode {
     );
   }
 
-  private handleNode(node: Node, data: any, tree: Record<Key, Node>): void {
+  private handleNode(
+    node: Node,
+    data: any,
+    tree: Record<Key, Node>,
+    isRoot: boolean
+  ): void {
     for (let key in data) {
       if (key === 'children') {
         data.children.forEach(([data, path]: NodeInsertion) => {
           const before = isNil(path) ? null : tree[path] ?? null;
-          this.insert(node, data, before);
+          this.insert(node, data, before, isRoot);
         });
       } else if (key === 'ref') {
         const ref = data[key];
@@ -307,10 +316,11 @@ export class VirtualNode {
     }
   }
 
-  private handlerSlot(
+  private handleSlot(
     node: HTMLSlotElement,
     data: any,
-    children?: State<any>
+    children: State<any> | undefined,
+    isRoot: boolean
   ): void {
     const parent = node.parentNode;
     if (parent && children) {
@@ -352,15 +362,20 @@ export class VirtualNode {
       };
       const before = document.createComment('');
       replaceChild(parent, before, node);
-      this.insert(parent, slotEffect, before);
+      this.insert(parent, slotEffect, before, isRoot);
     }
   }
 
-  private insert(parent: Node, data: any, before: Node | null): void {
-    if (typeof data === 'function') {
-      let lastValue: any = undefined;
-      let lastNodes: any = new Map();
+  private insert(
+    parent: Node,
+    data: any,
+    before: Node | null,
+    isRoot: boolean
+  ): void {
+    let lastValue: any = undefined;
+    let lastNodes = new Map<Key, Node | VirtualNode>();
 
+    if (typeof data === 'function') {
       // subscribe effect
       const subscription = effect<JSX.Children>(data).subscribe(value => {
         if (lastValue !== value) {
@@ -378,10 +393,24 @@ export class VirtualNode {
       // insert node
       coerceArray(data)
         .flat()
-        .forEach(node => {
-          insertChild(parent, coerceNode(node, this.context), before);
+        .forEach((node, i) => {
+          node = coerceNode(node, this.context);
+          lastNodes.set(i, node);
+          insertChild(parent, node, before);
         });
     }
+
+    // destroy cleanup
+    this.cleanup.add(() => {
+      lastNodes.forEach(node => {
+        if (isRoot) {
+          removeChild(parent, node);
+        }
+        if (node instanceof VirtualNode) {
+          node.dispose();
+        }
+      });
+    });
   }
 
   private normalizeData(data?: NodeData): NodeData {

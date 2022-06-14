@@ -110,9 +110,7 @@ export function mapNodeTree(tree: Node): Record<number, Node> {
   let index = 0;
   const result: Record<number, Node> = {};
   const walk = (node: Node) => {
-    if (node instanceof DocumentFragment) {
-      result[-1] = node;
-    } else {
+    if (!(node instanceof DocumentFragment)) {
       result[index++] = node;
     }
     let child = node.firstChild;
