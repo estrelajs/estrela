@@ -1,10 +1,11 @@
 import { render } from 'estrela';
 import App from './App';
+import './index.css';
 
-// function Row(props: { id: number }) {
+// function Row(props: { id: number; tap: EventEmitter<void> }) {
 //   const random = Math.random();
 //   return (
-//     <li class="item">
+//     <li class="item" on:click={() => props.tap.emit()}>
 //       {props.id} - {random}
 //     </li>
 //   );
@@ -28,7 +29,7 @@ import App from './App';
 //       <ul>
 //         <li>Header</li>
 //         {list.map(id => (
-//           <Row key={id} id={id} />
+//           <Row key={id} id={id} on:tap={() => console.log(id)} />
 //         ))}
 //         <li>Footer</li>
 //       </ul>

@@ -1,19 +1,15 @@
 import { EventEmitter, State, styled } from 'estrela';
 
-export interface TodoData {
+export interface TodoItem {
   id: number;
   text: string;
   completed: boolean;
 }
 
 export interface TodoProps {
-  todo: TodoData;
+  todo: TodoItem;
   complete: EventEmitter<boolean>;
-  remove: EventEmitter<TodoData>;
-}
-
-export interface TodoRef {
-  doSomething(): void;
+  remove: EventEmitter<TodoItem>;
 }
 
 function Todo({ todo, complete, remove }: TodoProps) {

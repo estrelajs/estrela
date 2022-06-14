@@ -1,17 +1,11 @@
-import {
-  createEventEmitter,
-  createState,
-  EventEmitter,
-  from,
-  isNextable,
-  isSelectable,
-  State,
-  Subscription,
-} from '../observables';
-import { effect } from './effect';
+import { createState, State } from '../observables';
 
 export class StateProxyHandler implements ProxyHandler<any> {
-  constructor(private data: any, private cleanup?: Subscription) {}
+  constructor(private data: any) {}
+
+  getPrototypeOf(target: any): any {
+    return target;
+  }
 
   get(target: any, prop: string) {
     if (prop === '$') {
@@ -30,45 +24,11 @@ export class StateProxyHandler implements ProxyHandler<any> {
     return true;
   }
 
-  private getState(target: any, prop: string): State<any> | EventEmitter<any> {
-    let state: State<any> | EventEmitter<any>;
+  private getState(target: any, prop: string): State<any> {
     if (prop in target) {
       return target[prop];
     }
-    if (this.data.hasOwnProperty(`on:${prop}`)) {
-      state = createEventEmitter();
-      const subscription = state.subscribe(e => {
-        const handler = this.data[`on:${prop}`];
-        if (isNextable(handler)) {
-          handler.next(e);
-        } else if (typeof handler === 'function') {
-          handler(e);
-        }
-      });
-      this.cleanup?.add(subscription);
-    } else {
-      const value = this.data[prop];
-      const bindState = this.data[`bind:${prop}`];
-
-      if (bindState instanceof State) {
-        state = this.data[`bind:${prop}`];
-      } else {
-        state = createState();
-      }
-
-      if (typeof value === 'function') {
-        const subscription = effect(value).subscribe(state);
-        this.cleanup?.add(subscription);
-      } else if (value instanceof State) {
-        const subscription = value.subscribe(state, { initialEmit: true });
-        this.cleanup?.add(subscription);
-      } else if (isSelectable(value)) {
-        const subscription = from(value).subscribe(state);
-        this.cleanup?.add(subscription);
-      } else if (value !== undefined) {
-        state.next(value);
-      }
-    }
+    const state = createState(this.data[prop]);
     target[prop] = state;
     return state;
   }

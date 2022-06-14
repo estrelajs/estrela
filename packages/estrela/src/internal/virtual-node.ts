@@ -1,4 +1,14 @@
-import { isCompletable, State, Subscription } from '../observables';
+import {
+  createEventEmitter,
+  EventEmitter,
+  from,
+  isCompletable,
+  isNextable,
+  isSelectable,
+  State,
+  Subscription,
+  Unsubscribable,
+} from '../observables';
 import { StateProxy } from '../state-proxy';
 import { Key } from '../types/types';
 import { coerceArray, identity, isNil } from '../utils';
@@ -24,11 +34,13 @@ export interface NodeData {
 
 export class VirtualNode {
   public context: any = {};
+
   private cleanup = new Subscription();
   private componentNode?: VirtualNode;
   private mounted = false;
   private nodes: Node[] = [];
-  private props?: StateProxy<NodeData>;
+  private props: StateProxy<NodeData> = {} as any;
+  private propsCleanup = new Map<string, Unsubscribable>();
   private hooks: Record<'init' | 'destroy', (() => void)[]> = {
     init: [],
     destroy: [],
@@ -78,13 +90,14 @@ export class VirtualNode {
       this.componentNode.dispose();
       delete this.componentNode;
     }
+    this.propsCleanup.forEach(subscription => subscription.unsubscribe());
     for (let key in this.props) {
       const prop = this.props.$[key];
       if (isCompletable(prop)) {
         prop.complete();
       }
     }
-    delete this.props;
+    this.props = {} as any;
     this.mounted = false;
     this.cleanup.unsubscribe();
     this.cleanup = new Subscription();
@@ -100,7 +113,8 @@ export class VirtualNode {
       return this.nodes;
     }
 
-    this.props = this.createProps(this.data);
+    // else need to be mounted
+    this.createProps();
 
     // is Component
     if (typeof this.template === 'function') {
@@ -129,12 +143,11 @@ export class VirtualNode {
       const index = Number(key);
       const isRoot = index === -1;
       const node = isRoot ? parent : tree[index];
-      const data = this.data[key];
 
       if (node instanceof HTMLSlotElement) {
-        this.handleSlot(node, data, children, isRoot);
+        this.handleSlot(node, index, children, isRoot);
       } else {
-        this.handleNode(node, data, tree, isRoot);
+        this.handleNode(node, index, tree, isRoot);
       }
     }
 
@@ -149,12 +162,37 @@ export class VirtualNode {
     }
     for (let key in data) {
       const value = data[key];
-      if (
-        !key.startsWith('on:') &&
-        typeof value !== 'function' &&
-        this.props?.[key] !== value
-      ) {
-        this.props?.$[key].next(value);
+      if (key.startsWith('on:')) {
+        const eventName = key.substring(3);
+        this.propsCleanup.get(key)?.unsubscribe();
+        let emitter: EventEmitter<any> | undefined = this.props[eventName];
+        if (emitter) {
+          emitter.complete();
+        }
+        emitter = createEventEmitter();
+        const subscription = emitter.subscribe(v => {
+          if (typeof value === 'function') {
+            value(v);
+          } else if (isNextable(value)) {
+            value.next(v);
+          }
+        });
+        this.props[eventName] = emitter;
+        this.propsCleanup.set(key, subscription);
+      } else if (key.startsWith('bind:')) {
+        const proto = Object.getPrototypeOf(this.props);
+        proto[key.substring(5)] = value;
+      } else if (isSelectable(value)) {
+        this.propsCleanup.get(key)?.unsubscribe();
+        const subscriber = (value: any) => {
+          if (value !== this.props[key]) {
+            this.props[key] = value;
+          }
+        };
+        const subscription = from(value).subscribe(subscriber);
+        this.propsCleanup.set(key, subscription);
+      } else {
+        this.props[key] = value;
       }
     }
   }
@@ -270,22 +308,27 @@ export class VirtualNode {
     return (event.target as any).value;
   }
 
-  private createProps(data: NodeData): StateProxy<NodeData> {
-    if (!this.isComponent) {
-      data = this.normalizeData(data);
+  private createProps(): void {
+    for (let key in this.props) {
+      const prop = this.props.$[key];
+      if (isCompletable(prop)) {
+        prop.complete();
+      }
     }
-    return new Proxy(
+    this.props = new Proxy(
       {} as StateProxy<NodeData>,
-      new StateProxyHandler(data, this.cleanup)
+      new StateProxyHandler({})
     );
+    this.patch(this.data);
   }
 
   private handleNode(
     node: Node,
-    data: any,
+    index: number,
     tree: Record<Key, Node>,
     isRoot: boolean
   ): void {
+    const data = this.data[index];
     for (let key in data) {
       if (key === 'children') {
         data.children.forEach(([data, path]: NodeInsertion) => {
@@ -309,7 +352,11 @@ export class VirtualNode {
         }
       } else if (key.startsWith('on:')) {
         const eventName = key.substring(3);
-        this.cleanup.add(addEventListener(node, eventName, data[key]));
+        this.cleanup.add(
+          addEventListener(node, eventName, (event: Event) =>
+            this.data[index][key](event)
+          )
+        );
       } else {
         this.setAttribute(node, key, data[key]);
       }
@@ -318,11 +365,12 @@ export class VirtualNode {
 
   private handleSlot(
     node: HTMLSlotElement,
-    data: any,
+    index: number,
     children: State<any> | undefined,
     isRoot: boolean
   ): void {
     const parent = node.parentNode;
+    const data = this.data[index];
     if (parent && children) {
       const slotEffect = () => {
         const availableChildren = coerceArray(children.$);
@@ -416,31 +464,23 @@ export class VirtualNode {
   private normalizeData(data?: NodeData): NodeData {
     const result: NodeData = {};
 
-    const isStatic = (value: any, key?: string) =>
-      key?.startsWith('on:') ||
-      value instanceof VirtualNode ||
-      value instanceof State ||
-      typeof value === 'function';
-
     for (let key in data) {
-      const props = { ...data[key] };
+      const props = data[key];
       for (let prop in props) {
-        if (isStatic(props[prop], prop)) {
+        // these properties won't change when props are patched
+        if (prop === 'ref' || prop === 'bind' || prop.startsWith('bind:') || prop.startsWith('on:')) {
           continue;
         }
         if (prop === 'children') {
           for (let i = 0; i < props.children.length; i++) {
-            if (isStatic(props.children[i][0])) {
-              continue;
-            }
             const name = `${key}:${prop}:${i}`;
             result[name] = props.children[i][0];
-            props.children[i][0] = () => this.props?.[name];
+            props.children[i][0] = () => this.props[name];
           }
         } else {
           const name = `${key}:${prop}`;
           result[name] = props[prop];
-          props[prop] = () => this.props?.[name];
+          props[prop] = () => this.props[name];
         }
       }
     }

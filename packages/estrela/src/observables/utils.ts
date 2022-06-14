@@ -1,4 +1,4 @@
-import { apply } from '../utils';
+import { effect } from '../internal/effect';
 import { Observable } from './observable';
 import { Subscriber } from './subscriber';
 import { Subscribable } from './types';
@@ -7,14 +7,19 @@ export function from<T>(x: any): Observable<T> {
   if (x instanceof Observable) {
     return x;
   }
-  if (x instanceof Subscriber) {
-    return new Observable((x as any).subscribe.bind(x));
+  if (isSubscribable<T>(x)) {
+    return new Observable(subscriber => {
+      x.subscribe(subscriber, { initialEmit: true });
+    });
+  }
+  if (typeof x === 'function') {
+    return effect(x);
   }
   return new Observable(subscriber => {
     if (typeof x.then === 'function') {
       x.then((value: T) => subscriber.next(value));
     } else {
-      subscriber.next(apply(x));
+      subscriber.next(x);
     }
   });
 }

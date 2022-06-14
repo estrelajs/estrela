@@ -1,9 +1,8 @@
-import { createState, State, styled } from 'estrela';
-import Todo, { TodoRef, TodoData } from './Todo';
+import { State, styled } from 'estrela';
+import Todo, { TodoItem } from './Todo';
 
 function App() {
-  const todoRef = createState<TodoRef>();
-  let todos: TodoData[] = [];
+  let todos: TodoItem[] = [];
   let todoText = '';
   var id = 0;
 
@@ -13,20 +12,20 @@ function App() {
     id = todos.reduce((max, todo) => Math.max(max, todo.id + 1), 0);
   }
 
-  (todos$ as State<TodoData[]>).subscribe(todos => {
+  (todos$ as State<TodoItem[]>).subscribe(todos => {
     localStorage.setItem('todos', JSON.stringify(todos));
   });
 
-  todoRef.subscribe(ref => ref?.doSomething());
-
   const addTodo = () => {
-    const todo: TodoData = {
-      id: id++,
-      text: todoText,
-      completed: false,
-    };
-    todos = [...todos, todo];
-    todoText = '';
+    if (!!todoText) {
+      const todo: TodoItem = {
+        id: id++,
+        text: todoText,
+        completed: false,
+      };
+      todos = [...todos, todo];
+      todoText = '';
+    }
   };
 
   const completeTodo = (id: number) => (completed: boolean) => {
@@ -54,14 +53,15 @@ function App() {
             bind={todoText$}
             on:keydown={e => e.key === 'Enter' && addTodo()}
           />
-          <button on:click={addTodo}>➕</button>
+          <button disabled={!todoText} on:click={addTodo}>
+            ➕
+          </button>
         </div>
         <div class="todos" class:empty={todos.length === 0}>
           {todos.map(todo => (
             <Todo
               key={todo.id}
               todo={todo}
-              ref={todoRef}
               on:complete={completeTodo(todo.id)}
               on:remove={removeTodo(todo.id)}
             />
