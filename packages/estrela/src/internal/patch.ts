@@ -31,7 +31,7 @@ export function patchChildren(
       }
       range.deleteContents();
     }
-    childrenMap.forEach((node, key) => {
+    childrenMap.forEach(node => {
       if (node instanceof VirtualNode) {
         node.dispose();
       }
@@ -126,7 +126,7 @@ function mapKeys(children: NodeOrVNode[]): Map<Key, NodeOrVNode> {
 }
 
 function getKey(node: NodeOrVNode | undefined, index: number): Key {
-  const key = node instanceof VirtualNode ? node.key : (node as Element)?.id;
+  const key = (node as any)?.id;
   let result = key === '' ? undefined : key;
   return result ?? `_$${index}$`;
 }

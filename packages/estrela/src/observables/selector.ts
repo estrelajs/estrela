@@ -22,24 +22,23 @@ export class Selector<T> extends Observable<T> {
   }
 
   private execute(): void {
-    STATE_CALLS.clear();
     this.hasResult = true;
     const result = this.selector(
       ...Array.from({ length: this.length }, (_, i) => this.memoizedValues[i])
     );
 
-    STATE_CALLS.forEach(state => {
+    let state = STATE_CALLS.pop();
+    while (state) {
       if (!this.states.includes(state)) {
         this.subscribeAt(this.states.push(state) - 1);
       }
-    });
+      state = STATE_CALLS.pop();
+    }
 
     if (this.memoizedResult !== result) {
       this.memoizedResult = result;
       this.observers.forEach(observer => observer.next(result));
     }
-
-    STATE_CALLS.clear();
   }
 
   private subscriber(observer: Observer<T>): () => void {

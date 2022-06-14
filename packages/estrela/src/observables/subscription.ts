@@ -23,7 +23,6 @@ export class Subscription implements Unsubscribable {
   unsubscribe() {
     if (!this.closed) {
       this._closed = true;
-
       if (this._finalizers.size > 0) {
         this._finalizers.forEach(finalizer => {
           if (typeof finalizer === 'function') {

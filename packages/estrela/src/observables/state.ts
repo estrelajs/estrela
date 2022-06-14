@@ -3,11 +3,11 @@ import { Subscription } from './subscription';
 import { symbol_observable } from './symbol';
 import { PartialObserver, Subscribable } from './types';
 
-export const STATE_CALLS = new Set<State<any>>();
+export const STATE_CALLS: State<any>[] = [];
 
 export class State<T> extends Subscriber<T> implements Subscribable<T> {
   get $(): T {
-    STATE_CALLS.add(this);
+    STATE_CALLS.push(this);
     return this._value;
   }
 

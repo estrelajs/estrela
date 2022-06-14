@@ -1,4 +1,4 @@
-import { mapNodeTree, VirtualNode } from './internal';
+import { VirtualNode, walkNode } from './internal';
 
 export type StyledTemplate<C> = (
   css: TemplateStringsArray,
@@ -26,9 +26,7 @@ export function styled<C extends Function>(
       if (!memo) {
         memo = node.cloneNode(true);
         if (!memo.isComponent) {
-          Object.values(
-            mapNodeTree(memo.template as any)
-          ).forEach(node => {
+          walkNode(memo.template as Node, node => {
             (node as Element).setAttribute?.(`_${id}`, '');
           });
         }

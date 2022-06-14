@@ -206,7 +206,9 @@ const Main = () => (
     <Jumbotron />
     <table class="table table-hover table-striped test-data">
       <tbody>
-        {() => data.$.map(item => <Row key={item.id} item={item} />)}
+        {data.$.map(item => (
+          <Row key={item.id} item={item} />
+        ))}
       </tbody>
     </table>
     <span class="preloadicon glyphicon glyphicon-remove" aria-hidden="true" />

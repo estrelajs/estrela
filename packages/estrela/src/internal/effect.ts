@@ -3,19 +3,21 @@ import { Observable, State, STATE_CALLS, Subscription } from '../observables';
 export function effect<T>(fn: () => T): Observable<T> {
   return new Observable(subscriber => {
     const subscription = new Subscription();
-    const states: State<any>[] = [];
-    const effectSync = () => {
-      STATE_CALLS.clear();
+    const states = new Set<State<any>>();
+    const runEffect = () => {
       const result = fn();
-      STATE_CALLS.forEach(state => {
-        if (!states.includes(state)) {
-          states.push(state);
-          subscription.add(state.subscribe(effectSync));
+      let state = STATE_CALLS.pop();
+      while (state) {
+        const oldSize = states.size;
+        states.add(state);
+        if (states.size > oldSize) {
+          subscription.add(state.subscribe(runEffect));
         }
-      });
+        state = STATE_CALLS.pop();
+      }
       subscriber.next(result);
     };
-    effectSync();
+    runEffect();
     return subscription;
   });
 }

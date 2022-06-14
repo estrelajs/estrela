@@ -106,25 +106,20 @@ export function setAttribute(
   }
 }
 
-export function mapNodeTree(tree: Node): Record<number, Node> {
-  let index = 0;
-  const result: Record<number, Node> = {};
+export function template(html: string): DocumentFragment {
+  const template = document.createElement('template');
+  template.innerHTML = html;
+  return template.content;
+}
+
+export function walkNode(root: Node, cb: (node: Node) => void): void {
   const walk = (node: Node) => {
-    if (!(node instanceof DocumentFragment)) {
-      result[index++] = node;
-    }
+    cb(node);
     let child = node.firstChild;
     while (child) {
       walk(child);
       child = child.nextSibling;
     }
   };
-  walk(tree);
-  return result;
-}
-
-export function template(html: string): DocumentFragment {
-  const template = document.createElement('template');
-  template.innerHTML = html;
-  return template.content;
+  walk(root);
 }

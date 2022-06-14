@@ -17,7 +17,6 @@ import { addEventListener } from './events';
 import {
   coerceNode,
   insertChild,
-  mapNodeTree,
   removeChild,
   replaceChild,
   setAttribute,
@@ -36,7 +35,7 @@ export class VirtualNode {
   public context: any = {};
 
   private cleanup = new Subscription();
-  private componentNode?: VirtualNode;
+  private componentTemplate?: VirtualNode;
   private mounted = false;
   private nodes: Node[] = [];
   private props: StateProxy<NodeData> = {} as any;
@@ -63,7 +62,7 @@ export class VirtualNode {
       | DocumentFragment
       | ((props?: any, context?: any) => VirtualNode),
     public data: NodeData,
-    public key?: Key
+    public id?: Key
   ) {}
 
   addHook(name: 'init' | 'destroy', handler: () => void): void {
@@ -75,32 +74,27 @@ export class VirtualNode {
   cloneNode(children?: boolean): VirtualNode {
     const data = { ...this.data };
     if (this.isComponent) {
-      return new VirtualNode(this.template, data, this.key);
+      return new VirtualNode(this.template, data, this.id);
     } else {
       const clone = (this.template as DocumentFragment).cloneNode(children);
-      return new VirtualNode(clone as DocumentFragment, data, this.key);
+      return new VirtualNode(clone as DocumentFragment, data, this.id);
     }
   }
 
   dispose(): void {
+    if (this.componentTemplate) {
+      this.componentTemplate.dispose();
+    }
     this.hooks.destroy.forEach(handler => handler());
-    this.hooks.destroy = [];
-    this.hooks.init = [];
-    if (this.componentNode) {
-      this.componentNode.dispose();
-      delete this.componentNode;
-    }
-    this.propsCleanup.forEach(subscription => subscription.unsubscribe());
-    for (let key in this.props) {
-      const prop = this.props.$[key];
-      if (isCompletable(prop)) {
-        prop.complete();
-      }
-    }
-    this.props = {} as any;
-    this.mounted = false;
+    this.propsCleanup.forEach(p => p.unsubscribe());
     this.cleanup.unsubscribe();
-    this.cleanup = new Subscription();
+    this.mounted = false;
+    // for (let key in this.props) {
+    //   const prop = this.props.$[key];
+    //   if (isCompletable(prop)) {
+    //     prop.complete();
+    //   }
+    // }
   }
 
   mount(
@@ -119,9 +113,9 @@ export class VirtualNode {
     // is Component
     if (typeof this.template === 'function') {
       VirtualNode.ref = this;
-      this.componentNode = this.template(this.props, this.context);
-      this.componentNode.context = this.context;
-      this.nodes = this.componentNode.mount(
+      this.componentTemplate = this.template(this.props, this.context);
+      this.componentTemplate.context = this.context;
+      this.nodes = this.componentTemplate.mount(
         parent,
         before,
         this.props.$.children
@@ -134,8 +128,7 @@ export class VirtualNode {
 
     // is Node
     const clone = this.template.cloneNode(true);
-    const tree = mapNodeTree(clone);
-    this.nodes = Array.from(clone.childNodes);
+    const tree = this.mapNodeTree(clone);
     insertChild(parent, clone, before);
     this.mounted = true;
 
@@ -453,12 +446,35 @@ export class VirtualNode {
       lastNodes.forEach(node => {
         if (isRoot) {
           removeChild(parent, node);
-        }
-        if (node instanceof VirtualNode) {
+        } else if (node instanceof VirtualNode) {
           node.dispose();
         }
       });
     });
+  }
+
+  private mapNodeTree(tree: Node): Record<number, Node> {
+    let index = 0;
+    const result: Record<number, Node> = {};
+    const walk = (node: Node) => {
+      const isFragment = node instanceof DocumentFragment;
+      if (!isFragment) {
+        result[index++] = node;
+      }
+      let child = node.firstChild;
+      if (child && isFragment) {
+        this.nodes.push(child);
+      }
+      while (child) {
+        walk(child);
+        child = child.nextSibling;
+        if (child && isFragment) {
+          this.nodes.push(child);
+        }
+      }
+    };
+    walk(tree);
+    return result;
   }
 
   private normalizeData(data?: NodeData): NodeData {

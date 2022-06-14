@@ -9,10 +9,11 @@ export class StateProxyHandler implements ProxyHandler<any> {
 
   get(target: any, prop: string) {
     if (prop === '$') {
-      return new Proxy(target, { get: this.getState.bind(this) });
+      return target;
+      // return new Proxy(target, { get: this.getState.bind(this) });
     }
     const state = this.getState(target, prop);
-    return state instanceof State ? state.$ : state;
+    return state.$;
   }
 
   set(target: any, prop: string, value: any) {

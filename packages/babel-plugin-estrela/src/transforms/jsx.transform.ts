@@ -49,8 +49,9 @@ function createVirtualNode(
     state.tmplDeclaration.declarations.push(declarator);
   }
   const args = [tmpl, createProps(result.props)];
-  if (result.props.key) {
-    args.push(result.props.key);
+  const key = result.props.key ?? result.props[0]?.key;
+  if (key) {
+    args.push(key);
   }
   return t.callExpression(state.h, args);
 }
