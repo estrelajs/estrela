@@ -69,8 +69,8 @@ export function setAttribute(
     }
     return;
   }
-  if (/$class:/.test(attr)) {
-    const klass = attr.replace(/^class:/, '');
+  if (attr.startsWith('class:')) {
+    const klass = attr.substring(6);
     if (isFalsy(value)) {
       element.classList.remove(klass);
     } else {
@@ -89,8 +89,8 @@ export function setAttribute(
     }
     return;
   }
-  if (/^style:/.test(attr)) {
-    const style = toCamelCase(attr.replace(/^style:/, ''));
+  if (attr.startsWith('style:')) {
+    const style = toCamelCase(attr.substring(6));
     if (style in element.style) {
       element.style[style as any] = value;
     }

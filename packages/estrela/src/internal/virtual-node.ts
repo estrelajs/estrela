@@ -7,7 +7,7 @@ import {
   isSelectable,
   State,
   Subscription,
-  Unsubscribable,
+  Unsubscribable
 } from '../observables';
 import { StateProxy } from '../state-proxy';
 import { Key } from '../types/types';
@@ -19,7 +19,7 @@ import {
   insertChild,
   removeChild,
   replaceChild,
-  setAttribute,
+  setAttribute
 } from './node-api';
 import { patchChildren } from './patch';
 import { StateProxyHandler } from './proxy-handler';

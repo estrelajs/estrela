@@ -1,8 +1,18 @@
 import * as babel from '@babel/core';
 import { Plugin } from 'vite';
-import { Options } from 'babel-plugin-estrela';
+import { Options as BabelOptions } from '../../babel-plugin-estrela/src';
+
+export interface Options extends BabelOptions {
+  /** Filter files to apply babel. */
+  fileRegex?: string | RegExp;
+}
 
 export default function (options?: Options): Plugin {
+  let { fileRegex = /\.[jt]sx$/, ...babelOptions } = options ?? {};
+  if (typeof fileRegex === 'string') {
+    fileRegex = new RegExp(fileRegex);
+  }
+
   return {
     name: 'vite-plugin-estrela',
     config() {
@@ -16,12 +26,12 @@ export default function (options?: Options): Plugin {
       };
     },
     transform(code, id) {
-      if (/\.[jt]sx$/.test(id)) {
+      if ((fileRegex as RegExp).test(id)) {
         const result = babel.transformSync(code, {
           filename: id,
           sourceMaps: true,
           sourceType: 'module',
-          plugins: [['babel-plugin-estrela', options]],
+          plugins: [['babel-plugin-estrela', babelOptions]],
         });
         if (result?.code) {
           return {

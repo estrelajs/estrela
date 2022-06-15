@@ -123,7 +123,7 @@ declare global {
       'on:timeupdate'?: HTMLEventHandler<T, Event>;
       'on:volumechange'?: HTMLEventHandler<T, Event>;
       'on:waiting'?: HTMLEventHandler<T, Event>;
-      'on:click'?: HTMLEventHandler<T, MouseEvent>;
+      'on:click'?: HTMLEventHandler<T, PointerEvent>;
       'on:contextmenu'?: HTMLEventHandler<T, MouseEvent>;
       'on:dblclick'?: HTMLEventHandler<T, MouseEvent>;
       'on:drag'?: HTMLEventHandler<T, DragEvent>;

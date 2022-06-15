@@ -1,5 +1,3 @@
-import { VirtualNode } from './internal';
-
 /** Return value from a value or function. */
 export function apply<T>(value: T | ((...args: any) => T), ...args: any[]): T {
   return typeof value === 'function'
@@ -63,14 +61,6 @@ export function isPrimitive(
 /** Check if value is truthy. */
 export function isTruthy<T>(x: T | false | null | undefined): x is T {
   return x !== false && x !== null && x !== undefined;
-}
-
-export function isVirtualNode(x: any): x is VirtualNode {
-  return (
-    x &&
-    x.sel !== undefined &&
-    (x.children || x.Component || x.Observable || x.text)
-  );
 }
 
 /** Transform string to camelCase. */

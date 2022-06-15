@@ -274,7 +274,17 @@ function transformChildren(path: NodePath<JSXElement>, result: Result): void {
   const parentIndex = result.index;
   path
     .get('children')
-    .filter(isValidChild)
+    .reduce((acc, child) => {
+      if (isValidChild(child)) {
+        const lastChild = acc.at(-1);
+        if (lastChild && isTextChild(child) && isTextChild(lastChild)) {
+          setNodeText(lastChild, getNodeText(lastChild) + getNodeText(child));
+        } else {
+          acc.push(child);
+        }
+      }
+      return acc;
+    }, [] as NodePath<JSXChild>[])
     .forEach((child, i, arr) => {
       result.parentIndex = parentIndex;
       result.isLastChild = i === arr.length - 1;
@@ -328,6 +338,31 @@ function getAttrName(attribute: t.JSXAttribute): string {
   throw new Error('Unsupported attribute type');
 }
 
+function getNodeText(path: NodePath<JSXChild>): string {
+  if (path.isJSXText()) {
+    return path.node.value;
+  }
+  if (path.isJSXExpressionContainer()) {
+    const expression = path.get('expression');
+    if (expression.isStringLiteral() || expression.isNumericLiteral()) {
+      return String(expression.node.value);
+    }
+  }
+  return '';
+}
+
+function setNodeText(path: NodePath<JSXChild>, text: string): void {
+  if (path.isJSXText()) {
+    path.node.value = text;
+  }
+  if (path.isJSXExpressionContainer()) {
+    const expression = path.get('expression');
+    if (expression.isStringLiteral() || expression.isNumericLiteral()) {
+      expression.replaceWith(t.stringLiteral(text));
+    }
+  }
+}
+
 function getTagName(node: t.JSXElement): string {
   const jsxName = node.openingElement.name;
   return jsxElementNameToString(jsxName);
@@ -341,7 +376,24 @@ function isComponent(tagName: string): boolean {
   );
 }
 
-function isValidChild(path: NodePath): boolean {
+function isTextChild(path: NodePath<JSXChild>): boolean {
+  if (path.isJSXExpressionContainer()) {
+    const expression = path.get('expression');
+    if (
+      expression.isJSXText() ||
+      expression.isStringLiteral() ||
+      expression.isNumericLiteral()
+    ) {
+      return true;
+    }
+  }
+  if (path.isJSXText() || path.isStringLiteral() || path.isNullLiteral()) {
+    return true;
+  }
+  return false;
+}
+
+function isValidChild(path: NodePath<JSXChild>): boolean {
   const regex = /^\s*$/;
   if (path.isStringLiteral() || path.isJSXText()) {
     return !regex.test(path.node.value);

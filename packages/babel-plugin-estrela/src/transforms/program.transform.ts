@@ -17,14 +17,10 @@ export function transformProgram(options: Options) {
       const state: State = path.state;
       const imports: Record<string, string> = {};
       if (state.tmplDeclaration.declarations.length > 0) {
-        const index = path.node.body.reduce(
-          (index, node, i) =>
-            t.isImportDeclaration(node) || t.isExportDeclaration(node)
-              ? i
-              : index,
-          0
+        const index = path.node.body.findIndex(
+          node => !t.isImportDeclaration(node) && !t.isExportDeclaration(node)
         );
-        path.node.body.splice(index + 1, 0, state.tmplDeclaration);
+        path.node.body.splice(index, 0, state.tmplDeclaration);
         imports.template = state.template.name;
       }
       if (path.scope.hasBinding(state.h.name)) {

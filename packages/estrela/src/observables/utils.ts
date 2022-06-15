@@ -1,6 +1,5 @@
 import { effect } from '../internal/effect';
 import { Observable } from './observable';
-import { Subscriber } from './subscriber';
 import { Subscribable } from './types';
 
 export function from<T>(x: any): Observable<T> {

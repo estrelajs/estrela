@@ -1,4 +1,4 @@
-import { State, styled } from 'estrela';
+import { styled } from 'estrela';
 import Todo, { TodoItem } from './Todo';
 
 function App() {
@@ -12,7 +12,7 @@ function App() {
     id = todos.reduce((max, todo) => Math.max(max, todo.id + 1), 0);
   }
 
-  (todos$ as State<TodoItem[]>).subscribe(todos => {
+  todos$.subscribe((todos: TodoItem[]) => {
     localStorage.setItem('todos', JSON.stringify(todos));
   });
 
