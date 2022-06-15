@@ -19,26 +19,36 @@ const App = () => {
 
   // clean interval on destroy this component.
   onDestroy(() => clearInterval(interval));
-  
+
   // return JSX element.
-  return <div>Count is { count * 2 }</div>
-}
+  return <div>Count is {count * 2}</div>;
+};
 ```
 
-It will convert the code above to:
+It will transpile the code above to:
 
 ```js
-import { h as _jsx, $$ as _$$ } from 'estrela/internal';
-import { state, onDestroy } from 'estrela';
+import { template as _template, h as _h, $$ as _$$ } from "estrela/internal";
+import { render } from "estrela";
+import { onDestroy } from "estrela";
 
-const App = () => {
+const _tmpl = _template("<div>Count is </div>");
+
+const App = _props => {
   const _$ = /*#__PURE__*/_$$();
-  _$.count = 0;
+
+  _$.count = 0
+
   _$.$.count.subscribe(console.log);
-  setInterval(() => _$.count++, 1000);
+
+  const interval = setInterval(() => _$.count++, 1e3);
   onDestroy(() => clearInterval(interval));
-  return /*#__PURE__*/h('div', null, 'Count is ', [() => _$.count * 2]);
-}
+  return _h(_tmpl, {
+    "0": {
+      "children": [[() => _$.count * 2, null]]
+    }
+  });
+};
 ```
 
 ## Install

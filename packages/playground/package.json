@@ -9,9 +9,8 @@
     "deploy": "./deploy.sh"
   },
   "devDependencies": {
-    "typescript": "^4.5.4",
-    "vite": "^2.9.0",
-    "vite-plugin-estrela": "^0.3.1"
+    "typescript": "^4.7.3",
+    "vite": "^2.9.12"
   },
   "dependencies": {
     "rxjs": "^7.5.5"
