@@ -1,5 +1,4 @@
-import { createSelector } from '../observables';
-import { createStore } from '../store';
+import { createSelector, createState } from '../observables';
 
 export interface RouterState {
   url: string;
@@ -24,7 +23,7 @@ const getState = ({ state = {} }: Partial<RouterState> = {}): RouterState => {
   };
 };
 
-const store = createStore<RouterState>(getState());
+const store = createState<RouterState>(getState());
 export const routeUrl = createSelector(store, state => state.url);
 export const routeFragment = createSelector(store, state => state.fragment);
 export const routeQueryParams = createSelector(
@@ -38,7 +37,7 @@ window.addEventListener('popstate', () => {
 });
 
 export function navigateTo(url: string, opts?: NavigateOptions) {
-  const oldState = store.getState();
+  const oldState = store.$;
   const { replace = false, state = oldState.state } = opts ?? {};
   const action = replace ? 'replaceState' : 'pushState';
   window.history[action](state, '', url);

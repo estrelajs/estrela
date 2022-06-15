@@ -1,3 +1,12 @@
+import * as t from '@babel/types';
+
+export interface State {
+  h: t.Identifier;
+  stateProxy: t.Identifier;
+  tmplDeclaration: t.VariableDeclaration;
+  template: t.Identifier;
+}
+
 export interface Options {
   /**
    * Create a proxy state inside of functional components.

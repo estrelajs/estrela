@@ -3,7 +3,6 @@ import { defineConfig } from 'vite';
 import estrela from '../vite-plugin-estrela/src';
 
 export default defineConfig({
-  base: '/estrela/',
   plugins: [estrela()],
   resolve: {
     alias: [

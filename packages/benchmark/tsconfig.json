@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "useDefineForClassFields": true,
+    "paths": {
+      "estrela": [
+        "../estrela/src/index.ts"
+      ],
+      "estrela/*": [
+        "../estrela/src/*/index.ts"
+      ],
+    }
+  },
+  "include": [
+    "src"
+  ]
+}

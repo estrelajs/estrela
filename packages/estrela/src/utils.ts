@@ -38,6 +38,11 @@ export function deepEqual(obj1: any, obj2: any): boolean {
   return true;
 }
 
+/** Identity function. Returns the first param. */
+export function identity<T>(value: T, ...args: any[]): T {
+  return value;
+}
+
 /** Check if value is false, null or undefined. */
 export function isFalsy(x: any): x is false | null | undefined {
   return x === false || x === null || x === undefined;

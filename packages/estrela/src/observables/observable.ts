@@ -1,30 +1,39 @@
-import { createSubscriber } from './subscriber';
-import { createSubscription } from './subscription';
+import { Subscription } from './subscription';
 import { symbol_observable } from './symbol';
-import { ObservableLike, Observer } from './types';
-import { coerceObserver } from './utils';
+import { PartialObserver, Subscribable, Unsubscribable } from './types';
+import { Observer } from './types';
 
-export interface Observable<T> extends ObservableLike<T> {}
+const noop = () => {};
 
-export function createObservable<T>(
-  subscribe?: (subscriber: Observer<T>) => void
-): Observable<T> {
-  return {
-    [symbol_observable]() {
-      return this;
-    },
-    subscribe(observer) {
-      const observers = new Set([coerceObserver(observer)]);
-      const subscriber = createSubscriber(observers);
-      subscribe?.(subscriber);
-      return createSubscription(() => {
-        subscriber.complete();
-        observers.clear();
-      });
-    },
-  };
+export function coerceObserver<T>(observer?: PartialObserver<T>): Observer<T> {
+  if (typeof observer === 'function') {
+    return {
+      next: observer,
+      error: noop,
+      complete: noop,
+    };
+  }
+  let { next, error, complete } = observer ?? {};
+  next = next ? next.bind(observer) : noop;
+  error = error ? error.bind(observer) : noop;
+  complete = complete ? complete.bind(observer) : noop;
+  return { next, error, complete };
 }
 
-export function isObservable<T>(x: any): x is Observable<T> {
-  return x && typeof x[symbol_observable] === 'function';
+export class Observable<T> implements Subscribable<T> {
+  constructor(
+    protected cb?: (
+      subscriber: Observer<T>
+    ) => (() => void) | Unsubscribable | void
+  ) {}
+
+  [symbol_observable]() {
+    return this;
+  }
+
+  subscribe(observer?: PartialObserver<T>): Subscription {
+    const subscriber = coerceObserver(observer);
+    const cleanup = this.cb?.(subscriber);
+    return new Subscription(cleanup ?? undefined);
+  }
 }

@@ -1,0 +1,29 @@
+{
+  "name": "js-framework-benchmark-estrela",
+  "version": "0.9.2",
+  "description": "Estrela demo",
+  "main": "index.js",
+  "js-framework-benchmark": {
+    "frameworkVersionFromPackage": "estrela"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build-dev": "vite",
+    "build-prod": "vite build"
+  },
+  "keywords": [
+    "estrela",
+    "vite"
+  ],
+  "author": "Eduardo Rosostolato",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/krausest/js-framework-benchmark",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krausest/js-framework-benchmark.git"
+  },
+  "devDependencies": {
+    "typescript": "^4.7.2",
+    "vite": "^2.9.9"
+  }
+}

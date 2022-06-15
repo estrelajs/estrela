@@ -1,21 +1,41 @@
+import { VirtualNode, walkNode } from './internal';
+
 export type StyledTemplate<C> = (
   css: TemplateStringsArray,
   ...cssArgs: any[]
 ) => C;
 
-export function styled<C extends Function>(Component: C): StyledTemplate<C> {
+export function styled<C extends Function>(Component: C): StyledTemplate<C>;
+export function styled<C extends Function>(
+  Component: C,
+  id: string
+): StyledTemplate<C>;
+export function styled<C extends Function>(
+  Component: C,
+  id?: string
+): StyledTemplate<C> {
+  if (!id) {
+    throw new Error('id is required');
+  }
+
   return (css, ...cssArgs) => {
-    const template = Array.from(css);
+    let memo: VirtualNode;
+
     const styledComponent = (...args: any[]) => {
-      return Component.apply(undefined, args as any);
+      const node: VirtualNode = Component.apply(undefined, args);
+      if (!memo) {
+        memo = node.cloneNode(true);
+        if (!memo.isComponent) {
+          walkNode(memo.template as Node, node => {
+            (node as Element).setAttribute?.(`_${id}`, '');
+          });
+        }
+      }
+      (node as any).template = memo.template;
+      return node;
     };
 
-    if (isStyleId(cssArgs[0])) {
-      styledComponent.styleId = cssArgs[0];
-      template.shift();
-      cssArgs.shift();
-    }
-
+    const template = Array.from(css);
     const style = document.createElement('style');
     const styleSheet = cssArgs.reduce(
       (acc: string, arg, i) => acc + String(arg) + template[i + 1],
@@ -24,12 +44,9 @@ export function styled<C extends Function>(Component: C): StyledTemplate<C> {
 
     style.setAttribute('type', 'text/css');
     style.textContent = styleSheet;
+    styledComponent.styleId = id;
     document.head.append(style);
 
     return styledComponent as any;
   };
-}
-
-function isStyleId(id: string): boolean {
-  return /^[a-z0-9]{5}$/.test(id);
 }

@@ -1,20 +1,15 @@
-import { EventEmitter, Ref, setRef, State, styled } from 'estrela';
+import { EventEmitter, State, styled } from 'estrela';
 
-export interface TodoData {
+export interface TodoItem {
   id: number;
   text: string;
   completed: boolean;
 }
 
 export interface TodoProps {
-  todo: TodoData;
+  todo: TodoItem;
   complete: EventEmitter<boolean>;
-  remove: EventEmitter<TodoData>;
-  ref?: Ref<TodoRef>;
-}
-
-export interface TodoRef {
-  doSomething(): void;
+  remove: EventEmitter<TodoItem>;
 }
 
 function Todo({ todo, complete, remove }: TodoProps) {
@@ -22,12 +17,6 @@ function Todo({ todo, complete, remove }: TodoProps) {
 
   (completed$ as State<boolean>).subscribe(value => {
     complete.emit(value);
-  });
-
-  setRef<TodoRef>({
-    doSomething() {
-      console.log('Called "doSomething" on Todo');
-    },
   });
 
   return (

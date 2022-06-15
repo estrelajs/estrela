@@ -1,46 +1,55 @@
-import { Observer } from './types';
+import { PartialObserver, SubscriberLike } from './types';
 
-export interface Subscriber<T> extends Observer<T> {
-  closed: boolean;
-  hasError: boolean;
-  thrownError?: any;
-}
+export class Subscriber<T> implements SubscriberLike<T> {
+  private observers = new Set<PartialObserver<T>>();
+  private _closed = false;
+  private _hasError = false;
+  public thrownError?: any;
 
-export function createSubscriber<T>(
-  observers: Set<Observer<T>>
-): Subscriber<T> {
-  let closed = false;
-  let hasError = false;
+  get closed() {
+    return this._closed;
+  }
 
-  return {
-    get closed() {
-      return closed;
-    },
-    get hasError() {
-      return hasError;
-    },
-    next(value: T) {
-      observers.forEach(observer => observer.next(value));
-    },
-    error(err: any) {
-      observers.forEach(observer => observer.error(err));
-      observers.clear();
-      hasError = true;
-      this.thrownError = err;
-    },
-    complete() {
-      observers.forEach(observer => observer.complete());
-      observers.clear();
-      closed = true;
-    },
-  };
-}
+  get hasError() {
+    return this._hasError;
+  }
 
-export function isSubscriber<T>(x: any): x is Subscriber<T> {
-  return (
-    typeof x === 'object' &&
-    typeof x.next === 'function' &&
-    typeof x.error === 'function' &&
-    typeof x.complete === 'function'
-  );
+  get observed() {
+    return this.observers.size > 0;
+  }
+
+  next(value: T): void {
+    this.observers.forEach(observer => {
+      typeof observer === 'function' ? observer(value) : observer.next?.(value);
+    });
+  }
+
+  error(err: any): void {
+    this.observers.forEach(
+      observer => typeof observer === 'object' && observer.error?.(err)
+    );
+    this.observers.clear();
+    this._hasError = true;
+    this.thrownError = err;
+  }
+
+  complete(): void {
+    this.observers.forEach(
+      observer => typeof observer === 'object' && observer.complete?.()
+    );
+    this.observers.clear();
+    this._closed = true;
+  }
+
+  protected add(observer?: PartialObserver<T>): void {
+    if (observer) {
+      this.observers.add(observer);
+    }
+  }
+
+  protected remove(observer?: PartialObserver<T>): void {
+    if (observer) {
+      this.observers.delete(observer);
+    }
+  }
 }

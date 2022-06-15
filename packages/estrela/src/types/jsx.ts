@@ -1,6 +1,6 @@
 import { VirtualNode } from '../internal';
 import { EventEmitter, State, Subscribable } from '../observables';
-import { ProxyState } from '../proxy-state';
+import { Component, EventHandler, HTMLEventHandler, Key } from './types';
 
 /**
  * Based on JSX types for Surplus, Inferno and dom-expressions, adapted for Estrela.
@@ -10,16 +10,10 @@ import { ProxyState } from '../proxy-state';
  * https://github.com/ryansolid/dom-expressions/blob/main/packages/dom-expressions/src/jsx.d.ts
  */
 
-export interface Component<P = {}, C = JSX.Children> {
-  (
-    props: P extends { children: any } ? Props<P> : Props<P> & { children?: C }
-  ): JSX.Element | null;
-}
-
-export type Props<T extends Object> = ProxyState<T>;
-
 type PropsOf<P> = {
   [K in keyof Omit<P, '$' | EmittersOf<P>>]: P[K];
+} & {
+  [K in `bind:${string}`]: State<any>;
 } & {
   [K in keyof Pick<P, EmittersOf<P>> as `on:${K & string}`]: P[K] extends
     | EventEmitter<infer E>
@@ -32,37 +26,34 @@ type EmittersOf<P> = {
   [K in keyof P]: P[K] extends EventEmitter<any> | undefined ? K : never;
 }[keyof P];
 
-export type EventHandler<T> = ((value: T) => void) | EventEmitter<T> | State<T>;
-
-export type HTMLEventHandler<T, E extends Event> = EventHandler<
-  E & { target: T }
->;
-
-export type Ref<T> = ((data: T | undefined) => void) | State<T | undefined>;
-
 declare global {
   namespace JSX {
     type Element = VirtualNode;
-    type Child =
-      | Node
-      | Element
-      | Array<Children>
-      | Subscribable<any>
-      | Promise<any>
+    type Children =
       | string
       | number
       | boolean
+      | Date
+      | Node
+      | Element
+      | Selector
+      | Subscribable<any>
+      | Promise<any>
+      | Children[]
       | null
       | undefined;
-    type Children = Child | Array<Child>;
+    type Selector = () => Children;
     type LibraryManagedAttributes<C, P> = PropsOf<P>;
     interface ElementChildrenAttribute {
       children: any;
     }
     interface IntrinsicAttributes {
-      key?: string | number | symbol;
+      key?: Key;
     }
     interface Directives {}
+    type BindAttributes = {
+      [K in `bind:${string}`]: State<any>;
+    };
     type DirectiveAttributes = {
       [Key in keyof Directives as `use:${Key}`]?: Directives[Key];
     };
@@ -72,9 +63,9 @@ declare global {
     type ClassAttributes = {
       [K in `class:${string}`]?: boolean;
     };
-    interface DOMAttributes<T> extends DirectiveAttributes {
-      ref?: State<T | null> | ((el: T) => void);
-      key?: string | number | symbol;
+    interface DOMAttributes<T> extends BindAttributes, DirectiveAttributes {
+      ref?: State<T | undefined> | ((el: T) => void);
+      key?: Key;
       children?: Children;
       innerHTML?: string;
       innerText?: string | number;
@@ -1864,7 +1855,6 @@ declare global {
         ClassAttributes,
         DOMAttributes<T> {
       accessKey?: string;
-      bind?: State<any>;
       class?: string | string[] | { [key: string]: boolean };
       contenteditable?: boolean | 'inherit';
       contextmenu?: string;
@@ -2128,6 +2118,7 @@ declare global {
       alt?: string;
       autocomplete?: string;
       autofocus?: boolean;
+      bind?: State<any>;
       capture?: boolean | string;
       checked?: boolean;
       crossorigin?: HTMLCrossorigin;
@@ -2259,6 +2250,7 @@ declare global {
       label?: string;
     }
     interface OptionHTMLAttributes<T> extends HTMLAttributes<T> {
+      children?: string;
       disabled?: boolean;
       label?: string;
       selected?: boolean;
@@ -2295,6 +2287,7 @@ declare global {
     interface SelectHTMLAttributes<T> extends HTMLAttributes<T> {
       autocomplete?: string;
       autofocus?: boolean;
+      bind?: State<any>;
       disabled?: boolean;
       form?: string;
       multiple?: boolean;
@@ -2331,6 +2324,7 @@ declare global {
     interface TextareaHTMLAttributes<T> extends HTMLAttributes<T> {
       autocomplete?: string;
       autofocus?: boolean;
+      bind?: State<any>;
       cols?: number | string;
       dirname?: string;
       disabled?: boolean;

@@ -1,41 +1,38 @@
-import { SubscriptionLike, TeardownLogic } from './types';
+import { TeardownLogic, Unsubscribable } from './types';
 
-export interface Subscription extends SubscriptionLike {
-  add(teardown: TeardownLogic): void;
-}
+export class Subscription implements Unsubscribable {
+  private _closed = false;
+  private _finalizers = new Set<TeardownLogic>();
 
-export function createSubscription(teardown?: () => void): Subscription {
-  const finalizers = new Set<TeardownLogic>();
-  let closed = false;
-
-  if (teardown) {
-    finalizers.add(teardown);
+  get closed() {
+    return this._closed;
   }
 
-  return {
-    get closed() {
-      return closed;
-    },
-    add(teardown) {
-      if (!closed) {
-        finalizers.add(teardown);
-      }
-    },
-    unsubscribe() {
-      if (!closed) {
-        closed = true;
+  constructor(teardown?: TeardownLogic) {
+    if (teardown) {
+      this._finalizers.add(teardown);
+    }
+  }
 
-        if (finalizers.size > 0) {
-          finalizers.forEach(finalizer => {
-            if (typeof finalizer === 'function') {
-              finalizer();
-            } else {
-              finalizer.unsubscribe();
-            }
-          });
-          finalizers.clear();
-        }
+  add(teardown: TeardownLogic) {
+    if (!this._closed) {
+      this._finalizers.add(teardown);
+    }
+  }
+
+  unsubscribe() {
+    if (!this.closed) {
+      this._closed = true;
+      if (this._finalizers.size > 0) {
+        this._finalizers.forEach(finalizer => {
+          if (typeof finalizer === 'function') {
+            finalizer();
+          } else {
+            finalizer.unsubscribe();
+          }
+        });
+        this._finalizers.clear();
       }
-    },
-  };
+    }
+  }
 }

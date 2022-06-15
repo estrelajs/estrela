@@ -1,4 +1,4 @@
-export { createProxyState as $$ } from '../proxy-state';
-export * from './h';
-export * from './virtual-dom/component-ref';
-export * from './virtual-dom/virtual-node';
+export * from './node-api';
+export * from './proxy-handler';
+export * from './virtual-node';
+export { createStateProxy as $$ } from '../state-proxy';
