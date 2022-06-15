@@ -1,6 +1,6 @@
 # babel-plugin-estrela
 
-A babel plugin to process estrela jsx/tsx files.
+A babel plugin to pre-process estrela jsx/tsx files.
 
 ### Estrela code example
 

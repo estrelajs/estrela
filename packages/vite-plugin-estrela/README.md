@@ -1,6 +1,6 @@
 # vite-plugin-estrela
 
-A vite plugin to process estrela jsx/tsx files.
+A vite plugin to pre-process estrela jsx/tsx files.
 
 ## Installation
 

@@ -66,6 +66,14 @@ Check the [documentation](https://estrelajs.github.io/) for more information.
 
 See it in action on this [Todo App](https://estrelajs.github.io/estrela/todo) example. You can find source code for this example [here](https://github.com/estrelajs/estrela/tree/main/packages/playground/src/todo).
 
+## Performance
+
+Since version v0.10.0, Estrela uses a new dom manager system which boosted the performance of the application making it faster than React and Angular. Still have many things to polish to make it even faster.
+
+This is a performance chart comparing Estrela to other famous frameworks:
+
+![Performance Chart](images/performance-chart.png)
+
 ## Contributing
 
 Estrela is open source and we appreciate issue reports and pull requests.
