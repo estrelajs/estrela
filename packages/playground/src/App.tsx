@@ -10,8 +10,6 @@ const routes = createRouter(
   withRoute('/todo', () => <TodoApp />)
 );
 
-const test = 'test';
-
 function Menu() {
   return (
     <>
@@ -27,7 +25,6 @@ function Menu() {
           <Link to="/todo">Todo App</Link>
         </li>
       </ul>
-      {test}
     </>
   );
 }

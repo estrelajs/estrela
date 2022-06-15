@@ -1,4 +1,4 @@
-import { EventEmitter, State, styled } from 'estrela';
+import { EventEmitter, styled } from 'estrela';
 
 export interface TodoItem {
   id: number;
@@ -15,7 +15,7 @@ export interface TodoProps {
 function Todo({ todo, complete, remove }: TodoProps) {
   let completed = todo.completed;
 
-  (completed$ as State<boolean>).subscribe(value => {
+  completed$.subscribe((value: boolean) => {
     complete.emit(value);
   });
 
