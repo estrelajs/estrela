@@ -1,5 +1,3 @@
-import { VirtualNode, walkNode } from './internal';
-
 export type StyledTemplate<C> = (
   css: TemplateStringsArray,
   ...cssArgs: any[]
@@ -19,22 +17,6 @@ export function styled<C extends Function>(
   }
 
   return (css, ...cssArgs) => {
-    let memo: VirtualNode;
-
-    const styledComponent = (...args: any[]) => {
-      const node: VirtualNode = Component.apply(undefined, args);
-      if (!memo) {
-        memo = node.cloneNode(true);
-        if (!memo.isComponent) {
-          walkNode(memo.template as Node, node => {
-            (node as Element).setAttribute?.(`_${id}`, '');
-          });
-        }
-      }
-      (node as any).template = memo.template;
-      return node;
-    };
-
     const template = Array.from(css);
     const style = document.createElement('style');
     const styleSheet = cssArgs.reduce(
@@ -44,9 +26,11 @@ export function styled<C extends Function>(
 
     style.setAttribute('type', 'text/css');
     style.textContent = styleSheet;
-    styledComponent.styleId = id;
     document.head.append(style);
 
+    const styledComponent = (...args: any[]) =>
+      Component.apply(undefined, args);
+    styledComponent.styleId = id;
     return styledComponent as any;
   };
 }

@@ -3,10 +3,12 @@ import { VirtualNode } from './virtual-node';
 
 export function coerceNode(
   node: JSX.Children,
-  context: any
+  context: any,
+  styleId?: string
 ): Node | VirtualNode {
   if (node instanceof VirtualNode) {
     node.context = context;
+    node.styleId = styleId;
     return node;
   }
   if (node instanceof Node) {

@@ -33,6 +33,7 @@ export interface NodeData {
 
 export class VirtualNode {
   public context: any = {};
+  public styleId?: string;
 
   private cleanup = new Subscription();
   private componentTemplate?: VirtualNode;
@@ -115,6 +116,11 @@ export class VirtualNode {
       VirtualNode.ref = this;
       this.componentTemplate = this.template(this.props, this.context);
       this.componentTemplate.context = this.context;
+      if (this.template.hasOwnProperty('styleId')) {
+        const styleId = (this.template as any).styleId;
+        this.componentTemplate.styleId = styleId;
+        this.styleId = styleId;
+      }
       this.nodes = this.componentTemplate.mount(
         parent,
         before,
@@ -423,7 +429,7 @@ export class VirtualNode {
           lastValue = value;
           const nextNodes = coerceArray(value)
             .flat()
-            .map(node => coerceNode(node, this.context));
+            .map(node => coerceNode(node, this.context, this.styleId));
           lastNodes = patchChildren(parent, lastNodes, nextNodes, before);
         }
       });
@@ -435,7 +441,7 @@ export class VirtualNode {
       coerceArray(data)
         .flat()
         .forEach((node, i) => {
-          node = coerceNode(node, this.context);
+          node = coerceNode(node, this.context, this.styleId);
           lastNodes.set(i, node);
           insertChild(parent, node, before);
         });
@@ -471,6 +477,9 @@ export class VirtualNode {
         if (child && isFragment) {
           this.nodes.push(child);
         }
+      }
+      if (this.styleId) {
+        (node as Element).setAttribute?.(`_${this.styleId}`, '');
       }
     };
     walk(tree);
