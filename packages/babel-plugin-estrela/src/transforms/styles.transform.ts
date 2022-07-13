@@ -3,7 +3,7 @@ import * as t from '@babel/types';
 import autoprefixer from 'autoprefixer';
 import postcss from 'postcss';
 import postcssNested from 'postcss-nested';
-import postcssPrefixer from 'postcss-prefix-selector';
+import cssParserPlugin from '../shared/css-parser-plugin';
 
 export function transformStyles(path: NodePath<t.TaggedTemplateExpression>) {
   const tag = path.get('tag');
@@ -33,11 +33,7 @@ function generateStyleId(): string {
 }
 
 function processCss(css: string, hostId: string) {
-  return postcss([
-    autoprefixer(),
-    postcssNested(),
-    postcssPrefixer({
-      transform: (_, selector) => `${selector}[_${hostId}]`,
-    }) as any,
-  ]).process(css).css;
+  const firstPass = postcss([autoprefixer(), postcssNested()]).process(css).css;
+  return postcss([cssParserPlugin({ id: `_${hostId}` })]).process(firstPass)
+    .css;
 }

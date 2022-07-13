@@ -25,14 +25,13 @@
     "autoprefixer": "^10.4.7",
     "postcss": "^8.4.14",
     "postcss-nested": "^5.0.6",
-    "postcss-prefix-selector": "^1.15.0"
+    "postcss-selector-parser": "^6.0.10"
   },
   "devDependencies": {
     "@babel/helper-annotate-as-pure": "^7.16.7",
     "@babel/helper-plugin-utils": "^7.17.12",
     "@types/babel__core": "^7.1.19",
     "@types/babel__helper-plugin-utils": "^7.10.0",
-    "@types/postcss-prefix-selector": "^1.15.0",
     "esbuild": "^0.14.43",
     "esbuild-config": "^0.2.0",
     "rimraf": "^3.0.2"
