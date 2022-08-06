@@ -188,7 +188,7 @@ export class VirtualNode {
           }
         };
         const state = createState<any>(value);
-        const subscription = state.subscribe(subscriber);
+        const subscription = state.subscribe(subscriber, { initialEmit: true });
         subscription.add(() => state.complete());
         this.propsCleanup.set(key, subscription);
       } else {

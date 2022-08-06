@@ -40,30 +40,31 @@ export function patchChildren(
   }
 
   const replaces: [Comment, NodeOrVNode][] = [];
-  const nextChildrenMap = mapKeys(nextChildren);
+  // const nextChildrenMap = mapKeys(nextChildren);
 
   for (let i = 0; i < nextChildren.length; i++) {
     let currChild = children.next().value;
     let currKey = getKey(currChild, i);
 
-    while (currChild && !nextChildrenMap.has(currKey)) {
-      removeChild(parent, currChild);
-      childrenMap.delete(currKey);
-      currChild = children.next().value;
-      currKey = getKey(currChild, i);
-    }
+    // while (currChild && !nextChildrenMap.has(currKey)) {
+    //   removeChild(parent, currChild);
+    //   childrenMap.delete(currKey);
+    //   currChild = children.next().value;
+    //   currKey = getKey(currChild, i);
+    // }
 
     let child = nextChildren[i];
     const key = getKey(child, i);
     const origChild = childrenMap.get(key);
 
-    if (currChild || origChild) {
+    if (origChild) {
+      child = patch(parent, origChild, child);
+    }
+
+    if (currChild) {
       if (currChild === origChild) {
-        child = patch(parent, currChild, child);
+        // noop
       } else if (currChild) {
-        if (origChild) {
-          child = patch(parent, origChild, child);
-        }
         const placeholder = document.createComment('');
         insertChild(parent, placeholder, currChild);
         replaces.push([placeholder, child]);
@@ -75,7 +76,6 @@ export function patchChildren(
     }
 
     result.set(key, child);
-    // childrenMap.delete(key);
   }
 
   replaces.forEach(([placeholder, child]) =>
@@ -115,15 +115,15 @@ function patch(
   return next;
 }
 
-function mapKeys(children: NodeOrVNode[]): Map<Key, NodeOrVNode> {
-  const result = new Map<Key, NodeOrVNode>();
-  for (let i = 0; i < children.length; i++) {
-    const child = children[i];
-    const key = getKey(child, i);
-    result.set(key, child);
-  }
-  return result;
-}
+// function mapKeys(children: NodeOrVNode[]): Map<Key, NodeOrVNode> {
+//   const result = new Map<Key, NodeOrVNode>();
+//   for (let i = 0; i < children.length; i++) {
+//     const child = children[i];
+//     const key = getKey(child, i);
+//     result.set(key, child);
+//   }
+//   return result;
+// }
 
 function getKey(node: NodeOrVNode | undefined, index: number): Key {
   const key = (node as any)?.id;
