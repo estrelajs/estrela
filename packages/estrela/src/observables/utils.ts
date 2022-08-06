@@ -1,26 +1,27 @@
 import { effect } from '../internal/effect';
-import { Observable } from './observable';
-import { Subscribable } from './types';
+import { createState, State } from './state';
+import {
+  Observer,
+  PartialObserver,
+  Subscribable,
+  Unsubscribable,
+} from './types';
 
-export function from<T>(x: any): Observable<T> {
-  if (x instanceof Observable) {
-    return x;
+const noop = () => {};
+
+export function coerceObserver<T>(observer?: PartialObserver<T>): Observer<T> {
+  if (typeof observer === 'function') {
+    return {
+      next: observer,
+      error: noop,
+      complete: noop,
+    };
   }
-  if (isSubscribable<T>(x)) {
-    return new Observable(subscriber => {
-      x.subscribe(subscriber, { initialEmit: true });
-    });
-  }
-  if (typeof x === 'function') {
-    return effect(x);
-  }
-  return new Observable(subscriber => {
-    if (typeof x.then === 'function') {
-      x.then((value: T) => subscriber.next(value));
-    } else {
-      subscriber.next(x);
-    }
-  });
+  let { next, error, complete } = observer ?? {};
+  next = next ? next.bind(observer) : noop;
+  error = error ? error.bind(observer) : noop;
+  complete = complete ? complete.bind(observer) : noop;
+  return { next, error, complete };
 }
 
 export function isCompletable(x: any): x is { complete(): void } {
@@ -29,6 +30,10 @@ export function isCompletable(x: any): x is { complete(): void } {
 
 export function isNextable<T>(x: any): x is { next(value: T): void } {
   return x && typeof x.next === 'function';
+}
+
+export function isPromiseLike<T>(x: any): x is PromiseLike<T> {
+  return x && typeof x.then === 'function';
 }
 
 export function isSelectable<T>(

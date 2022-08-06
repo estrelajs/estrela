@@ -1,7 +1,6 @@
 import {
-  createEventEmitter,
+  createState,
   EventEmitter,
-  from,
   isCompletable,
   isNextable,
   isSelectable,
@@ -168,7 +167,7 @@ export class VirtualNode {
         if (emitter) {
           emitter.complete();
         }
-        emitter = createEventEmitter();
+        emitter = new EventEmitter<any>();
         const subscription = emitter.subscribe(v => {
           if (typeof value === 'function') {
             value(v);
@@ -188,7 +187,9 @@ export class VirtualNode {
             this.props[key] = value;
           }
         };
-        const subscription = from(value).subscribe(subscriber);
+        const state = createState<any>(value);
+        const subscription = state.subscribe(subscriber);
+        subscription.add(() => state.complete());
         this.propsCleanup.set(key, subscription);
       } else {
         this.props[key] = value;

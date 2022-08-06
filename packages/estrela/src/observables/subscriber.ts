@@ -1,6 +1,7 @@
-import { PartialObserver, SubscriberLike } from './types';
+import { Subscription } from './subscription';
+import { PartialObserver, Subscribable } from './types';
 
-export class Subscriber<T> implements SubscriberLike<T> {
+export class Subscriber<T> implements Subscribable<T> {
   private observers = new Set<PartialObserver<T>>();
   private _closed = false;
   private _hasError = false;
@@ -39,6 +40,11 @@ export class Subscriber<T> implements SubscriberLike<T> {
     );
     this.observers.clear();
     this._closed = true;
+  }
+
+  subscribe(observer?: PartialObserver<T>): Subscription {
+    this.add(observer);
+    return new Subscription(() => this.remove(observer));
   }
 
   protected add(observer?: PartialObserver<T>): void {
