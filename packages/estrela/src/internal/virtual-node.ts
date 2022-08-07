@@ -49,6 +49,10 @@ export class VirtualNode {
     return typeof this.template === 'function';
   }
 
+  get isConnected(): boolean {
+    return this.mounted;
+  }
+
   get firstChild(): Node | null {
     return this.nodes[0] ?? null;
   }

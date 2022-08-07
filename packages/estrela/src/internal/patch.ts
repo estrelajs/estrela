@@ -40,18 +40,18 @@ export function patchChildren(
   }
 
   const replaces: [Comment, NodeOrVNode][] = [];
-  // const nextChildrenMap = mapKeys(nextChildren);
+  const nextChildrenMap = mapKeys(nextChildren);
 
   for (let i = 0; i < nextChildren.length; i++) {
     let currChild = children.next().value;
     let currKey = getKey(currChild, i);
 
-    // while (currChild && !nextChildrenMap.has(currKey)) {
-    //   removeChild(parent, currChild);
-    //   childrenMap.delete(currKey);
-    //   currChild = children.next().value;
-    //   currKey = getKey(currChild, i);
-    // }
+    while (currChild && !nextChildrenMap.has(currKey)) {
+      removeChild(parent, currChild);
+      childrenMap.delete(currKey);
+      currChild = children.next().value;
+      currKey = getKey(currChild, i);
+    }
 
     let child = nextChildren[i];
     const key = getKey(child, i);
@@ -83,7 +83,7 @@ export function patchChildren(
   );
 
   childrenMap.forEach((child, key) => {
-    if (!result.has(key)) {
+    if (child.isConnected && !result.has(key)) {
       removeChild(parent, child);
     }
   });
@@ -115,15 +115,15 @@ function patch(
   return next;
 }
 
-// function mapKeys(children: NodeOrVNode[]): Map<Key, NodeOrVNode> {
-//   const result = new Map<Key, NodeOrVNode>();
-//   for (let i = 0; i < children.length; i++) {
-//     const child = children[i];
-//     const key = getKey(child, i);
-//     result.set(key, child);
-//   }
-//   return result;
-// }
+function mapKeys(children: NodeOrVNode[]): Map<Key, NodeOrVNode> {
+  const result = new Map<Key, NodeOrVNode>();
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i];
+    const key = getKey(child, i);
+    result.set(key, child);
+  }
+  return result;
+}
 
 function getKey(node: NodeOrVNode | undefined, index: number): Key {
   const key = (node as any)?.id;
