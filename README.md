@@ -18,7 +18,7 @@ Estrela is extremely easy to use, all the hard work is done by the babel plugin.
 
 To create a state variable, just declare it using the `let` keyword to specify that its value will change in the future.
 
-The component function will be called just once, so you can call any side effect, like data fetching, direct in the function scope.
+The component function will be called just once, so you can call any side effect directly in the function scope.
 
 ```tsx
 // main.tsx
