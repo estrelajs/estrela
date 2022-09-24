@@ -2,7 +2,7 @@ export class EventEmitter<T = void> {
   private listeners = new Set<(value: T) => void>();
 
   emit(value: T): void {
-    this.listeners.forEach(listener => listener(value));
+    Array.from(this.listeners).forEach(listener => listener(value));
   }
 
   subscribe(listener: () => void): () => void {

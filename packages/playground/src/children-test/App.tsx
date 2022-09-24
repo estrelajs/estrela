@@ -15,7 +15,6 @@ function App() {
 
   function prependItem() {
     state.items = [++counter, ...state.items];
-    console.log(state.items);
   }
 
   function removeItem() {
