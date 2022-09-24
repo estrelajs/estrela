@@ -1,8 +1,6 @@
-/** Return value from a value or function. */
-export function apply<T>(value: T | ((...args: any) => T), ...args: any[]): T {
-  return typeof value === 'function'
-    ? (value as Function).apply(value, args)
-    : value;
+/** automatic event value binding. */
+export function bindHandler<T, R>(event: Event & { target: T }): R {
+  return (event.target as any).value;
 }
 
 /** Make array from data or return data if it's already an array. */
@@ -10,35 +8,9 @@ export function coerceArray<T>(data: T | T[]): T[] {
   return Array.isArray(data) ? data : [data];
 }
 
-/** Make an identity function from any value. */
-export function coerceFunction<T>(value: T | (() => T)): () => T {
-  return typeof value === 'function' ? (value as () => T) : () => value;
-}
-
-/** Check if objects are deep equal. */
-export function deepEqual(obj1: any, obj2: any): boolean {
-  if (!obj1 || !obj2 || (isPrimitive(obj1) && isPrimitive(obj2))) {
-    // compare primitives
-    return obj1 === obj2;
-  }
-  if (Object.keys(obj1).length !== Object.keys(obj2).length) {
-    return false;
-  }
-  // compare objects with same number of keys
-  for (let key in obj1) {
-    if (!(key in obj2)) {
-      return false; //other object doesn't have this prop
-    }
-    if (!deepEqual(obj1[key], obj2[key])) {
-      return false;
-    }
-  }
-  return true;
-}
-
 /** Identity function. Returns the first param. */
-export function identity<T>(value: T, ...args: any[]): T {
-  return value;
+export function identity<T>(...args: any[]): T {
+  return args[0];
 }
 
 /** Check if value is false, null or undefined. */
@@ -46,21 +18,34 @@ export function isFalsy(x: any): x is false | null | undefined {
   return x === false || x === null || x === undefined;
 }
 
+/** Check if value is a function. */
+export function isFunction<Args extends Array<any> = [], R = any>(
+  x: any
+): x is (...args: Args) => R {
+  return typeof x === 'function';
+}
+
 /** Check if value is null or undefined. */
 export function isNil(x: any): x is null | undefined {
   return x === null || x === undefined;
 }
 
-/** Check if value is primitive. */
-export function isPrimitive(
-  x: any
-): x is string | number | boolean | symbol | null | undefined {
-  return typeof x !== 'function' && typeof x !== 'object';
-}
-
-/** Check if value is truthy. */
-export function isTruthy<T>(x: T | false | null | undefined): x is T {
-  return x !== false && x !== null && x !== undefined;
+/** Creates a throttled function that only invokes `fn` at most once per every `wait` milliseconds. */
+export function throttle<T extends (...args: any) => void>(
+  fn: T,
+  wait?: number
+): (...args: Parameters<T>) => void {
+  let lastargs = [] as Parameters<T>;
+  let timeout: number | null = null;
+  return (...args: Parameters<T>): void => {
+    lastargs = args;
+    if (timeout === null) {
+      timeout = window.setTimeout(() => {
+        timeout = null;
+        fn(lastargs);
+      }, wait);
+    }
+  };
 }
 
 /** Transform string to camelCase. */
@@ -68,7 +53,6 @@ export function toCamelCase(str: string): string {
   const s = str.replace(/[-_\s]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ''));
   return s[0].toLowerCase() + s.slice(1);
 }
-
 /** Transform string to kebab-case. */
 export function toKebabCase(str: string): string {
   return str

@@ -1,5 +1,5 @@
-import { VirtualNode } from '../internal';
-import { EventEmitter, State, Subscribable } from '../observables';
+import { EventEmitter } from '../event-emitter';
+import { EstrelaNode } from '../internal';
 import { Component, EventHandler, HTMLEventHandler, Key } from './types';
 
 /**
@@ -11,24 +11,24 @@ import { Component, EventHandler, HTMLEventHandler, Key } from './types';
  */
 
 type PropsOf<P> = {
-  [K in keyof Omit<P, '$' | EmittersOf<P>>]: P[K];
+  [K in keyof Omit<P, EventEmittersOf<P>>]: P[K];
 } & {
-  [K in `bind:${string}`]: State<any>;
+  [K in keyof Omit<P, EventEmittersOf<P>> as `bind:${K & string}`]: P[K];
 } & {
-  [K in keyof Pick<P, EmittersOf<P>> as `on:${K & string}`]: P[K] extends
+  [K in keyof Pick<P, EventEmittersOf<P>> as `on:${K & string}`]: P[K] extends
     | EventEmitter<infer E>
     | undefined
     ? EventHandler<E>
     : never;
 };
 
-type EmittersOf<P> = {
+type EventEmittersOf<P> = {
   [K in keyof P]: P[K] extends EventEmitter<any> | undefined ? K : never;
 }[keyof P];
 
 declare global {
   namespace JSX {
-    type Element = VirtualNode;
+    type Element = EstrelaNode;
     type Children =
       | string
       | number
@@ -37,8 +37,6 @@ declare global {
       | Node
       | Element
       | Selector
-      | Subscribable<any>
-      | Promise<any>
       | Children[]
       | null
       | undefined;
@@ -52,7 +50,7 @@ declare global {
     }
     interface Directives {}
     type BindAttributes = {
-      [K in `bind:${string}`]: State<any>;
+      [K in `bind:${string}`]: any;
     };
     type DirectiveAttributes = {
       [Key in keyof Directives as `use:${Key}`]?: Directives[Key];
@@ -64,7 +62,7 @@ declare global {
       [K in `class:${string}`]?: boolean;
     };
     interface DOMAttributes<T> extends BindAttributes, DirectiveAttributes {
-      ref?: State<T | undefined> | ((el: T) => void);
+      ref?: (el: T) => void;
       key?: Key;
       children?: Children;
       innerHTML?: string;
@@ -2118,7 +2116,7 @@ declare global {
       alt?: string;
       autocomplete?: string;
       autofocus?: boolean;
-      bind?: State<any>;
+      bind?: any;
       capture?: boolean | string;
       checked?: boolean;
       crossorigin?: HTMLCrossorigin;
@@ -2287,7 +2285,7 @@ declare global {
     interface SelectHTMLAttributes<T> extends HTMLAttributes<T> {
       autocomplete?: string;
       autofocus?: boolean;
-      bind?: State<any>;
+      bind?: any;
       disabled?: boolean;
       form?: string;
       multiple?: boolean;
@@ -2324,7 +2322,7 @@ declare global {
     interface TextareaHTMLAttributes<T> extends HTMLAttributes<T> {
       autocomplete?: string;
       autofocus?: boolean;
-      bind?: State<any>;
+      bind?: any;
       cols?: number | string;
       dirname?: string;
       disabled?: boolean;

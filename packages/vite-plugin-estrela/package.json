@@ -20,16 +20,16 @@
     "tsx"
   ],
   "dependencies": {
-    "@babel/core": "^7.18.5",
+    "@babel/core": "^7.19.1",
     "babel-plugin-estrela": "^0.10.2"
   },
   "devDependencies": {
-    "@types/node": "^17.0.43",
-    "esbuild": "^0.14.43",
-    "esbuild-config": "^0.2.0",
+    "@types/node": "^18.7.19",
+    "esbuild": "^0.15.9",
+    "esbuild-config": "^1.0.1",
     "rimraf": "^3.0.2"
   },
   "peerDependencies": {
-    "vite": "^2.9.12"
+    "vite": "^3.1.3"
   }
 }

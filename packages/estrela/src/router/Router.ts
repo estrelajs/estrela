@@ -1,15 +1,13 @@
 import { h, template } from '../internal';
-import { createSelector } from '../observables';
-import { StateProxy } from '../state-proxy';
 import { Routes } from './route';
-import { routeUrl } from './router.store';
+import { routerState } from './router.store';
 
 export interface RouterProps {
   base?: string;
   routes: Routes;
 }
 
-export function Router(props: StateProxy<RouterProps>) {
+export function Router(props: RouterProps) {
   const getRoute = (
     routes: Routes,
     url: string,
@@ -54,12 +52,9 @@ export function Router(props: StateProxy<RouterProps>) {
   };
 
   return h(template(''), {
-    '-1': {
+    '0': {
       children: [
-        [
-          createSelector(props.$.routes, routeUrl, props.$.base, getRoute),
-          null,
-        ],
+        [() => getRoute(props.routes, routerState.url, props.base), null],
       ],
     },
   });

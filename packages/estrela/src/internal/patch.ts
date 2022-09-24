@@ -1,16 +1,16 @@
 import { Key } from '../types/types';
+import { EstrelaNode } from './estrela-node';
 import { insertChild, removeChild, replaceChild } from './node-api';
-import { VirtualNode } from './virtual-node';
 
-type NodeOrVNode = Node | VirtualNode;
+type AnyNode = Node | EstrelaNode;
 
 export function patchChildren(
   parent: Node,
-  childrenMap: Map<Key, NodeOrVNode>,
-  nextChildren: NodeOrVNode[],
+  childrenMap: Map<Key, AnyNode>,
+  nextChildren: AnyNode[],
   before: Node | null
-): Map<Key, NodeOrVNode> {
-  const result = new Map<Key, NodeOrVNode>();
+): Map<Key, AnyNode> {
+  const result = new Map<Key, AnyNode>();
   const children = childrenMap.values();
 
   if (childrenMap.size > 0 && nextChildren.length === 0) {
@@ -22,7 +22,7 @@ export function patchChildren(
     } else {
       const range = document.createRange();
       const child = children.next().value;
-      const start = child instanceof VirtualNode ? child.firstChild : child;
+      const start = child instanceof EstrelaNode ? child.firstChild : child;
       range.setStartBefore(start);
       if (before) {
         range.setEndBefore(before);
@@ -32,14 +32,14 @@ export function patchChildren(
       range.deleteContents();
     }
     childrenMap.forEach(node => {
-      if (node instanceof VirtualNode) {
+      if (node instanceof EstrelaNode) {
         node.dispose();
       }
     });
     return result;
   }
 
-  const replaces: [Comment, NodeOrVNode][] = [];
+  const replaces: [Comment, AnyNode][] = [];
   const nextChildrenMap = mapKeys(nextChildren);
 
   for (let i = 0; i < nextChildren.length; i++) {
@@ -91,15 +91,11 @@ export function patchChildren(
   return result;
 }
 
-function patch(
-  parent: Node,
-  node: NodeOrVNode,
-  next: NodeOrVNode
-): NodeOrVNode {
+function patch(parent: Node, node: AnyNode, next: AnyNode): AnyNode {
   if (node === next) {
     return node;
   }
-  if (node instanceof VirtualNode && next instanceof VirtualNode) {
+  if (node instanceof EstrelaNode && next instanceof EstrelaNode) {
     if (node.template === next.template) {
       node.patch(next.data);
       return node;
@@ -115,8 +111,8 @@ function patch(
   return next;
 }
 
-function mapKeys(children: NodeOrVNode[]): Map<Key, NodeOrVNode> {
-  const result = new Map<Key, NodeOrVNode>();
+function mapKeys(children: AnyNode[]): Map<Key, AnyNode> {
+  const result = new Map<Key, AnyNode>();
   for (let i = 0; i < children.length; i++) {
     const child = children[i];
     const key = getKey(child, i);
@@ -125,7 +121,7 @@ function mapKeys(children: NodeOrVNode[]): Map<Key, NodeOrVNode> {
   return result;
 }
 
-function getKey(node: NodeOrVNode | undefined, index: number): Key {
+function getKey(node: AnyNode | undefined, index: number): Key {
   const key = (node as any)?.id;
   let result = key === '' ? undefined : key;
   return result ?? `_$${index}$`;
