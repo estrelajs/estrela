@@ -1,5 +1,4 @@
-import { NodePath } from '@babel/core';
-import * as t from '@babel/types';
+import { NodePath, types as t } from '@babel/core';
 import { selfClosingTags } from '../shared/tags';
 import { State } from '../types';
 
@@ -22,17 +21,17 @@ type JSXChild =
 
 export function transformJSX(path: NodePath<JSXElement>): void {
   const result: Result = {
-    index: 0,
+    index: 1,
     isLastChild: false,
     parentIndex: 0,
     props: {},
     template: '',
   };
   transformElement(path, result, true);
-  path.replaceWith(createVirtualNode(path, result));
+  path.replaceWith(createEstrelaNode(path, result));
 }
 
-function createVirtualNode(
+function createEstrelaNode(
   path: NodePath<JSXElement>,
   result: Result
 ): t.CallExpression {
@@ -318,9 +317,9 @@ function replaceChild(node: t.Expression, result: Result): void {
   } else {
     result.template += '<!>';
   }
-  result.props[result.parentIndex!] ??= {};
-  result.props[result.parentIndex!].children ??= [];
-  result.props[result.parentIndex!].children.push(
+  result.props[result.parentIndex] ??= {};
+  result.props[result.parentIndex].children ??= [];
+  result.props[result.parentIndex].children.push(
     t.arrayExpression([
       t.arrowFunctionExpression([], node),
       result.isLastChild ? t.nullLiteral() : t.identifier(String(result.index)),

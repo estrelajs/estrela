@@ -1,17 +1,14 @@
-import { NodePath } from '@babel/core';
-import * as t from '@babel/types';
-import { Options, State } from '../types';
+import { NodePath, types as t } from '@babel/core';
+import { State } from '../types';
 
-export function transformProgram(options: Options) {
+export function transformProgram() {
   return {
     enter(path: NodePath<t.Program>) {
       path.state = {
         h: path.scope.generateUidIdentifier('h'),
-        stateProxy: path.scope.generateUidIdentifier('$$'),
         tmplDeclaration: t.variableDeclaration('const', []),
         template: path.scope.generateUidIdentifier('template'),
       } as State;
-      (path.hub as any).file.metadata.config = options;
     },
     exit(path: NodePath<t.Program>) {
       const state: State = path.state;
@@ -25,9 +22,6 @@ export function transformProgram(options: Options) {
       }
       if (path.scope.hasBinding(state.h.name)) {
         imports.h = state.h.name;
-      }
-      if (path.scope.hasBinding(state.stateProxy.name)) {
-        imports.$$ = state.stateProxy.name;
       }
       if (Object.keys(imports).length > 0) {
         path.node.body.unshift(createImport(imports, 'estrela/internal'));
