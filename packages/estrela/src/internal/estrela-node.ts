@@ -365,10 +365,9 @@ export class EstrelaNode {
 
   private mapNodeTree(parent: Node, tree: Node): Record<number, Node> {
     let index = 1;
-    const blackList = [Node.DOCUMENT_FRAGMENT_NODE, Node.TEXT_NODE];
     const result: Record<number, Node> = { 0: parent };
     const walk = (node: Node) => {
-      if (!blackList.includes(node.nodeType)) {
+      if (node.nodeType !== Node.DOCUMENT_FRAGMENT_NODE) {
         result[index++] = node;
       }
       let child = node.firstChild;

@@ -13,7 +13,7 @@ import { Component, EventHandler, HTMLEventHandler, Key } from './types';
 type PropsOf<P> = {
   [K in keyof Omit<P, EventEmittersOf<P>>]: P[K];
 } & {
-  [K in keyof Omit<P, EventEmittersOf<P>> as `bind:${K & string}`]: P[K];
+  [K in `bind:${string}`]: any;
 } & {
   [K in keyof Pick<P, EventEmittersOf<P>> as `on:${K & string}`]: P[K] extends
     | EventEmitter<infer E>

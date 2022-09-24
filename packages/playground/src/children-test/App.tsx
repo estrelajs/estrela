@@ -1,28 +1,33 @@
+import { createState } from '../../../estrela/src/state';
 import classes from './App.module.css';
 
 function App() {
-  let items: number[] = [];
-  let showOdds = true;
-  var counter = 0;
+  const state = createState({
+    items: [] as number[],
+    showOdds: true,
+  });
+
+  let counter = 0;
 
   function appendItem() {
-    items = [...items, ++counter];
+    state.items = [...state.items, ++counter];
   }
 
   function prependItem() {
-    items = [++counter, ...items];
+    state.items = [++counter, ...state.items];
+    console.log(state.items);
   }
 
   function removeItem() {
-    items = items.slice(0, -1);
+    state.items = state.items.slice(0, -1);
   }
 
   function shuffleList() {
-    items = items.sort(() => Math.random() - 0.5).slice();
+    state.items = state.items.sort(() => Math.random() - 0.5).slice();
   }
 
   function toggleOdds() {
-    showOdds = !showOdds;
+    state.showOdds = !state.showOdds;
   }
 
   return (
@@ -34,16 +39,18 @@ function App() {
         <button on:click={prependItem}>Prepend item</button>
         <button on:click={removeItem}>Remove item</button>
         <button on:click={shuffleList}>Shuffle list</button>
-        <button on:click={toggleOdds}>{showOdds ? 'Hide' : 'Show'} odds</button>
-        <button on:click={() => console.log(items)}>Log</button>
+        <button on:click={toggleOdds}>
+          {state.showOdds ? 'Hide' : 'Show'} odds
+        </button>
+        <button on:click={() => console.log(state.items)}>Log</button>
       </div>
 
-      <ul class="list" class:has-item={items.length}>
+      <ul class="list" class:has-item={state.items.length}>
         <li>Header</li>
 
-        {items.map(item => {
+        {state.items.map(item => {
           const klass = item % 2 === 0 ? 'even' : 'odd';
-          return showOdds || klass === 'even' ? (
+          return state.showOdds || klass === 'even' ? (
             <li key={item} class={classes[klass]}>
               Item {item}
             </li>

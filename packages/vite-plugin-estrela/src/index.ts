@@ -1,14 +1,14 @@
 import * as babel from '@babel/core';
 import { Plugin } from 'vite';
-import { Options as BabelOptions } from '../../babel-plugin-estrela/src';
+import estrela from '../../babel-plugin-estrela/src';
 
-export interface Options extends BabelOptions {
+export interface Options {
   /** Filter files to apply babel. */
   fileRegex?: string | RegExp;
 }
 
 export default function (options?: Options): Plugin {
-  let { fileRegex = /\.[jt]sx$/, ...babelOptions } = options ?? {};
+  let { fileRegex = /\.[jt]sx$/ } = options ?? {};
   if (typeof fileRegex === 'string') {
     fileRegex = new RegExp(fileRegex);
   }
@@ -31,7 +31,7 @@ export default function (options?: Options): Plugin {
           filename: id,
           sourceMaps: true,
           sourceType: 'module',
-          plugins: [['babel-plugin-estrela', babelOptions]],
+          plugins: [estrela], // 'babel-plugin-estrela'
         });
         if (result?.code) {
           return {

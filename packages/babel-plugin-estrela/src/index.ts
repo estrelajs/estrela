@@ -1,32 +1,20 @@
-import { declare } from '@babel/helper-plugin-utils';
-import { transformComponent } from './transforms/component.transform';
+import { PluginObj } from '@babel/core';
 import { transformJSX } from './transforms/jsx.transform';
 import { transformProgram } from './transforms/program.transform';
 import { transformStyles } from './transforms/styles.transform';
-import { Options } from './types';
 export * from './types';
 
-export default declare((api, options: Options) => {
-  const {
-    autoDeclareStates = true,
-    enableGetStateFunction = true,
-    getStateWithDolarSuffix = true,
-  } = options ?? {};
+export default function (): PluginObj {
   return {
     name: 'babel-plugin-estrela',
-    manipulateOptions(opts, parserOpts) {
+    manipulateOptions(_, parserOpts) {
       parserOpts.plugins.push('jsx');
     },
     visitor: {
-      Program: transformProgram({
-        autoDeclareStates,
-        enableGetStateFunction,
-        getStateWithDolarSuffix,
-      }),
-      Function: transformComponent,
+      Program: transformProgram(),
       JSXElement: transformJSX,
       JSXFragment: transformJSX,
       TaggedTemplateExpression: transformStyles,
     },
   };
-});
+}
