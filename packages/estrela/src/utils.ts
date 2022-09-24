@@ -30,24 +30,6 @@ export function isNil(x: any): x is null | undefined {
   return x === null || x === undefined;
 }
 
-/** Creates a throttled function that only invokes `fn` at most once per every `wait` milliseconds. */
-export function throttle<T extends (...args: any) => void>(
-  fn: T,
-  wait?: number
-): (...args: Parameters<T>) => void {
-  let lastargs = [] as Parameters<T>;
-  let timeout: number | null = null;
-  return (...args: Parameters<T>): void => {
-    lastargs = args;
-    if (timeout === null) {
-      timeout = window.setTimeout(() => {
-        timeout = null;
-        fn(lastargs);
-      }, wait);
-    }
-  };
-}
-
 /** Transform string to camelCase. */
 export function toCamelCase(str: string): string {
   const s = str.replace(/[-_\s]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ''));
