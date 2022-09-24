@@ -1,6 +1,5 @@
 import { EventEmitter } from './event-emitter';
 import { EstrelaNode } from './internal';
-import { throttle } from './utils';
 
 const eventEmitters = new Set<EventEmitter>();
 const blockedEventEmitters = new Set<EventEmitter>();
@@ -42,7 +41,7 @@ export function createState<T extends Object>(initialState: T) {
 
 export function createEffect(fn: () => void): Unsubscriber {
   const unsubscribers = new Set<() => void>();
-  const runEffect = throttle(() => {
+  const runEffect = () => {
     eventEmitters.clear();
     blockedEventEmitters.clear();
     fn();
@@ -51,7 +50,7 @@ export function createEffect(fn: () => void): Unsubscriber {
         unsubscribers.add(emitter.subscribe(runEffect));
       }
     });
-  });
+  };
   runEffect();
   const unsubscriber = () => {
     unsubscribers.forEach(unsubscriber => {

@@ -1,6 +1,6 @@
 import path from 'path';
 import { defineConfig } from 'vite';
-import estrela from '../vite-plugin-estrela/src';
+import estrela from 'vite-plugin-estrela';
 
 export default defineConfig({
   plugins: [estrela()],
