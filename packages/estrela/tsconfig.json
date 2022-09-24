@@ -3,7 +3,5 @@
   "compilerOptions": {
     "declarationDir": "dist/types"
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src"]
 }

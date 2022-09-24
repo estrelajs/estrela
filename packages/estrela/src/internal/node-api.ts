@@ -1,30 +1,42 @@
 import { isFalsy, toCamelCase, toKebabCase } from '../utils';
-import { VirtualNode } from './virtual-node';
+import { EstrelaNode } from './estrela-node';
+
+export function addEventListener(
+  node: Node,
+  eventName: string,
+  handler: EventListener
+): () => void {
+  node.addEventListener(eventName, handler);
+  return () => node.removeEventListener(eventName, handler);
+}
 
 export function coerceNode(
-  node: JSX.Children,
-  context: any,
+  data: any,
+  context: {},
   styleId?: string
-): Node | VirtualNode {
-  if (node instanceof VirtualNode) {
-    node.context = context;
-    node.styleId = styleId;
-    return node;
+): Node | EstrelaNode {
+  if (data instanceof EstrelaNode) {
+    data.setContext(context);
+    if (styleId) {
+      data.setStyleId(styleId);
+    }
+    return data;
   }
-  if (node instanceof Node) {
-    return node;
+  if (data instanceof Node) {
+    return data;
   }
-  return document.createTextNode(String(node ?? ''));
+  const text = isFalsy(data) ? '' : String(data);
+  return document.createTextNode(text);
 }
 
 export function insertChild(
   parent: Node,
-  child: Node | VirtualNode,
-  before: Node | VirtualNode | null = null
+  child: Node | EstrelaNode,
+  before: Node | EstrelaNode | null = null
 ): void {
-  const beforeNode = before instanceof VirtualNode ? before.firstChild : before;
-  if (child instanceof VirtualNode) {
-    child.mount(parent, beforeNode);
+  const beforeNode = before instanceof EstrelaNode ? before.firstChild : before;
+  if (child instanceof EstrelaNode) {
+    child.mount(parent, beforeNode, (child as any).context);
   } else if (beforeNode) {
     parent.insertBefore(child, beforeNode);
   } else {
@@ -32,8 +44,8 @@ export function insertChild(
   }
 }
 
-export function removeChild(parent: Node, child: Node | VirtualNode): void {
-  if (child instanceof VirtualNode) {
+export function removeChild(parent: Node, child: Node | EstrelaNode): void {
+  if (child instanceof EstrelaNode) {
     child.unmount(parent);
   } else {
     parent.removeChild(child);
@@ -42,8 +54,8 @@ export function removeChild(parent: Node, child: Node | VirtualNode): void {
 
 export function replaceChild(
   parent: Node,
-  node: Node | VirtualNode,
-  child: Node | VirtualNode
+  node: Node | EstrelaNode,
+  child: Node | EstrelaNode
 ): void {
   insertChild(parent, node, child);
   removeChild(parent, child);
@@ -71,6 +83,7 @@ export function setAttribute(
     }
     return;
   }
+
   if (attr.startsWith('class:')) {
     const klass = attr.substring(6);
     if (isFalsy(value)) {
@@ -91,6 +104,7 @@ export function setAttribute(
     }
     return;
   }
+
   if (attr.startsWith('style:')) {
     const style = toCamelCase(attr.substring(6));
     if (style in element.style) {
@@ -108,20 +122,8 @@ export function setAttribute(
   }
 }
 
-export function template(html: string): DocumentFragment {
+export function template(html: string): HTMLTemplateElement {
   const template = document.createElement('template');
   template.innerHTML = html;
-  return template.content;
-}
-
-export function walkNode(root: Node, cb: (node: Node) => void): void {
-  const walk = (node: Node) => {
-    cb(node);
-    let child = node.firstChild;
-    while (child) {
-      walk(child);
-      child = child.nextSibling;
-    }
-  };
-  walk(root);
+  return template;
 }
