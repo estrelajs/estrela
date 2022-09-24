@@ -26,16 +26,17 @@ export type EstrelaComponent = (props?: any, context?: any) => EstrelaNode;
 export class EstrelaNode {
   static ref: EstrelaNode | null = null;
 
-  private context = {};
-  private mounted = false;
-  private styleId?: string;
-  private nodes: Node[] = [];
   private cleanups: (() => void)[] = [];
-  private props: Record<string, any> = {};
+  private context = {};
   private hooks: Record<'init' | 'destroy', (() => void)[]> = {
     init: [],
     destroy: [],
   };
+  private mounted = false;
+  private nodes: Node[] = [];
+  private props: Record<string, any> = {};
+  private propsCleanup: { [prop: string]: () => void } = {};
+  private styleId?: string;
 
   get firstChild(): Node | null {
     return this.nodes[0] ?? null;
@@ -63,8 +64,13 @@ export class EstrelaNode {
   dispose(): void {
     this.hooks.destroy.forEach(handler => handler());
     this.hooks = { init: [], destroy: [] };
+
     this.cleanups.forEach(unsubscriber => unsubscriber());
     this.cleanups = [];
+
+    Object.values(this.propsCleanup).forEach(unsubscriber => unsubscriber());
+    this.propsCleanup = {};
+
     this.mounted = false;
   }
 
@@ -122,9 +128,9 @@ export class EstrelaNode {
 
   patch(data: EstrelaNodeData): void {
     this.data = data;
-    // if (!this.isComponent) {
-    //   data = this.normalizeData(data);
-    // }
+    if (!this.isComponent) {
+      data = this.normalizeData(data);
+    }
 
     for (let key in data) {
       const param = data[key];
@@ -138,22 +144,23 @@ export class EstrelaNode {
 
       // handle events
       else if (key.startsWith('on:')) {
+        this.propsCleanup[key]?.();
         const eventName = key.substring(3);
         const emitter: EventEmitter =
           this.props[eventName] ?? new EventEmitter();
         this.props[eventName] = emitter;
-        this.cleanups.push(emitter.subscribe(param));
+        this.propsCleanup[key] = emitter.subscribe(param);
       }
 
       // handle reactive props
       else if (isFunction(param)) {
-        const unsubscriber = createEffect(() => {
+        this.propsCleanup[key]?.();
+        this.propsCleanup[key] = createEffect(() => {
           const value = param();
           if (this.props[key] !== value) {
             this.props[key] = value;
           }
         });
-        this.cleanups.push(unsubscriber);
       } else {
         this.props[key] = param;
       }
@@ -383,35 +390,35 @@ export class EstrelaNode {
     return result;
   }
 
-  // private normalizeData(data?: EstrelaNodeData): EstrelaNodeData {
-  //   const result: EstrelaNodeData = {};
-  //   for (let key in data) {
-  //     const props = data[key];
-  //     for (let prop in props) {
-  //       // these properties won't change when props are patched
-  //       if (
-  //         prop === 'ref' ||
-  //         prop === 'bind' ||
-  //         prop.startsWith('bind:') ||
-  //         prop.startsWith('on:')
-  //       ) {
-  //         continue;
-  //       }
-  //       if (prop === 'children') {
-  //         for (let i = 0; i < props.children.length; i++) {
-  //           const name = `${key}:${prop}:${i}`;
-  //           result[name] = props.children[i][0];
-  //           props.children[i][0] = () => this.props[name];
-  //         }
-  //       } else {
-  //         const name = `${key}:${prop}`;
-  //         result[name] = props[prop];
-  //         props[prop] = () => this.props[name];
-  //       }
-  //     }
-  //   }
-  //   return result;
-  // }
+  private normalizeData(data: EstrelaNodeData): EstrelaNodeData {
+    const result: EstrelaNodeData = {};
+    for (let key in data) {
+      const props = data[key];
+      for (let prop in props) {
+        // these properties won't change when props are patched
+        if (
+          prop === 'ref' ||
+          prop === 'bind' ||
+          prop.startsWith('bind:') ||
+          prop.startsWith('on:')
+        ) {
+          continue;
+        }
+        if (prop === 'children') {
+          for (let i = 0; i < props.children.length; i++) {
+            const name = `${key}:${prop}:${i}`;
+            result[name] = props.children[i][0];
+            props.children[i][0] = () => this.props[name];
+          }
+        } else {
+          const name = `${key}:${prop}`;
+          result[name] = props[prop];
+          props[prop] = () => this.props[name];
+        }
+      }
+    }
+    return result;
+  }
 
   private setAttribute(node: Node, key: string, data: any): void {
     const element = node as HTMLElement;

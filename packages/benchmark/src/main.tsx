@@ -1,4 +1,4 @@
-import { createState, EventEmitter, render } from 'estrela';
+import { createState, EventEmitter } from 'estrela';
 
 interface RowData {
   id: number;
@@ -78,59 +78,58 @@ const buildData = (count: number) => {
   return data;
 };
 
-const data = createState<RowData[]>([]);
-const selected = createState(0);
-const version = '0.10.0';
+const state = createState({
+  data: [] as RowData[],
+  selected: 0,
+});
+const version = '0.11.0';
 
 const actions = {
   run: () => {
-    data.next(buildData(1000));
-    selected.next(0);
+    state.data = buildData(1000);
+    state.selected = 0;
   },
   runLots: () => {
-    data.next(buildData(10000));
-    selected.next(0);
+    state.data = buildData(10000);
+    state.selected = 0;
   },
   add: () => {
-    data.update(items => items.concat(buildData(1000)));
+    state.data = state.data.concat(buildData(1000));
   },
-  update: () =>
-    data.update(items => {
-      const newData = items.slice(0);
-      for (let i = 0; i < newData.length; i += 10) {
-        const r = newData[i];
-        newData[i] = { id: r.id, label: r.label + ' !!!' };
-      }
-      return newData;
-    }),
+  update: () => {
+    const newData = state.data.slice(0);
+    for (let i = 0; i < newData.length; i += 10) {
+      const r = newData[i];
+      newData[i] = { id: r.id, label: r.label + ' !!!' };
+    }
+    state.data = newData;
+  },
   clear: () => {
-    data.next([]);
-    selected.next(0);
+    state.data = [];
+    state.selected = 0;
   },
   swapRows: () => {
-    if (data.$.length > 998) {
-      data.update(items => [
-        items[0],
-        items[998],
-        ...items.slice(2, 998),
-        items[1],
-        items[999],
-      ]);
+    if (state.data.length > 998) {
+      state.data = [
+        state.data[0],
+        state.data[998],
+        ...state.data.slice(2, 998),
+        state.data[1],
+        state.data[999],
+      ];
     }
   },
   remove: (id: number) => {
-    data.update(items => {
-      const idx = items.findIndex(d => d.id === id);
-      return [...items.slice(0, idx), ...items.slice(idx + 1)];
-    });
+    const idx = state.data.findIndex(d => d.id === id);
+    state.data = [...state.data.slice(0, idx), ...state.data.slice(idx + 1)];
   },
   select: (id: number) => {
-    selected.next(id);
+    state.selected = id;
   },
 };
 
 const Row = (props: { item: RowData }) => (
-  <tr class={selected.$ === props.item.id ? 'danger' : ''}>
+  <tr class={state.selected === props.item.id ? 'danger' : ''}>
     <td class="col-md-1">{props.item.id}</td>
     <td class="col-md-4">
       <a on:click={() => actions.select(props.item.id)}>{props.item.label}</a>
@@ -206,7 +205,7 @@ const Main = () => (
     <Jumbotron />
     <table class="table table-hover table-striped test-data">
       <tbody>
-        {data.$.map(item => (
+        {state.data.map(item => (
           <Row key={item.id} item={item} />
         ))}
       </tbody>
@@ -215,4 +214,4 @@ const Main = () => (
   </div>
 );
 
-render(<Main />, document.getElementById('main')!);
+(<Main />).mount(document.getElementById('main')!);
