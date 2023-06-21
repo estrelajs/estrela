@@ -1,33 +1,31 @@
-import { createState } from '../../../estrela/src/state';
+import { signal } from 'estrela';
 import classes from './App.module.css';
 
 function App() {
-  const state = createState({
-    items: [] as number[],
-    showOdds: true,
-  });
+  const items = signal<number[]>([]);
+  const showOdds = signal(true);
 
   let counter = 0;
 
-  function appendItem() {
-    state.items = [...state.items, ++counter];
-  }
+  const appendItem = () => {
+    items.mutate(list => list.push(++counter));
+  };
 
-  function prependItem() {
-    state.items = [++counter, ...state.items];
-  }
+  const prependItem = () => {
+    items.mutate(list => list.unshift(++counter));
+  };
 
-  function removeItem() {
-    state.items = state.items.slice(0, -1);
-  }
+  const removeItem = () => {
+    items.update(list => list.slice(0, -1));
+  };
 
-  function shuffleList() {
-    state.items = state.items.sort(() => Math.random() - 0.5).slice();
-  }
+  const shuffleList = () => {
+    items.mutate(list => list.sort(() => Math.random() - 0.5));
+  };
 
-  function toggleOdds() {
-    state.showOdds = !state.showOdds;
-  }
+  const toggleOdds = () => {
+    showOdds.update(x => !x);
+  };
 
   return (
     <>
@@ -39,17 +37,17 @@ function App() {
         <button on:click={removeItem}>Remove item</button>
         <button on:click={shuffleList}>Shuffle list</button>
         <button on:click={toggleOdds}>
-          {state.showOdds ? 'Hide' : 'Show'} odds
+          {showOdds() ? 'Hide' : 'Show'} odds
         </button>
-        <button on:click={() => console.log(state.items)}>Log</button>
+        <button on:click={() => console.log(items())}>Log</button>
       </div>
 
-      <ul class="list" class:has-item={state.items.length}>
+      <ul class="list" class:has-item={items().length}>
         <li>Header</li>
 
-        {state.items.map(item => {
+        {items().map(item => {
           const klass = item % 2 === 0 ? 'even' : 'odd';
-          return state.showOdds || klass === 'even' ? (
+          return showOdds() || klass === 'even' ? (
             <li key={item} class={classes[klass]}>
               Item {item}
             </li>

@@ -1,6 +1,31 @@
-import { EventEmitter } from '../event-emitter';
-import { EstrelaNode } from '../internal';
-import { Component, EventHandler, HTMLEventHandler, Key } from './types';
+import { EstrelaNode } from './internal';
+import { Signal } from './signal';
+
+/** Output function. */
+export interface Output<T> {
+  (value: T): void;
+  type: 'output';
+}
+
+type PropsOf<P> = {
+  [K in keyof Omit<P, OutputOf<P>>]: P[K];
+} & {
+  [K in keyof Pick<P, OutputOf<P>> as `on:${K & string}`]: P[K] extends
+    | Output<infer E>
+    | undefined
+    ? E extends void
+      ? () => void
+      : (value: E) => void
+    : never;
+} & {
+  [K in `bind:${string}`]: any;
+};
+
+type OutputOf<P> = {
+  [K in keyof P]: P[K] extends Output<any> | undefined ? K : never;
+}[keyof P];
+
+type HTMLEventHandler<T, E extends Event> = (value: E & { target: T }) => void;
 
 /**
  * Based on JSX types for Surplus, Inferno and dom-expressions, adapted for Estrela.
@@ -9,22 +34,6 @@ import { Component, EventHandler, HTMLEventHandler, Key } from './types';
  * https://github.com/infernojs/inferno/blob/master/packages/inferno/src/core/types.ts
  * https://github.com/ryansolid/dom-expressions/blob/main/packages/dom-expressions/src/jsx.d.ts
  */
-
-type PropsOf<P> = {
-  [K in keyof Omit<P, EventEmittersOf<P>>]: P[K];
-} & {
-  [K in `bind:${string}`]: any;
-} & {
-  [K in keyof Pick<P, EventEmittersOf<P>> as `on:${K & string}`]: P[K] extends
-    | EventEmitter<infer E>
-    | undefined
-    ? EventHandler<E>
-    : never;
-};
-
-type EventEmittersOf<P> = {
-  [K in keyof P]: P[K] extends EventEmitter<any> | undefined ? K : never;
-}[keyof P];
 
 declare global {
   namespace JSX {
@@ -36,17 +45,19 @@ declare global {
       | Date
       | Node
       | Element
-      | Selector
+      | Effect
       | Children[]
       | null
       | undefined;
-    type Selector = () => Children;
-    type LibraryManagedAttributes<C, P> = PropsOf<P>;
+    type Effect = () => Children;
+    type LibraryManagedAttributes<C, P> = ThisParameterType<C> extends Object
+      ? PropsOf<ThisParameterType<C>>
+      : P;
     interface ElementChildrenAttribute {
       children: any;
     }
     interface IntrinsicAttributes {
-      key?: Key;
+      key?: string | number | symbol;
     }
     interface Directives {}
     type BindAttributes = {
@@ -63,7 +74,7 @@ declare global {
     };
     interface DOMAttributes<T> extends BindAttributes, DirectiveAttributes {
       ref?: (el: T) => void;
-      key?: Key;
+      key?: string | number | symbol;
       children?: Children;
       innerHTML?: string;
       innerText?: string | number;
@@ -2116,7 +2127,7 @@ declare global {
       alt?: string;
       autocomplete?: string;
       autofocus?: boolean;
-      bind?: any;
+      bind?: Signal<unknown>;
       capture?: boolean | string;
       checked?: boolean;
       crossorigin?: HTMLCrossorigin;
@@ -2285,7 +2296,7 @@ declare global {
     interface SelectHTMLAttributes<T> extends HTMLAttributes<T> {
       autocomplete?: string;
       autofocus?: boolean;
-      bind?: any;
+      bind?: Signal<unknown>;
       disabled?: boolean;
       form?: string;
       multiple?: boolean;
@@ -2297,7 +2308,7 @@ declare global {
     interface HTMLSlotElementAttributes<T = HTMLSlotElement>
       extends HTMLAttributes<T> {
       name?: string;
-      select?: string | Component;
+      select?: string; // | Component;
     }
     interface SourceHTMLAttributes<T> extends HTMLAttributes<T> {
       media?: string;
@@ -2322,7 +2333,7 @@ declare global {
     interface TextareaHTMLAttributes<T> extends HTMLAttributes<T> {
       autocomplete?: string;
       autofocus?: boolean;
-      bind?: any;
+      bind?: Signal<unknown>;
       cols?: number | string;
       dirname?: string;
       disabled?: boolean;

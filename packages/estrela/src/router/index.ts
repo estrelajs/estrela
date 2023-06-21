@@ -1,3 +1,3 @@
-export * from './Link';
+export * from './components/Link';
+export * from './components/Router';
 export * from './route';
-export * from './Router';

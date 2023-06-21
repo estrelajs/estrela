@@ -1,13 +1,13 @@
 import { createRouter, Link, Router, withRoute } from 'estrela/router';
 import ChildrenTest from './children-test/App';
-// import GithubTest from './github/App';
-// import TodoApp from './todo/App';
+import GithubTest from './github/App';
+import TodoApp from './todo/App';
 
 const routes = createRouter(
   withRoute('/', () => <Menu />),
-  withRoute('/test', () => <ChildrenTest />)
-  // withRoute('/github', () => <GithubTest />),
-  // withRoute('/todo', () => <TodoApp />)
+  withRoute('/test', () => <ChildrenTest />),
+  withRoute('/github', () => <GithubTest />),
+  withRoute('/todo', () => <TodoApp />)
 );
 
 function Menu() {
@@ -18,12 +18,12 @@ function Menu() {
         <li>
           <Link to="/test">Test</Link>
         </li>
-        {/* <li>
+        <li>
           <Link to="/github">Github</Link>
         </li>
         <li>
           <Link to="/todo">Todo App</Link>
-        </li> */}
+        </li>
       </ul>
     </>
   );

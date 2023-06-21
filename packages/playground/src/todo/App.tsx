@@ -1,44 +1,44 @@
-import { styled } from 'estrela';
+import { effect, signal, styled } from 'estrela';
 import Todo, { TodoItem } from './Todo';
 
 function App() {
-  let todos: TodoItem[] = [];
-  let todoText = '';
-  var id = 0;
+  const todos = signal<TodoItem[]>([]);
+  const todoText = signal('');
+  let id = 0;
 
   const storeTodo = localStorage.getItem('todos');
   if (storeTodo) {
-    todos = JSON.parse(storeTodo);
-    id = todos.reduce((max, todo) => Math.max(max, todo.id + 1), 0);
+    todos.set(JSON.parse(storeTodo));
+    id = todos().reduce((max, todo) => Math.max(max, todo.id + 1), 0);
   }
 
-  todos$.subscribe((todos: TodoItem[]) => {
-    localStorage.setItem('todos', JSON.stringify(todos));
+  effect(() => {
+    localStorage.setItem('todos', JSON.stringify(todos()));
   });
 
   const addTodo = () => {
-    if (!!todoText) {
+    if (!!todoText()) {
       const todo: TodoItem = {
         id: id++,
-        text: todoText,
+        text: todoText(),
         completed: false,
       };
-      todos = [...todos, todo];
-      todoText = '';
+      todos.mutate(todos => todos.push(todo));
+      todoText.set('');
     }
   };
 
   const completeTodo = (id: number) => (completed: boolean) => {
-    todos = todos.map(todo => {
-      if (todo.id === id) {
+    todos.mutate(todos => {
+      const todo = todos.find(todo => todo.id === id);
+      if (todo) {
         todo.completed = completed;
       }
-      return todo;
     });
   };
 
   const removeTodo = (id: number) => () => {
-    todos = todos.filter(t => t.id !== id);
+    todos.update(todos => todos.filter(t => t.id !== id));
   };
 
   return (
@@ -50,7 +50,7 @@ function App() {
         <div class="add-todo">
           <input
             placeholder="Enter todo"
-            bind={todoText$}
+            bind={todoText}
             on:keydown={e => e.key === 'Enter' && addTodo()}
           />
           <button disabled={!todoText} on:click={addTodo}>
@@ -58,7 +58,7 @@ function App() {
           </button>
         </div>
         <div class="todos" class:empty={todos.length === 0}>
-          {todos.map(todo => (
+          {todos().map(todo => (
             <Todo
               key={todo.id}
               todo={todo}

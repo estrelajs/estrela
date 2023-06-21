@@ -1,24 +1,25 @@
-import { EventEmitter } from 'estrela';
+import { Output } from 'estrela';
 import Button from './Button';
 import styles from './GithubCard.module.css';
 import { Repository } from './repository';
 
 interface GithubCardProps {
   item: Repository;
-  remove: EventEmitter<Repository>;
+  remove: Output<Repository>;
 }
 
-function GithubCard({ item, remove }: GithubCardProps) {
+function GithubCard(this: GithubCardProps) {
   return (
     <div class={styles.card}>
       <div>
-        <a href={item.html_url} target="_blank">
-          {item.full_name}
+        <a href={this.item.html_url} target="_blank">
+          {this.item.full_name}
         </a>
-        🌟<strong>{item.stargazers_count}</strong>
+        <span>🌟</span>
+        <strong>{this.item.stargazers_count}</strong>
       </div>
-      <p>{item.description}</p>
-      <Button on:click={() => remove.next(item)}>Remove</Button>
+      <p>{this.item.description}</p>
+      <Button on:click={() => this.remove(this.item)}>Remove</Button>
     </div>
   );
 }

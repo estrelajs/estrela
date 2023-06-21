@@ -5,7 +5,7 @@ export function bindHandler<T, R>(event: Event & { target: T }): R {
 
 /** Make array from data or return data if it's already an array. */
 export function coerceArray<T>(data: T | T[]): T[] {
-  return Array.isArray(data) ? data : [data];
+  return Array.isArray(data) ? (data.flat() as T[]) : [data];
 }
 
 /** Identity function. Returns the first param. */
@@ -19,7 +19,7 @@ export function isFalsy(x: any): x is false | null | undefined {
 }
 
 /** Check if value is a function. */
-export function isFunction<Args extends Array<any> = [], R = any>(
+export function isFunction<Args extends Array<unknown>, R = unknown>(
   x: any
 ): x is (...args: Args) => R {
   return typeof x === 'function';

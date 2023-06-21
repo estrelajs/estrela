@@ -1,13 +1,13 @@
-import { h, template } from '../internal';
-import { Routes } from './route';
-import { routerState } from './router.store';
+import { h, template } from '../../internal';
+import { Routes } from '../route';
+import { routerStore } from '../router.store';
 
 export interface RouterProps {
   base?: string;
   routes: Routes;
 }
 
-export function Router(props: RouterProps) {
+export function Router(this: RouterProps) {
   const getRoute = (
     routes: Routes,
     url: string,
@@ -54,7 +54,7 @@ export function Router(props: RouterProps) {
   return h(template(''), {
     '0': {
       children: [
-        [() => getRoute(props.routes, routerState.url, props.base), null],
+        [() => getRoute(this.routes, routerStore().url, this.base), null],
       ],
     },
   });

@@ -1,16 +1,15 @@
-import { Key } from '../types/types';
-import { EstrelaNode } from './estrela-node';
+import { EstrelaNode, isEstrelaNode } from './template';
 import { insertChild, removeChild, replaceChild } from './node-api';
 
 type AnyNode = Node | EstrelaNode;
 
 export function patchChildren(
   parent: Node,
-  childrenMap: Map<Key, AnyNode>,
+  childrenMap: Map<string, AnyNode>,
   nextChildren: AnyNode[],
   before: Node | null
-): Map<Key, AnyNode> {
-  const result = new Map<Key, AnyNode>();
+): Map<string, AnyNode> {
+  const result = new Map<string, AnyNode>();
   const children = childrenMap.values();
 
   if (childrenMap.size > 0 && nextChildren.length === 0) {
@@ -22,7 +21,7 @@ export function patchChildren(
     } else {
       const range = document.createRange();
       const child = children.next().value;
-      const start = child instanceof EstrelaNode ? child.firstChild : child;
+      const start = isEstrelaNode(child) ? child.firstChild : child;
       range.setStartBefore(start);
       if (before) {
         range.setEndBefore(before);
@@ -32,8 +31,8 @@ export function patchChildren(
       range.deleteContents();
     }
     childrenMap.forEach(node => {
-      if (node instanceof EstrelaNode) {
-        node.dispose();
+      if (isEstrelaNode(node)) {
+        node.unmount();
       }
     });
     return result;
@@ -47,7 +46,7 @@ export function patchChildren(
     let currKey = getKey(currChild, i);
 
     while (currChild && !nextChildrenMap.has(currKey)) {
-      removeChild(parent, currChild);
+      removeChild(currChild);
       childrenMap.delete(currKey);
       currChild = children.next().value;
       currKey = getKey(currChild, i);
@@ -84,7 +83,7 @@ export function patchChildren(
 
   childrenMap.forEach((child, key) => {
     if (child.isConnected && !result.has(key)) {
-      removeChild(parent, child);
+      removeChild(child);
     }
   });
 
@@ -95,9 +94,9 @@ function patch(parent: Node, node: AnyNode, next: AnyNode): AnyNode {
   if (node === next) {
     return node;
   }
-  if (node instanceof EstrelaNode && next instanceof EstrelaNode) {
+  if (isEstrelaNode(node) && isEstrelaNode(next)) {
     if (node.template === next.template) {
-      node.patch(next.data);
+      node.patchProps(next.props);
       return node;
     }
   }
@@ -111,8 +110,8 @@ function patch(parent: Node, node: AnyNode, next: AnyNode): AnyNode {
   return next;
 }
 
-function mapKeys(children: AnyNode[]): Map<Key, AnyNode> {
-  const result = new Map<Key, AnyNode>();
+function mapKeys(children: AnyNode[]): Map<string, AnyNode> {
+  const result = new Map<string, AnyNode>();
   for (let i = 0; i < children.length; i++) {
     const child = children[i];
     const key = getKey(child, i);
@@ -121,7 +120,7 @@ function mapKeys(children: AnyNode[]): Map<Key, AnyNode> {
   return result;
 }
 
-function getKey(node: AnyNode | undefined, index: number): Key {
+function getKey(node: AnyNode | undefined, index: number): string {
   const key = (node as any)?.id;
   let result = key === '' ? undefined : key;
   return result ?? `_$${index}$`;

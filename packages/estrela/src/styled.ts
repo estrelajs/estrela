@@ -1,7 +1,6 @@
-export type StyledTemplate<C> = (
-  css: TemplateStringsArray,
-  ...cssArgs: any[]
-) => C;
+export interface StyledTemplate<C> {
+  (css: TemplateStringsArray, ...cssArgs: any[]): C;
+}
 
 export function styled<C extends Function>(Component: C): StyledTemplate<C>;
 export function styled<C extends Function>(
@@ -15,7 +14,6 @@ export function styled<C extends Function>(
   if (!id) {
     throw new Error('id is required');
   }
-
   return (css, ...cssArgs) => {
     const template = Array.from(css);
     const style = document.createElement('style');
@@ -28,9 +26,10 @@ export function styled<C extends Function>(
     style.textContent = styleSheet;
     document.head.append(style);
 
-    const styledComponent = (...args: any[]) =>
-      Component.apply(undefined, args);
-    styledComponent.styleId = id;
-    return styledComponent as any;
+    const StyledComponent: any = function (this: any) {
+      return Component.apply(this, arguments);
+    };
+    StyledComponent.styleId = id;
+    return StyledComponent;
   };
 }
