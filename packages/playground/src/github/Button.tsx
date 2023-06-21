@@ -1,18 +1,19 @@
-import { Component, EventEmitter } from 'estrela';
+import { Output } from 'estrela';
 
 export interface ButtonProps {
+  children?: JSX.Children;
   disabled?: boolean;
   icon?: string;
-  click?: EventEmitter<void>;
+  click?: Output<void>;
 }
 
-const Button: Component<ButtonProps> = ({ disabled, icon, click }) => (
-  <button disabled={disabled} on:click={() => click?.next()}>
-    {icon && <i class={`fa-solid fa-${icon}`}></i>}
-    <span>
-      <slot />
-    </span>
-  </button>
-);
+function Button(this: ButtonProps) {
+  return (
+    <button disabled={this.disabled} on:click={() => this.click?.()}>
+      {this.icon && <i class={`fa-solid fa-${this.icon}`}></i>}
+      <span>{this.children}</span>
+    </button>
+  );
+}
 
 export default Button;

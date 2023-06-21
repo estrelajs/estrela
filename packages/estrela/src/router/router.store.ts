@@ -1,4 +1,4 @@
-import { createState } from '../state';
+import { signal } from '../signal';
 
 export interface RouterState {
   url: string;
@@ -23,15 +23,15 @@ const getState = ({ state = {} }: Partial<RouterState> = {}): RouterState => {
   };
 };
 
-export const routerState = createState<RouterState>(getState());
+export const routerStore = signal<RouterState>(getState());
 
 window.addEventListener('popstate', () => {
-  Object.assign(routerState, getState(routerState.state));
+  routerStore.update(signal => getState(signal.state));
 });
 
 export function navigateTo(url: string, opts?: NavigateOptions) {
-  const { replace = false, state = routerState.state } = opts ?? {};
+  const { replace = false, state = routerStore().state } = opts ?? {};
   const action = replace ? 'replaceState' : 'pushState';
   window.history[action](state, '', url);
-  Object.assign(routerState, getState({ ...routerState, state }));
+  routerStore.update(signal => getState({ ...signal.state, state }));
 }

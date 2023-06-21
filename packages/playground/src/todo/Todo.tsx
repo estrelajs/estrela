@@ -1,4 +1,4 @@
-import { EventEmitter, styled } from 'estrela';
+import { Output, effect, signal, styled } from 'estrela';
 
 export interface TodoItem {
   id: number;
@@ -8,22 +8,25 @@ export interface TodoItem {
 
 export interface TodoProps {
   todo: TodoItem;
-  complete: EventEmitter<boolean>;
-  remove: EventEmitter<TodoItem>;
+  complete: Output<boolean>;
+  remove: Output<TodoItem>;
 }
 
-function Todo({ todo, complete, remove }: TodoProps) {
-  let completed = todo.completed;
+function Todo(this: TodoProps) {
+  const completed = signal(this.todo.completed);
 
-  completed$.subscribe((value: boolean) => {
-    complete.emit(value);
+  effect(iter => {
+    const isCompleted = completed();
+    if (iter > 0) {
+      this.complete(isCompleted);
+    }
   });
 
   return (
     <div class="todo">
-      <input type="checkbox" bind={completed$} />
-      <span class:completed={completed}>{todo.text}</span>
-      <button on:click={() => remove?.emit(todo)}>🗑️</button>
+      <input type="checkbox" bind={completed} />
+      <span class:completed={completed()}>{this.todo.text}</span>
+      <button on:click={() => this.remove?.(this.todo)}>🗑️</button>
     </div>
   );
 }
