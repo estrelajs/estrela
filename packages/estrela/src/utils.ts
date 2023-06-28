@@ -1,4 +1,4 @@
-/** automatic event value binding. */
+/** Automatic event value binding. */
 export function bindHandler<T, R>(event: Event & { target: T }): R {
   return (event.target as any).value;
 }
@@ -35,6 +35,7 @@ export function toCamelCase(str: string): string {
   const s = str.replace(/[-_\s]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ''));
   return s[0].toLowerCase() + s.slice(1);
 }
+
 /** Transform string to kebab-case. */
 export function toKebabCase(str: string): string {
   return str

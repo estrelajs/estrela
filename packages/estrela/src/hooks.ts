@@ -1,21 +1,22 @@
 import { ComponentNode } from './internal/component-node';
 
-/** Call the callback function when component is initialized. */
-export function onInit(callback: () => void): void {
-  throwIfOutsideComponent();
-  ComponentNode.ref?.addHook('init', callback);
+/** Calls the callback function when component is initialized. */
+export function onInit(cb: () => void): void {
+  throwIfOutsideComponent('onInit');
+  ComponentNode.ref?.addHook('init', cb);
 }
 
-/** Call the callback function when component is destroyed. */
-export function onDestroy(callback: () => void): void {
-  throwIfOutsideComponent();
-  ComponentNode.ref?.addHook('destroy', callback);
+/** Calls the callback function when component is destroyed. */
+export function onDestroy(cb: () => void): void {
+  throwIfOutsideComponent('onDestroy');
+  ComponentNode.ref?.addHook('destroy', cb);
 }
 
-function throwIfOutsideComponent() {
+function throwIfOutsideComponent(hook: string) {
   if (!ComponentNode.ref) {
     throw new Error(
-      'Out of Context! You can only use this function inside a component.'
+      `"${hook}" can only be called within the component function body
+      and cannot be used in asynchronous or deferred calls.`
     );
   }
 }

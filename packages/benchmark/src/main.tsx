@@ -1,4 +1,4 @@
-import { createState, EventEmitter } from 'estrela';
+import { Output, signal } from 'estrela';
 
 interface RowData {
   id: number;
@@ -78,140 +78,144 @@ const buildData = (count: number) => {
   return data;
 };
 
-const state = createState({
-  data: [] as RowData[],
-  selected: 0,
-});
+const data = signal<RowData[]>([]);
+const selected = signal(0);
 const version = '0.11.0';
 
 const actions = {
   run: () => {
-    state.data = buildData(1000);
-    state.selected = 0;
+    data.set(buildData(1000));
+    selected.set(0);
   },
   runLots: () => {
-    state.data = buildData(10000);
-    state.selected = 0;
+    data.set(buildData(10000));
+    selected.set(0);
   },
   add: () => {
-    state.data = state.data.concat(buildData(1000));
+    data.update(data => data.concat(buildData(1000)));
   },
   update: () => {
-    const newData = state.data.slice(0);
-    for (let i = 0; i < newData.length; i += 10) {
-      const r = newData[i];
-      newData[i] = { id: r.id, label: r.label + ' !!!' };
-    }
-    state.data = newData;
+    data.mutate(data => {
+      for (let i = 0; i < data.length; i += 10) {
+        const r = data[i];
+        data[i] = { id: r.id, label: r.label + ' !!!' };
+      }
+    });
   },
   clear: () => {
-    state.data = [];
-    state.selected = 0;
+    data.set([]);
+    selected.set(0);
   },
   swapRows: () => {
-    if (state.data.length > 998) {
-      state.data = [
-        state.data[0],
-        state.data[998],
-        ...state.data.slice(2, 998),
-        state.data[1],
-        state.data[999],
-      ];
+    if (data().length > 998) {
+      data.update(data => [
+        data[0],
+        data[998],
+        ...data.slice(2, 998),
+        data[1],
+        data[999],
+      ]);
     }
   },
   remove: (id: number) => {
-    const idx = state.data.findIndex(d => d.id === id);
-    state.data = [...state.data.slice(0, idx), ...state.data.slice(idx + 1)];
+    data.update(data => {
+      const idx = data.findIndex(d => d.id === id);
+      return [...data.slice(0, idx), ...data.slice(idx + 1)];
+    });
   },
   select: (id: number) => {
-    state.selected = id;
+    selected.set(id);
   },
 };
 
-const Row = (props: { item: RowData }) => (
-  <tr class={state.selected === props.item.id ? 'danger' : ''}>
-    <td class="col-md-1">{props.item.id}</td>
-    <td class="col-md-4">
-      <a on:click={() => actions.select(props.item.id)}>{props.item.label}</a>
-    </td>
-    <td class="col-md-1">
-      <a on:click={() => actions.remove(props.item.id)}>
-        <span class="glyphicon glyphicon-remove" aria-hidden="true" />
-      </a>
-    </td>
-    <td class="col-md-6" />
-  </tr>
-);
+function Row(this: { item: RowData }) {
+  return (
+    <tr class={selected() === this.item.id ? 'danger' : ''}>
+      <td class="col-md-1">{this.item.id}</td>
+      <td class="col-md-4">
+        <a on:click={() => actions.select(this.item.id)}>{this.item.label}</a>
+      </td>
+      <td class="col-md-1">
+        <a on:click={() => actions.remove(this.item.id)}>
+          <span class="glyphicon glyphicon-remove" aria-hidden="true" />
+        </a>
+      </td>
+      <td class="col-md-6" />
+    </tr>
+  );
+}
 
-const Button = (props: {
-  id: string;
-  title: string;
-  click: EventEmitter<void>;
-}) => (
-  <div class="col-sm-6 smallpad">
-    <button
-      type="button"
-      class="btn btn-primary btn-block"
-      id={props.id}
-      on:click={() => props.click.emit()}
-    >
-      {props.title}
-    </button>
-  </div>
-);
+function Button(this: { id: string; title: string; click: Output<void> }) {
+  return (
+    <div class="col-sm-6 smallpad">
+      <button
+        type="button"
+        class="btn btn-primary btn-block"
+        id={this.id}
+        on:click={() => this.click()}
+      >
+        {this.title}
+      </button>
+    </div>
+  );
+}
 
-const Jumbotron = () => (
-  <div class="jumbotron">
-    <div class="row">
-      <div class="col-md-6">
-        <h1>Estrela v{version} keyed</h1>
-      </div>
-      <div class="col-md-6">
-        <div class="row">
-          <Button
-            id="run"
-            title="Create 1,000 rows"
-            on:click={() => actions.run()}
-          />
-          <Button
-            id="runlots"
-            title="Create 10,000 rows"
-            on:click={() => actions.runLots()}
-          />
-          <Button
-            id="add"
-            title="Append 1,000 rows"
-            on:click={() => actions.add()}
-          />
-          <Button
-            id="update"
-            title="Update every 10th row"
-            on:click={() => actions.update()}
-          />
-          <Button id="clear" title="Clear" on:click={() => actions.clear()} />
-          <Button
-            id="swaprows"
-            title="Swap Rows"
-            on:click={() => actions.swapRows()}
-          />
+function Jumbotron() {
+  return (
+    <div class="jumbotron">
+      <div class="row">
+        <div class="col-md-6">
+          <h1>Estrela v{version} keyed</h1>
+        </div>
+        <div class="col-md-6">
+          <div class="row">
+            <Button
+              id="run"
+              title="Create 1,000 rows"
+              on:click={() => actions.run()}
+            />
+            <Button
+              id="runlots"
+              title="Create 10,000 rows"
+              on:click={() => actions.runLots()}
+            />
+            <Button
+              id="add"
+              title="Append 1,000 rows"
+              on:click={() => actions.add()}
+            />
+            <Button
+              id="update"
+              title="Update every 10th row"
+              on:click={() => actions.update()}
+            />
+            <Button id="clear" title="Clear" on:click={() => actions.clear()} />
+            <Button
+              id="swaprows"
+              title="Swap Rows"
+              on:click={() => actions.swapRows()}
+            />
+          </div>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+}
 
-const Main = () => (
-  <div class="container">
-    <Jumbotron />
-    <table class="table table-hover table-striped test-data">
-      <tbody>
-        {state.data.map(item => (
-          <Row key={item.id} item={item} />
-        ))}
-      </tbody>
-    </table>
-    <span class="preloadicon glyphicon glyphicon-remove" aria-hidden="true" />
-  </div>
-);
+function Main() {
+  return (
+    <div class="container">
+      <Jumbotron />
+      <table class="table table-hover table-striped test-data">
+        <tbody>
+          {data().map(item => (
+            <Row key={item.id} item={item} />
+          ))}
+        </tbody>
+      </table>
+      <span class="preloadicon glyphicon glyphicon-remove" aria-hidden="true" />
+    </div>
+  );
+}
 
 (<Main />).mount(document.getElementById('main')!);

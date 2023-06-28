@@ -1,6 +1,6 @@
 import { h, template } from '../../internal';
 import { Routes } from '../route';
-import { routerStore } from '../router.store';
+import { url } from '../router.store';
 
 export interface RouterProps {
   base?: string;
@@ -53,9 +53,7 @@ export function Router(this: RouterProps) {
 
   return h(template(''), {
     '0': {
-      children: [
-        [() => getRoute(this.routes, routerStore().url, this.base), null],
-      ],
+      children: [[() => getRoute(this.routes, url(), this.base), null]],
     },
   });
 }

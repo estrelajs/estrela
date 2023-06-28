@@ -1,4 +1,4 @@
-import { signal } from '../signal';
+import { signalStore, withState } from '../store';
 
 export interface RouterState {
   url: string;
@@ -13,25 +13,28 @@ export interface NavigateOptions {
   state?: any;
 }
 
-const getState = ({ state = {} }: Partial<RouterState> = {}): RouterState => {
+export const [{ url, href, fragment, queryParams, state }, update] =
+  signalStore(withState<RouterState>(getState()));
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('popstate', () => {
+    update(({ state }) => getState(state));
+  });
+}
+
+function getState(nextState: any = {}): RouterState {
   return {
     url: window.location.pathname,
     href: window.location.href,
     fragment: window.location.hash,
     queryParams: new URLSearchParams(window.location.search),
-    state,
+    state: nextState,
   };
-};
-
-export const routerStore = signal<RouterState>(getState());
-
-window.addEventListener('popstate', () => {
-  routerStore.update(signal => getState(signal.state));
-});
+}
 
 export function navigateTo(url: string, opts?: NavigateOptions) {
-  const { replace = false, state = routerStore().state } = opts ?? {};
+  const { replace = false, state: nextState = state() } = opts ?? {};
   const action = replace ? 'replaceState' : 'pushState';
-  window.history[action](state, '', url);
-  routerStore.update(signal => getState({ ...signal.state, state }));
+  window.history[action](nextState, '', url);
+  update(({ state }) => getState({ ...state, ...nextState }));
 }

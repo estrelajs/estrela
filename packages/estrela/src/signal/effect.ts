@@ -44,6 +44,7 @@ export function triggerEffectsForSignal(signal: ReadonlySignal<unknown>) {
 /**
  * Creates a reactive effect that tracks dependencies and triggers updates when necessary.
  * @param fn The effect function which represents the reactive code that needs to be executed.
+ * @returns A function that can be used to cleanup the effect.
  */
 export function effect(fn: Effect): () => void {
   runEffect(fn);
