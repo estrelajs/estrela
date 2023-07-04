@@ -44,7 +44,7 @@ App().mount(document.getElementById('app')!);
 ## Key Features
 - Reactive Signal-based Framework: Estrela's core architecture is built around signals, enabling reactive programming. Signals allow for efficient data flow and automatically update the UI whenever the underlying data changes.
 
-- Main Functionalities: Estrela comes with all the essential functionalities you need to build robust applications. It provides components, lifecyle hooks, and utilities for managing state, handling events, and rendering user interfaces efficiently.
+- Main Functionalities: Estrela comes with all the essential functionalities you need to build robust applications. It provides components, lifecycle hooks, and utilities for managing state, handling events, and rendering user interfaces efficiently.
 
 - Built-in Styling with CSS-in-JS: Estrela incorporates CSS-in-JS styling, allowing you to write component-specific styles directly in your TypeScript code. This approach promotes component encapsulation and eliminates the need for external CSS files.
 
