@@ -10,38 +10,49 @@
   <a href="https://www.npmjs.com/package/estrela">
     <img src="https://img.shields.io/npm/v/estrela?color=009DFF&label=NPM%20Package&logo=npm" alt="Estrela on npm" />
   </a>&nbsp;
+  <a href="https://opensource.org/licenses/MIT" target="_new">
+    <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT">
+  </a>
 </p>
 
 <hr>
+&nbsp;
 
-Estrela is extremely easy to use, all the hard work is done by the babel plugin. There's no need for hooks like `useState`, `useEffect` and others.
-
-To create a state variable, just declare it using the `let` keyword to specify that its value will change in the future.
-
-The component function will be called just once, so you can call any side effect directly in the function scope.
+Estrela is a modern TypeScript library inspired by popular frameworks such as React, Angular, and Solid. It provides a comprehensive set of features while leveraging reactive programming to create responsive and dynamic applications.
 
 ```tsx
 // main.tsx
-import { onDestroy, render } from 'estrela';
+import { onDestroy, signal } from 'estrela';
 
 function App() {
-  let count = 0;
+  const count = signal(0);
 
-  const interval = setInterval(() => count++, 1000);
+  const interval = setInterval(() => count.update(x => x + 1), 1000);
 
   onDestroy(() => clearInterval(interval));
 
-  return <Count count={count} />;
+  return <Count count={count()} />;
 }
 
-function Count(props: { count: number }) {
-  return <div>Count is {props.count}</div>;
+function Count(this: { count: number }) {
+  return <div>Count is {this.count}</div>;
 }
 
-render(<App />, document.getElementById('app')!);
+App().mount(document.getElementById('app')!);
 ```
 
-## Installation
+## Key Features
+- Reactive Signal-based Framework: Estrela's core architecture is built around signals, enabling reactive programming. Signals allow for efficient data flow and automatically update the UI whenever the underlying data changes.
+
+- Main Functionalities: Estrela comes with all the essential functionalities you need to build robust applications. It provides components, lifecyle hooks, and utilities for managing state, handling events, and rendering user interfaces efficiently.
+
+- Built-in Styling with CSS-in-JS: Estrela incorporates CSS-in-JS styling, allowing you to write component-specific styles directly in your TypeScript code. This approach promotes component encapsulation and eliminates the need for external CSS files.
+
+- Router: The built-in router simplifies navigation within your application. It provides declarative routing capabilities, enabling you to define routes and associated components effortlessly.
+
+- Store: Estrela includes a powerful store mechanism for managing global state. The store facilitates state sharing across components and ensures consistent and predictable updates throughout your application.
+
+## Get Started
 
 Start a new Estrela project by running the following `degit` command:
 
@@ -77,3 +88,7 @@ This is a performance chart comparing Estrela to other famous frameworks:
 ## Contributing
 
 Estrela is open source and we appreciate issue reports and pull requests.
+
+## License
+
+Estrela is released under the MIT License. Feel free to use it in both open-source and commercial projects.
