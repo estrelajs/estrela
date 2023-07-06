@@ -10,6 +10,7 @@ export default defineConfig({
     index: 'src/index.ts',
     internal: 'src/internal/index.ts',
     router: 'src/router/index.ts',
+    store: 'src/store/index.ts',
   },
   output: [
     {

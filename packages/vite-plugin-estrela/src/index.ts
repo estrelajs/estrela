@@ -1,6 +1,5 @@
 import * as babel from '@babel/core';
 import { Plugin } from 'vite';
-import estrela from '../../babel-plugin-estrela/src';
 
 export interface Options {
   /** Filter files to apply babel. */
@@ -31,7 +30,7 @@ export default function (options?: Options): Plugin {
           filename: id,
           sourceMaps: true,
           sourceType: 'module',
-          plugins: [estrela], // 'babel-plugin-estrela'
+          plugins: ['babel-plugin-estrela'],
         });
         if (result?.code) {
           return {
