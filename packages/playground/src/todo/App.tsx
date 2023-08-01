@@ -53,7 +53,7 @@ function App() {
             bind={todoText}
             on:keydown={e => e.key === 'Enter' && addTodo()}
           />
-          <button disabled={!todoText} on:click={addTodo}>
+          <button disabled={!todoText()} on:click={addTodo}>
             ➕
           </button>
         </div>
