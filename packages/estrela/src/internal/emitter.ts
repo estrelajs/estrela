@@ -1,4 +1,5 @@
 import { Output } from '../jsx';
+import { getActiveEffectMetadata } from '../signal/effect';
 
 export type Listener<T> = (value: T) => void;
 
@@ -18,6 +19,13 @@ export class Emitter<T> {
   }
 
   emit(value: T): void {
-    this.listener(value);
+    const metadata = getActiveEffectMetadata();
+    if (
+      !metadata ||
+      metadata.options.allowEmitsOnFirstRun ||
+      metadata.iteration > 0
+    ) {
+      this.listener(value);
+    }
   }
 }

@@ -1,24 +1,29 @@
 import { onDestroy } from '../hooks';
 import { ComponentNode } from '../internal/component-node';
-import { ReadonlySignal, Effect, Cleanup } from './types';
+import { ReadonlySignal, Effect, Cleanup, EffectOptions } from './types';
 
 const signalToEffectsMap = new Map<ReadonlySignal<unknown>, Set<Effect>>();
 const effectMetadataMap = new WeakMap<
   Effect,
-  { cleanup?: Cleanup; iteration: number }
+  {
+    cleanup?: Cleanup;
+    iteration: number;
+    options: EffectOptions;
+  }
 >();
 
 let activeEffect: Effect | null = null;
 let trackBlocked = false;
 
+export function getActiveEffectMetadata() {
+  return activeEffect ? effectMetadataMap.get(activeEffect)! : null;
+}
+
 function runEffect(fn: Effect): void {
   activeEffect = fn;
-  let metadata = effectMetadataMap.get(fn);
-  if (!metadata) {
-    metadata = { iteration: 0 };
-    effectMetadataMap.set(fn, metadata);
-  }
-  const cleanup = fn(metadata.iteration++);
+  const metadata = effectMetadataMap.get(fn)!;
+  const cleanup = fn(metadata.iteration);
+  metadata.iteration++;
   if (cleanup) {
     metadata.cleanup = cleanup;
   }
@@ -46,11 +51,12 @@ export function triggerEffectsForSignal(signal: ReadonlySignal<unknown>) {
  * @param fn The effect function which represents the reactive code that needs to be executed.
  * @returns A function that can be used to cleanup the effect.
  */
-export function effect(fn: Effect): () => void {
+export function effect(fn: Effect, options?: EffectOptions): () => void {
+  effectMetadataMap.set(fn, { iteration: 0, options: options ?? {} });
   runEffect(fn);
 
   const cleanup = () => {
-    effectMetadataMap.get(fn)?.cleanup?.();
+    effectMetadataMap.get(fn)!.cleanup?.();
     effectMetadataMap.delete(fn);
 
     for (const [signal, effects] of signalToEffectsMap.entries()) {

@@ -15,11 +15,8 @@ export interface TodoProps {
 function Todo(this: TodoProps) {
   const completed = signal(this.todo.completed);
 
-  effect(iter => {
-    const isCompleted = completed();
-    if (iter > 0) {
-      this.complete(isCompleted);
-    }
+  effect(() => {
+    this.complete(completed());
   });
 
   return (
