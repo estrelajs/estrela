@@ -2,6 +2,11 @@ export type Cleanup = () => void;
 
 export type Effect = (iteration: number) => void | Cleanup;
 
+export interface EffectOptions {
+  /** Will allow output props to emit values on the first iteration of the effect. */
+  allowEmitsOnFirstRun?: boolean;
+}
+
 export type EqualityFn<T> = (prev: T, next: T) => boolean;
 
 export interface ReadonlySignal<T> {
