@@ -1,83 +1,45 @@
-# Component
+# Components: Building Blocks of Your Web App!
 
-Components are the building blocks and the main way to build a web application. In Estrela, components are defined by a function that returns a template.
+Components are at the heart of building a fantastic web application with Estrela! They're simply functions that return a template. Let's dive in and see how easy it is to create powerful components. 🚀
 
-```jsx
+## Defining a Component
+
+Creating a component is as simple as defining a function that returns your desired template. For example:
+
+```tsx
 function App() {
   return <h1>Hello World</h1>;
 }
 
-render(<App />, document.getElementById('app')!);
+(<App />).mount(document.getElementById('app')!);
 ```
 
-## States
+This code sets up an `App` component that returns a heading element with "Hello World." By rendering the component, you bring it to life on your web page! 🌟
 
-To create a state from within a component, just declare it using the `let` keyword.
+## Signals: Reactivity at Its Best
 
-```jsx{2}
+Components automatically react to signal changes, making them reactive and dynamic. To achieve this, you'll need to declare signals within your component to track changes and trigger updates:
+
+```tsx
 function Counter() {
-  let count = 0;
-  return <div>Count is {count}</div>;
+  const count = signal(0);
+  return <div>Count is {count()}</div>;
 }
 ```
 
-And that's all! Anytime the `count` value changes, the component will be re-rendered.
+Now, every time the `count` value changes, the component will re-render, keeping things in sync with your signals. Easy, right?
 
-<iframe src="https://stackblitz.com/edit/estrelajs-component-state?ctl=1&embed=1&file=src/main.tsx&hideExplorer=1&hideNavigation=1&theme=light" style="width:100%;height:500px"></iframe>
+## Props: Data Flow Between Componentsps
 
-Under the hood, Estrela creates a local proxy state in the component scope. Every time you call one of the properties, it internally gets and sets their individual states.
+Props are a handy way to pass data from a parent component to a child component. Simply use the `this` keyword to access props in the component function:
 
-::: details
-To enable this feature, you need to use the babel plugin which comes with `vite-plugin-estrela` enabled by default. If you want to disable automatic states, you can set `autoDeclareStates` option to `false`.
-:::
-
-## State Ref
-
-Once you declare states using the `let` keyword, you will be able to get and set state values. However, you won't be able to subscribe to state changes and do other `State` operations.
-
-To get the state reference of each variable, call `getState()` and pass the local variable as parameter.
-
-```jsx{7}
-import { getState } from 'estrela';
-
-function Counter() {
-  let count = 0;
-
-  // gets the state reference for "count".
-  getState(count).subscribe(console.log);
-
-  return <div>Count is {count}</div>;
+```tsx
+interface GreeterProps {
+  name: string;
 }
-```
 
-Alternatively, you can get the state by adding a `$` suffix to the declared variable name.
-
-```jsx{5}
-function Counter() {
-  let count = 0;
-
-  // gets the state reference for "count".
-  count$.subscribe(console.log);
-
-  return <div>Count is {count}</div>;
-}
-```
-
-::: tip
-When working with TypeScript, you need to add the Estrela plugin to prevent the compiler from complaining about the missing properties. If you're using VSCode, you can install [`Estrela for VSCode`](https://marketplace.visualstudio.com/items?itemName=estrelajs.estrela-vscode) extension.
-:::
-
-::: warning
-`typescript-estrela-plugin` won't add the correct type to the `$` suffixed properties, it will remain as `any`. We're working to improve this in the future.
-:::
-
-## Props
-
-Props are used to pass data from the parent component to the child component. Props are passed as object to the first argument of the component function.
-
-```jsx
-function Greeter(props) {
-  return <p>Hello {props.name}</p>;
+function Greeter(this: GreeterProps) {
+  return <p>Hello {this.name}</p>;
 }
 
 function App() {
@@ -90,158 +52,109 @@ function App() {
 }
 ```
 
-Props are state proxy objects that are automatically updated when the parent component changes their state, you can subscribe to them using the `subscribe` method.
+Also, you can bind signals to props to make your components reactive:
 
-```jsx{10}
-function Counter() {
-  let count = 0;
-
-  setInterval(() => count++, 1000);
-
-  return <ShowCount count={count} />;
+```tsx
+interface ShowCountProps {
+  count: number;
 }
 
-function ShowCount({ count }) {
-  count$.subscribe(console.log);
+function ShowCount(this: ShowCountProps) {
+  effect(() => {
+    console.log('Count is', this.count);
+  });
 
-  return <div>Count is {count}</div>;
+  return <div>Count is {this.count}</div>;
+}
+
+function Counter() {
+  const count = signal(0);
+
+  setInterval(() => count.update(x => x + 1), 1000);
+
+  return <ShowCount count={count()} />;
 }
 ```
 
-::: tip
-Props and local states will automatically complete when the component is destroyed. So there's no need to unsubscribe their subscriptions.
-:::
+With props, you can customize and reuse your components seamlessly. 🎉
 
-## Event Emitter
+## Event Emitter: Components Speak Up!
 
-Like common HTML elements, you can emit events from a component. When you add `on:` prefix to the attribute name, Estrela will provide an `EventEmitter` instance, which you can use to emit events.
+Components can emit events just like common HTML elements. Use the `on:` prefix attribute to specify the event and use the `Output` type to define the event emitter:
 
-```jsx
-function Counter() {
-  let count = 0;
-
-  setInterval(() => count++, 1000);
-
-  return <ShowCount count={count} on:reset={() => (count = 0)} />;
+```tsx
+interface ShowCountProps {
+  count: number;
+  reset: Output<void>;
 }
 
-function ShowCount({ count, reset }) {
+function ShowCount(this: ShowCountProps) {
   return (
     <div>
       <div>Count is {count}</div>
-      <button on:click={() => reset.emit()}>Reset</button>
+      <button on:click={this.reset}>Reset</button>
     </div>
   );
+}
+
+function Counter() {
+  const count = signal(0);
+
+  setInterval(() => count.update(x => x + 1), 1000);
+
+  return <ShowCount count={count()} on:reset={() => count.set(0)} />;
 }
 ```
 
-## Context
+With event emitters, components can communicate and trigger actions within your app. Dynamic and interactive, all in one!
 
-As you already know, you can share data with global states. However, if you want to restrict the data to a specific component tree, you can use the `Context` API.
+## Children: A Special Kind of Props
 
-```jsx
-import { getContext, setContext } from 'estrela';
+"Children" is a magical prop that allows you to pass content between opening and closing tags of a component. This feature lets you nest components and customize their content in a natural way. 🔊
 
-function MyContent({ theme }) {
-  // use "theme$" to provide the prop state reference
-  // instead of just the current value.
-  setContext('theme', theme$);
-  return (
-    <div>
-      ...
-      <Button />
-    </div>
-  );
+Example Usage:
+
+```tsx
+interface MyComponentProps {
+  children?: JSX.Children;
 }
 
-function Button({ click }) {
-  // get "theme" state reference.
-  const theme = getContext('theme');
+function MyComponent(this: MyComponentProps) {
   return (
-    <button
-      on:click={click}
-      style:background={() => (theme.$ === 'dark' ? '#333' : '#fff')}
-    >
-      Click me!
-    </button>
+    <div>
+      <h1>This is My Component</h1>
+      {this.children}
+    </div>
   );
 }
 
 function App() {
   return (
-    <>
-      <MyContent theme="dark" />
-      <MyContent theme="light" />
-    </>
+    <MyComponent>
+      <p>Custom Content Here!</p>
+    </MyComponent>
   );
 }
 ```
 
-## Children
+By using this.children, your component can access and render the content provided between its tags. It's like unwrapping a surprise gift! 🎁
 
-Children are content that comes from outside of components. You can render children content from the `children` property or use the `<slot />` element.
-
-```jsx
-// Using the children prop
-function Button({ children }) {
-  return <button>{children}</button>;
-}
-
-// Using the slot element
-function Button() {
-  return (
-    <button>
-      <slot />
-    </button>
-  );
-}
-```
-
-These are some benefits of using `<slot />` element instead of `children` prop:
-
-- If no children are provided, it will render the default content inside of `<slot>`.
-- You can specify which child will be rendered by using the `name` attribute.
-- You can select the children content type by using the `select` attribute.
-
-```jsx
-function If({ condition }) {
-  return condition ? (
-    <slot>Content is True</slot>
-  ) : (
-    <slot name="else">Content is False</slot>
-  );
-}
-
-<If condition={5 > 2}>
-  <p>5 is greater than 2</p>
-  <p name="else">What the hell?!</p>
-</If>;
-```
-
-But if you want to deal with the children data like call a child function, you need to use the `children` prop.
-
-For TypeScript, when using `slot`, you can type your component by using the `Component` interface and passing the children type as the second type parameter:
-
-```tsx
-// Will only accept "string" children
-const Button: Component<ButtonProps, string[]> = ({ click }) => (
-  <button on:click={click.emit()}>
-    <slot />
-  </button>
-);
-```
-
-## Styling
+## Styled Components: CSS in JS
 
 Estrela comes with a styling system that allows you to style your components using CSS. All the styles are automatically scoped to the component.
 
-```jsx
-import { styled } from 'estrela';
+```tsx
+import { Output } from 'estrela';
 
-function MyButton({ click }) {
+export interface ButtonProps {
+  children?: JSX.Children;
+  click?: Output<void>;
+}
+
+function MyButton(this: ButtonProps) {
   return (
-    <button on:click={click.emit()}>
-      <slot />
+    <button on:click={() => this.click?.()}>
+      {this.children}
     </button>
   );
 }
@@ -257,3 +170,5 @@ export default styled(MyButton)`
 ::: tip
 Use [`Estrela for VSCode`](https://marketplace.visualstudio.com/items?itemName=estrelajs.estrela-vscode) extension to highlight the CSS syntax and use code completion to get the correct CSS property names.
 :::
+
+<!-- <iframe src="https://stackblitz.com/edit/estrelajs-component-state?ctl=1&embed=1&file=src/main.tsx&hideExplorer=1&hideNavigation=1&theme=light" style="width:100%;height:500px"></iframe> -->

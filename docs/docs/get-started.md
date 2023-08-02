@@ -1,17 +1,16 @@
 # Get Started
 
-Estrela has its own babel plugin to process JSX/TSX files which is required to make all the functionality work.
+Ready to get started with Estrela? 🚀 We've got you covered! To make the most out of the examples in this documentation, you'll need to use our special Babel plugin for processing JSX/TSX files. Don't worry; it's super easy!
 
-The easiest way to setup a new Estrela environment is by running `degit` to create a new project based on the default Estrela template.
+First things first, let's set up your Estrela environment. Just run the `degit` command to create a new project based on our default template:
 
 ```bash
 $ npx degit estrelajs/template my-project-name
 ```
 
-It will bootstrap a typescript project using `vite` as the package bundler with `vite-plugin-estrela` already installed and configured.
+This command sets up a fresh TypeScript project with `vite` as the package bundler and the `vite-plugin-estrela` plugin all ready to go. ✨
 
-
-To start the `vite` server, you need to install its dependencies and run `dev` script.
+Now, to start the `vite` server and see your app in action, follow these simple steps:
 
 ```bash
 $ cd my-project-name
@@ -19,8 +18,8 @@ $ yarn install
 $ yarn dev
 ```
 
-`Vite` will serve the application under `localhost:3000` displaying a simple startup page.
+`Vite` will serve your application on `localhost:3000`, and you'll see the default Estrela startup page.
 
 ::: tip
-Estrela is a normal JavaScript library, so it's possible to run it without using `vite` or `babel` plugins. However it's recommended to use them to enable all Estrela features.
+While you can use Estrela as a regular JavaScript library without vite or babel plugins, we highly recommend using them. They make development a breeze with their handy features, making your code cleaner and easier to maintain. So why not make life a little simpler? 😉
 :::
