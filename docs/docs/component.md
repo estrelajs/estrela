@@ -1,4 +1,4 @@
-# Components: Building Blocks of Your Web App!
+# Components
 
 Components are at the heart of building a fantastic web application with Estrela! They're simply functions that return a template. Let's dive in and see how easy it is to create powerful components. 🚀
 

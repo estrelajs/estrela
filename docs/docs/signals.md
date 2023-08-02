@@ -1,4 +1,4 @@
-# Signals: Reactivity Made Easy
+# Signals
 
 Let's talk about signals in Estrela! They're like these cool containers that hold values that can change over time. 📦💨
 

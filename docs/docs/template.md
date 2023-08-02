@@ -1,4 +1,4 @@
-# Template: Express Yourself with JSX!
+# Template Syntax
 
 In Estrela, we keep things simple and powerful with JSX, the easiest way to write HTML in JavaScript. You might've seen it in React, and it's just as awesome here! 🎨
 

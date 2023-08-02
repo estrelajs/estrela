@@ -1,4 +1,4 @@
-# Effects: React to Signal Changes
+# Effects
 
 In Estrela, effects are like magical listeners that reacts to changes in signals! They allow you to perform certain actions or tasks whenever the data in the signals you're interested in gets updated. 🚀
 
