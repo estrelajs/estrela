@@ -40,7 +40,7 @@ function createEstrelaNode(
   if (path.isJSXElement() && isComponent(getTagName(path.node))) {
     tmpl = t.identifier(getTagName(path.node));
   } else {
-    tmpl = path.scope.generateUidIdentifier('_tmpl');
+    tmpl = path.scope.generateUidIdentifier('_tmpl$');
     const template = t.callExpression(state.template, [
       t.stringLiteral(result.template),
     ]);
@@ -56,7 +56,7 @@ function createEstrelaNode(
 }
 
 function createProps(props: Record<string, any>): t.ObjectExpression {
-  const result: t.ObjectProperty[] = [];
+  const result: (t.ObjectProperty | t.SpreadElement)[] = [];
   for (const prop in props) {
     let value = props[prop];
     if (prop === 'key') {
@@ -65,27 +65,29 @@ function createProps(props: Record<string, any>): t.ObjectExpression {
     if (Array.isArray(value)) {
       value = t.arrayExpression(value);
     }
-    if (typeof value === 'object' && !t.isNode(value)) {
-      value = createProps(props[prop]);
+    if (typeof value === 'object' && value !== null && !t.isNode(value)) {
+      value = createProps(value);
     }
-    if (typeof value !== 'object') {
-      if (typeof value === 'string') {
-        value = t.stringLiteral(value);
-      }
-      if (typeof value === 'number') {
-        value = t.numericLiteral(value);
-      }
-      if (typeof value === 'boolean') {
-        value = t.booleanLiteral(value);
-      }
-      if (typeof value === null) {
-        value = t.nullLiteral();
-      }
-      if (typeof value === 'undefined') {
-        value = t.identifier('undefined');
-      }
+    if (typeof value === 'string') {
+      value = t.stringLiteral(value);
     }
-    result.push(t.objectProperty(t.stringLiteral(prop), value));
+    if (typeof value === 'number') {
+      value = t.numericLiteral(value);
+    }
+    if (typeof value === 'boolean') {
+      value = t.booleanLiteral(value);
+    }
+    if (value === undefined) {
+      value = t.tsUndefinedKeyword();
+    }
+    if (value === null) {
+      value = t.nullLiteral();
+    }
+    if (prop === '_$spread$') {
+      result.push(t.spreadElement(value));
+    } else {
+      result.push(t.objectProperty(t.stringLiteral(prop), value));
+    }
   }
   return t.objectExpression(result);
 }
@@ -128,6 +130,8 @@ function getAttrProps(path: NodePath<t.JSXElement>): Record<string, any> {
             props[name] = value.node;
           }
         }
+      } else if (attribute.isJSXSpreadAttribute()) {
+        props['_$spread$'] = attribute.get('argument').node;
       } else {
         throw new Error('Unsupported attribute type');
       }

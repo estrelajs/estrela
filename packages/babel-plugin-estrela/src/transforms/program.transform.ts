@@ -5,9 +5,9 @@ export function transformProgram() {
   return {
     enter(path: NodePath<t.Program>) {
       path.state = {
-        h: path.scope.generateUidIdentifier('h'),
+        h: path.scope.generateUidIdentifier('h$'),
+        template: path.scope.generateUidIdentifier('template$'),
         tmplDeclaration: t.variableDeclaration('const', []),
-        template: path.scope.generateUidIdentifier('template'),
       } as State;
     },
     exit(path: NodePath<t.Program>) {
