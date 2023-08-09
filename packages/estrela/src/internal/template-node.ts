@@ -60,6 +60,13 @@ export class TemplateNode implements EstrelaNode {
 
     // is Node
     const clone = this.template.content.cloneNode(true);
+    const firstChild = clone.firstChild as HTMLElement | null;
+    if (firstChild?.hasAttribute?.('_tmpl_')) {
+      clone.removeChild(firstChild);
+      Array.from(firstChild.childNodes).forEach(child =>
+        clone.appendChild(child)
+      );
+    }
     this.nodes = Array.from(clone.childNodes);
 
     this.mapNodeTree(parent, clone);

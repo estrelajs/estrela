@@ -1,5 +1,5 @@
 import { NodePath, types as t } from '@babel/core';
-import { selfClosingTags } from '../shared/tags';
+import { selfClosingTags, svgTags } from '../shared/tags';
 import { State } from '../types';
 
 interface Result {
@@ -144,6 +144,7 @@ function transformElement(
     const tagName = getTagName(path.node);
     const tagIsComponent = isComponent(tagName);
     const isSelfClosing = !tagIsComponent && selfClosingTags.includes(tagName);
+    const isSvgTemplate = svgTags.includes(tagName) && result.index === 1;
     const props = getAttrProps(path);
 
     if (tagIsComponent) {
@@ -162,12 +163,11 @@ function transformElement(
         replaceChild(path.node, result);
       }
     } else {
-      result.template += `<${tagName}`;
-      if (tagName === 'slot') {
-        result.props[result.index] = props;
-      } else {
-        handleAttributes(props, result);
+      if (isSvgTemplate) {
+        result.template += `<svg _tmpl_>`;
       }
+      result.template += `<${tagName}`;
+      handleAttributes(props, result);
       result.template += isSelfClosing ? '/>' : '>';
       if (!isSelfClosing) {
         transformChildren(path, result);
@@ -204,10 +204,6 @@ function handleAttributes(props: Record<string, any>, result: Result): void {
 
   for (const prop in props) {
     const value = props[prop];
-
-    if (prop === 'slot') {
-      continue;
-    }
 
     if (prop === 'class' && typeof value === 'string') {
       klass += ` ${value}`;

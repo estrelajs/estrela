@@ -2308,7 +2308,7 @@ declare global {
     interface HTMLSlotElementAttributes<T = HTMLSlotElement>
       extends HTMLAttributes<T> {
       name?: string;
-      select?: string; // | Component;
+      select?: string;
     }
     interface SourceHTMLAttributes<T> extends HTMLAttributes<T> {
       media?: string;
