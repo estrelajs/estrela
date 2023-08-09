@@ -14,3 +14,25 @@ export const selfClosingTags = [
   'track',
   'wbr',
 ];
+
+export const svgTags = [
+  'circle',
+  'clipPath',
+  'defs',
+  'ellipse',
+  'filter',
+  'g',
+  'line',
+  'linearGradient',
+  'mask',
+  'path',
+  'pattern',
+  'polygon',
+  'polyline',
+  'radialGradient',
+  'rect',
+  'stop',
+  'symbol',
+  'text',
+  'use',
+];

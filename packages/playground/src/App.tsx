@@ -1,12 +1,14 @@
 import { createRouter, Link, Router, withRoute } from 'estrela/router';
 import ChildrenTest from './children-test/App';
-import GithubTest from './github/App';
+import GithubApp from './github/App';
 import TodoApp from './todo/App';
+import SvgTest from './svg-test/App';
 
 const routes = createRouter(
   withRoute('/', () => <Menu />),
+  withRoute('/github', () => <GithubApp />),
+  withRoute('/svg', () => <SvgTest />),
   withRoute('/test', () => <ChildrenTest />),
-  withRoute('/github', () => <GithubTest />),
   withRoute('/todo', () => <TodoApp />)
 );
 
@@ -17,6 +19,9 @@ function Menu() {
       <ul>
         <li>
           <Link to="/test">Test</Link>
+        </li>
+        <li>
+          <Link to="/svg">SVG Test</Link>
         </li>
         <li>
           <Link to="/github">Github</Link>
