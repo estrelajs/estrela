@@ -1,5 +1,5 @@
 /**
- * Alias subpath import (`dist/cjs/*`) to top-level path mapping (`rxjs/*`)
+ * Alias subpath import (`dist/cjs/*`) to top-level path mapping (`estrela/*`)
  * Previously this was done by placing cjs to top-level package when it's published -
  * Now build uses `dist` as explicit output subpath so we generate top-level alias here instead.
  */
