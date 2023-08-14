@@ -3,7 +3,9 @@ import { ComponentNode } from './component-node';
 import { Listener } from './event-emitter';
 import { TemplateNode } from './template-node';
 
-export type EstrelaComponent = () => TemplateNode;
+export interface EstrelaComponent extends Function {
+  (): TemplateNode;
+}
 
 export interface EstrelaNode {
   template: EstrelaComponent | HTMLTemplateElement;
@@ -31,10 +33,24 @@ export function h(
   return new TemplateNode(template, props);
 }
 
+/** Wheather the node is of the given template. */
+export function isComponentOf(
+  node: unknown,
+  component: EstrelaComponent
+): node is EstrelaNode {
+  return node instanceof ComponentNode && node.template === component;
+}
+
+/** Wheather the node is a template or component. */
 export function isEstrelaNode(node: unknown): node is EstrelaNode {
   return node instanceof ComponentNode || node instanceof TemplateNode;
 }
 
+/**
+ * Converts an HTML string to a template to be used in EstrelaNode.
+ * @param html HTML string to be converted to a template.
+ * @returns HTMLTemplateElement.
+ */
 export function template(html: string): HTMLTemplateElement {
   const template = document.createElement('template');
   template.innerHTML = html;
