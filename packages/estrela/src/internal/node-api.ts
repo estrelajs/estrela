@@ -1,15 +1,6 @@
 import { isFalsy, toCamelCase, toKebabCase } from '../utils';
 import { EstrelaNode, isEstrelaNode } from './template';
 
-export function addEventListener(
-  node: Node,
-  eventName: string,
-  handler: EventListener
-): () => void {
-  node.addEventListener(eventName, handler);
-  return () => node.removeEventListener(eventName, handler);
-}
-
 export function coerceNode(data: any): Node | EstrelaNode {
   if (isEstrelaNode(data) || data instanceof Node) {
     return data;

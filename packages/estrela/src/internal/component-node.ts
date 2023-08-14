@@ -1,6 +1,6 @@
 import { Signal, effect, isSignal, signal } from '../signal';
 import { isFunction } from '../utils';
-import { Emitter, Listener } from './emitter';
+import { EventEmitter, Listener } from './event-emitter';
 import { ProxyProps, createProxyProps } from './proxy-props';
 import { EstrelaComponent, EstrelaNode, EstrelaProps } from './template';
 import { NodeTrack, TemplateNode } from './template-node';
@@ -30,6 +30,23 @@ export class ComponentNode implements EstrelaNode {
     public readonly template: EstrelaComponent,
     public props: EstrelaProps
   ) {}
+
+  addEventListener(event: string, listener: Listener<unknown>): void {
+    const proxy: ProxyProps = Object.getPrototypeOf(this.proxyProps);
+    if (!proxy[event] || isSignal(proxy[event])) {
+      proxy[event] = new EventEmitter<unknown>();
+    }
+    const track = this.getNodeTrack(event);
+    const emitter = proxy[event] as EventEmitter<unknown>;
+    emitter.addListener(listener);
+    track.cleanup = () => emitter.dispose();
+  }
+
+  removeEventListener(event: string, listener: Listener<unknown>): void {
+    const proxy: ProxyProps = Object.getPrototypeOf(this.proxyProps);
+    const emitter = proxy[event] as EventEmitter<unknown>;
+    emitter?.removeListener?.(listener);
+  }
 
   addHook(hook: Hook, cb: () => void): void {
     this.hooks[hook]?.add(cb);
@@ -80,11 +97,7 @@ export class ComponentNode implements EstrelaNode {
       if (key.startsWith('on:')) {
         const event = key.slice(3);
         const listener = props[key] as Listener<unknown>;
-        if (!proxy[event] || isSignal(proxy[event])) {
-          proxy[event] = new Emitter<unknown>();
-        }
-        const emitter = proxy[event] as Emitter<unknown>;
-        emitter.setListener(listener);
+        this.addEventListener(event, listener);
       }
 
       // bind props
@@ -95,9 +108,9 @@ export class ComponentNode implements EstrelaNode {
       // computed props
       else {
         const prop = props[key];
-        const track = this.getNodeTrack(key);
         const signalProp = (proxy[key] ??=
           signal(undefined)) as Signal<unknown>;
+        const track = this.getNodeTrack(key);
         track.cleanup = effect(() => {
           signalProp.set(isFunction(prop) ? prop() : prop);
         });

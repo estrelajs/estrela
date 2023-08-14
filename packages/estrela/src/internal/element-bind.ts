@@ -1,5 +1,5 @@
 import { Signal, effect } from '../signal';
-import { addEventListener } from './node-api';
+import { addEventListener } from './event-emitter';
 import { NodeTrack } from './template-node';
 
 export function binNode(

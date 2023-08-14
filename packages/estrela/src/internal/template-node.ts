@@ -2,14 +2,9 @@ import { Signal, effect } from '../signal';
 import { coerceArray, isFunction, isNil } from '../utils';
 import { binNode, bindProp } from './element-bind';
 import { EstrelaNode, EstrelaProps } from './template';
-import {
-  addEventListener,
-  coerceNode,
-  insertChild,
-  removeChild,
-  setAttribute,
-} from './node-api';
+import { coerceNode, insertChild, removeChild, setAttribute } from './node-api';
 import { patchChildren } from './patch';
+import { Listener, addEventListener } from './event-emitter';
 
 type NodeChild = [child: unknown, before: number | null];
 type WithEffect<T = unknown> = T | (() => T);
@@ -50,6 +45,9 @@ export class TemplateNode implements EstrelaNode {
     public readonly template: HTMLTemplateElement,
     public props: EstrelaProps
   ) {}
+
+  addEventListener(event: string, listener: Listener<unknown>): void {}
+  removeEventListener(event: string, listener: Listener<unknown>): void {}
 
   mount(parent: Node, before: Node | null = null): Node[] {
     // when node is already mounted

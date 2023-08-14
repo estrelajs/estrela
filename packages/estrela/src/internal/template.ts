@@ -1,5 +1,6 @@
 import { isFunction } from '../utils';
 import { ComponentNode } from './component-node';
+import { Listener } from './event-emitter';
 import { TemplateNode } from './template-node';
 
 export type EstrelaComponent = () => TemplateNode;
@@ -11,8 +12,10 @@ export interface EstrelaNode {
   get firstChild(): Node | null;
   get isConnected(): boolean;
 
-  mount(parent: Node, before?: Node | null): Node[];
+  addEventListener(event: string, listener: Listener<unknown>): void;
+  removeEventListener(event: string, listener: Listener<unknown>): void;
   patchProps(props: EstrelaProps): void;
+  mount(parent: Node, before?: Node | null): Node[];
   unmount(): void;
 }
 
