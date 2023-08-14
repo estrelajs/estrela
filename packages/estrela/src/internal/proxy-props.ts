@@ -1,9 +1,12 @@
 import { Signal } from '../signal';
 import { isSignal } from '../signal/signal';
 import { identity } from '../utils';
-import { Emitter } from './emitter';
+import { EventEmitter } from './event-emitter';
 
-export type ProxyProps = Record<string, Emitter<unknown> | Signal<unknown>>;
+export type ProxyProps = Record<
+  string,
+  EventEmitter<unknown> | Signal<unknown>
+>;
 
 export function createProxyProps(): ProxyProps {
   return new Proxy({} as ProxyProps, {
@@ -11,7 +14,7 @@ export function createProxyProps(): ProxyProps {
     get(target, key: string) {
       const bindKey = `bind:${key}`;
       const prop = target[bindKey] ?? target[key];
-      if (prop instanceof Emitter) {
+      if (prop instanceof EventEmitter) {
         return prop.emitter;
       }
       if (isSignal(prop)) {
