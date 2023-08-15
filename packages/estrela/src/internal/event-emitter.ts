@@ -1,5 +1,5 @@
-import { Output } from '../jsx';
 import { getActiveEffectMetadata } from '../signal/effect';
+import { Output } from '../types';
 
 export type Listener<T> = (value: T) => void;
 

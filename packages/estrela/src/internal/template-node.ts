@@ -4,7 +4,6 @@ import { binNode, bindProp } from './element-bind';
 import { addEventListener } from './event-emitter';
 import { coerceNode, insertChild, removeChild, setAttribute } from './node-api';
 import { patchChildren } from './patch';
-import { EstrelaNode, EstrelaProps } from './template';
 
 type NodeChild = [child: unknown, before: number | null];
 type WithEffect<T = unknown> = T | (() => T);
@@ -22,10 +21,10 @@ interface NodeData {
 export interface NodeTrack {
   cleanup: () => void;
   isRoot?: boolean;
-  lastNodes?: Map<string, Node | EstrelaNode>;
+  lastNodes?: Map<string, Node | JSX.Element>;
 }
 
-export class TemplateNode implements EstrelaNode {
+export class TemplateNode implements JSX.Element {
   private mounted = false;
   private nodes: Node[] = [];
   private styleId?: string;
@@ -42,7 +41,7 @@ export class TemplateNode implements EstrelaNode {
 
   constructor(
     public readonly template: HTMLTemplateElement,
-    private props: EstrelaProps
+    private props: Record<string, unknown>
   ) {}
 
   addEventListener(): void {}
@@ -105,7 +104,7 @@ export class TemplateNode implements EstrelaNode {
     this.mounted = false;
   }
 
-  patchProps(props: EstrelaProps): void {
+  patchProps(props: Record<string, unknown>): void {
     for (let key in props) {
       const index = Number(key);
       const node = this.treeMap.get(index);

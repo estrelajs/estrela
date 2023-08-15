@@ -1,11 +1,12 @@
-import { EstrelaNode } from './internal';
-import { Signal } from './signal';
+import { Signal } from '../signal';
+import { Output } from './component';
+import { EstrelaNode } from './estrela-node';
 
-/** Output function. */
-export interface Output<T> {
-  (value: T): void;
-  type: 'output';
-}
+type HTMLEventHandler<T, E extends Event> = (value: E & { target: T }) => void;
+
+type OutputOf<P> = {
+  [K in keyof P]: P[K] extends Output<any> | undefined ? K : never;
+}[keyof P];
 
 type PropsOf<P> = {
   [K in keyof Omit<P, OutputOf<P>>]: P[K];
@@ -20,12 +21,6 @@ type PropsOf<P> = {
 } & {
   [K in `bind:${string}`]: any;
 };
-
-type OutputOf<P> = {
-  [K in keyof P]: P[K] extends Output<any> | undefined ? K : never;
-}[keyof P];
-
-type HTMLEventHandler<T, E extends Event> = (value: E & { target: T }) => void;
 
 /**
  * Based on JSX types for Surplus, Inferno and dom-expressions, adapted for Estrela.

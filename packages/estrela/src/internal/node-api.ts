@@ -1,8 +1,8 @@
 import { isFalsy, toCamelCase, toKebabCase } from '../utils';
-import { EstrelaNode, isEstrelaNode } from './template';
+import { isJsxElement } from './template';
 
-export function coerceNode(data: any): Node | EstrelaNode {
-  if (isEstrelaNode(data) || data instanceof Node) {
+export function coerceNode(data: any): Node | JSX.Element {
+  if (isJsxElement(data) || data instanceof Node) {
     return data;
   }
   const text = isFalsy(data) ? '' : String(data);
@@ -11,11 +11,11 @@ export function coerceNode(data: any): Node | EstrelaNode {
 
 export function insertChild(
   parent: Node,
-  child: Node | EstrelaNode,
-  before: Node | EstrelaNode | null = null
+  child: Node | JSX.Element,
+  before: Node | JSX.Element | null = null
 ): void {
-  const beforeNode = isEstrelaNode(before) ? before.firstChild : before;
-  if (isEstrelaNode(child)) {
+  const beforeNode = isJsxElement(before) ? before.firstChild : before;
+  if (isJsxElement(child)) {
     child.mount(parent, beforeNode);
   } else if (beforeNode) {
     parent.insertBefore(child, beforeNode);
@@ -24,8 +24,8 @@ export function insertChild(
   }
 }
 
-export function removeChild(child: Node | EstrelaNode): void {
-  if (isEstrelaNode(child)) {
+export function removeChild(child: Node | JSX.Element): void {
+  if (isJsxElement(child)) {
     child.unmount();
   } else {
     const parent = child.parentNode;
@@ -37,8 +37,8 @@ export function removeChild(child: Node | EstrelaNode): void {
 
 export function replaceChild(
   parent: Node,
-  node: Node | EstrelaNode,
-  child: Node | EstrelaNode
+  node: Node | JSX.Element,
+  child: Node | JSX.Element
 ): void {
   insertChild(parent, node, child);
   removeChild(child);
