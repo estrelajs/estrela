@@ -9,14 +9,14 @@ export interface EstrelaComponent extends Function {
 
 export interface EstrelaNode {
   template: EstrelaComponent | HTMLTemplateElement;
-  props: EstrelaProps;
 
   get firstChild(): Node | null;
   get isConnected(): boolean;
 
   addEventListener(event: string, listener: Listener<unknown>): void;
   removeEventListener(event: string, listener: Listener<unknown>): void;
-  patchProps(props: EstrelaProps): void;
+  inheritNode(node: EstrelaNode): void;
+  // patchProps(props: EstrelaProps): void;
   mount(parent: Node, before?: Node | null): Node[];
   unmount(): void;
 }

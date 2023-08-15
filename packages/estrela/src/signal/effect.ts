@@ -1,4 +1,4 @@
-import { onDestroy } from '../hooks';
+import { onDestroy, onInit } from '../hooks';
 import { ComponentNode } from '../internal/component-node';
 import { ReadonlySignal, Effect, Cleanup, EffectOptions } from './types';
 
@@ -53,7 +53,12 @@ export function triggerEffectsForSignal(signal: ReadonlySignal<unknown>) {
  */
 export function effect(fn: Effect, options?: EffectOptions): () => void {
   effectMetadataMap.set(fn, { iteration: 0, options: options ?? {} });
-  runEffect(fn);
+
+  if (ComponentNode.ref) {
+    onInit(() => runEffect(fn));
+  } else {
+    runEffect(fn);
+  }
 
   const cleanup = () => {
     effectMetadataMap.get(fn)!.cleanup?.();
