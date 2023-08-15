@@ -1,10 +1,10 @@
 import { Signal, effect } from '../signal';
 import { coerceArray, isFunction, isNil } from '../utils';
 import { binNode, bindProp } from './element-bind';
-import { EstrelaNode, EstrelaProps } from './template';
+import { addEventListener } from './event-emitter';
 import { coerceNode, insertChild, removeChild, setAttribute } from './node-api';
 import { patchChildren } from './patch';
-import { Listener, addEventListener } from './event-emitter';
+import { EstrelaNode, EstrelaProps } from './template';
 
 type NodeChild = [child: unknown, before: number | null];
 type WithEffect<T = unknown> = T | (() => T);
@@ -29,9 +29,8 @@ export class TemplateNode implements EstrelaNode {
   private mounted = false;
   private nodes: Node[] = [];
   private styleId?: string;
-
-  private readonly trackMap = new Map<string, NodeTrack>();
-  private readonly treeMap = new Map<number, Node>();
+  private trackMap = new Map<string, NodeTrack>();
+  private treeMap = new Map<number, Node>();
 
   get firstChild(): Node | null {
     return this.nodes[0] ?? null;
@@ -43,11 +42,24 @@ export class TemplateNode implements EstrelaNode {
 
   constructor(
     public readonly template: HTMLTemplateElement,
-    public props: EstrelaProps
+    private props: EstrelaProps
   ) {}
 
-  addEventListener(event: string, listener: Listener<unknown>): void {}
-  removeEventListener(event: string, listener: Listener<unknown>): void {}
+  addEventListener(): void {}
+  removeEventListener(): void {}
+
+  inheritNode(node: TemplateNode): void {
+    this.mounted = node.mounted;
+    this.nodes = node.nodes;
+    this.styleId = node.styleId;
+    this.trackMap = node.trackMap;
+    this.treeMap = node.treeMap;
+
+    // patch props
+    const props = this.props;
+    this.props = node.props;
+    this.patchProps(props);
+  }
 
   mount(parent: Node, before: Node | null = null): Node[] {
     // when node is already mounted
@@ -94,7 +106,6 @@ export class TemplateNode implements EstrelaNode {
   }
 
   patchProps(props: EstrelaProps): void {
-    this.props = props;
     for (let key in props) {
       const index = Number(key);
       const node = this.treeMap.get(index);
@@ -103,6 +114,7 @@ export class TemplateNode implements EstrelaNode {
         this.patchNode(key, node, nodeData, index === 0);
       }
     }
+    this.props = props;
   }
 
   private getNodeTrack(

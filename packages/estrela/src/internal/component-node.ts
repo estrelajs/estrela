@@ -9,14 +9,14 @@ export type Hook = 'destroy' | 'init';
 
 export class ComponentNode implements EstrelaNode {
   static ref: ComponentNode | null = null;
-  private proxyProps = createProxyProps();
-  private root: TemplateNode | null = null;
 
-  private readonly trackMap = new Map<string, NodeTrack>();
-  private readonly hooks = {
+  private hooks = {
     destroy: new Set<() => void>(),
     init: new Set<() => void>(),
   };
+  private proxyProps = createProxyProps();
+  private root: TemplateNode | null = null;
+  private trackMap = new Map<string, NodeTrack>();
 
   get firstChild(): Node | null {
     return this.root?.firstChild ?? null;
@@ -28,7 +28,7 @@ export class ComponentNode implements EstrelaNode {
 
   constructor(
     public readonly template: EstrelaComponent,
-    public props: EstrelaProps
+    private props: EstrelaProps
   ) {}
 
   addEventListener(event: string, listener: Listener<unknown>): void {
@@ -36,7 +36,7 @@ export class ComponentNode implements EstrelaNode {
     if (!proxy[event] || isSignal(proxy[event])) {
       proxy[event] = new EventEmitter<unknown>();
     }
-    const track = this.getNodeTrack(event);
+    const track = this.getNodeTrack(event, true);
     const emitter = proxy[event] as EventEmitter<unknown>;
     emitter.addListener(listener);
     track.cleanup = () => emitter.dispose();
@@ -50,6 +50,18 @@ export class ComponentNode implements EstrelaNode {
 
   addHook(hook: Hook, cb: () => void): void {
     this.hooks[hook]?.add(cb);
+  }
+
+  inheritNode(node: ComponentNode): void {
+    this.hooks = node.hooks;
+    this.proxyProps = node.proxyProps;
+    this.root = node.root;
+    this.trackMap = node.trackMap;
+
+    // patch props
+    const props = this.props;
+    this.props = node.props;
+    this.patchProps(props);
   }
 
   mount(parent: Node, before: Node | null = null): Node[] {
@@ -66,11 +78,11 @@ export class ComponentNode implements EstrelaNode {
     this.root = this.template.call(this.proxyProps);
     ComponentNode.ref = null;
 
-    if (this.template.hasOwnProperty('styleId')) {
+    if (this.root && this.template.hasOwnProperty('styleId')) {
       this.root['styleId'] = (this.template as any).styleId;
     }
 
-    const nodes = this.root.mount(parent, before);
+    const nodes = this.root?.mount(parent, before) ?? [];
     this.hooks.init.forEach(handler => handler());
     return nodes;
   }
@@ -91,12 +103,12 @@ export class ComponentNode implements EstrelaNode {
 
   patchProps(props: EstrelaProps): void {
     const proxy: ProxyProps = Object.getPrototypeOf(this.proxyProps);
-    this.props = props;
 
     for (let key in props) {
       if (key.startsWith('on:')) {
         const event = key.slice(3);
         const listener = props[key] as Listener<unknown>;
+        this.removeEventListener(event, this.props[key] as Listener<unknown>);
         this.addEventListener(event, listener);
       }
 
@@ -116,15 +128,22 @@ export class ComponentNode implements EstrelaNode {
         });
       }
     }
+
+    this.props = props;
   }
 
-  private getNodeTrack(trackKey: string): NodeTrack {
+  private getNodeTrack(
+    trackKey: string,
+    suppressCleanupCall?: boolean
+  ): NodeTrack {
     let track = this.trackMap.get(trackKey);
     if (!track) {
       track = { cleanup: () => {} };
       this.trackMap.set(trackKey, track);
     }
-    track.cleanup();
+    if (!suppressCleanupCall) {
+      track.cleanup();
+    }
     return track;
   }
 }

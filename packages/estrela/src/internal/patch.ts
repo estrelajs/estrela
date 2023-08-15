@@ -96,8 +96,8 @@ function patch(parent: Node, node: AnyNode, next: AnyNode): AnyNode {
   }
   if (isEstrelaNode(node) && isEstrelaNode(next)) {
     if (node.template === next.template) {
-      node.patchProps(next.props);
-      return node;
+      next.inheritNode(node);
+      return next;
     }
   }
   if (node instanceof Text && next instanceof Text) {
