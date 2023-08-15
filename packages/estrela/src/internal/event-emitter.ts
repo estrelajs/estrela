@@ -43,7 +43,7 @@ export class EventEmitter<T> {
       metadata.options.allowEmitsOnFirstRun ||
       metadata.iteration > 0
     ) {
-      this.listeners.forEach(listener => listener(value));
+      Array.from(this.listeners).forEach(listener => listener(value));
     }
   }
 
