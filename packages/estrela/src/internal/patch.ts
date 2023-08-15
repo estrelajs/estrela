@@ -1,7 +1,7 @@
-import { EstrelaNode, isEstrelaNode } from './template';
+import { isJsxElement } from './template';
 import { insertChild, removeChild, replaceChild } from './node-api';
 
-type AnyNode = Node | EstrelaNode;
+type AnyNode = Node | JSX.Element;
 
 export function patchChildren(
   parent: Node,
@@ -21,7 +21,7 @@ export function patchChildren(
     } else {
       const range = document.createRange();
       const child = children.next().value;
-      const start = isEstrelaNode(child) ? child.firstChild : child;
+      const start = isJsxElement(child) ? child.firstChild : child;
       range.setStartBefore(start);
       if (before) {
         range.setEndBefore(before);
@@ -31,7 +31,7 @@ export function patchChildren(
       range.deleteContents();
     }
     childrenMap.forEach(node => {
-      if (isEstrelaNode(node)) {
+      if (isJsxElement(node)) {
         node.unmount();
       }
     });
@@ -94,7 +94,7 @@ function patch(parent: Node, node: AnyNode, next: AnyNode): AnyNode {
   if (node === next) {
     return node;
   }
-  if (isEstrelaNode(node) && isEstrelaNode(next)) {
+  if (isJsxElement(node) && isJsxElement(next)) {
     if (node.template === next.template) {
       next.inheritNode(node);
       return next;

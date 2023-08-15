@@ -1,13 +1,13 @@
 import { Signal, effect, isSignal, signal } from '../signal';
+import { EstrelaComponent } from '../types';
 import { isFunction } from '../utils';
 import { EventEmitter, Listener } from './event-emitter';
 import { ProxyProps, createProxyProps } from './proxy-props';
-import { EstrelaComponent, EstrelaNode, EstrelaProps } from './template';
 import { NodeTrack, TemplateNode } from './template-node';
 
 export type Hook = 'destroy' | 'init';
 
-export class ComponentNode implements EstrelaNode {
+export class ComponentNode implements JSX.Element {
   static ref: ComponentNode | null = null;
 
   private hooks = {
@@ -28,7 +28,7 @@ export class ComponentNode implements EstrelaNode {
 
   constructor(
     public readonly template: EstrelaComponent,
-    private props: EstrelaProps
+    private props: Record<string, unknown>
   ) {}
 
   addEventListener(event: string, listener: Listener<unknown>): void {
@@ -101,7 +101,7 @@ export class ComponentNode implements EstrelaNode {
     this.proxyProps = createProxyProps();
   }
 
-  patchProps(props: EstrelaProps): void {
+  patchProps(props: Record<string, unknown>): void {
     const proxy: ProxyProps = Object.getPrototypeOf(this.proxyProps);
 
     for (let key in props) {
