@@ -1,4 +1,5 @@
-import { Signal, effect } from '../signal';
+import { effect } from '../signal';
+import { Signal } from '../types';
 import { addEventListener } from './event-emitter';
 import { NodeTrack } from './template-node';
 

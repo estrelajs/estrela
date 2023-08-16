@@ -1,6 +1,6 @@
 import { onDestroy, onInit } from '../hooks';
 import { ComponentNode } from '../internal/component-node';
-import { ReadonlySignal, Effect, Cleanup, EffectOptions } from './types';
+import { ReadonlySignal, Effect, Cleanup, EffectOptions } from '../types';
 
 const signalToEffectsMap = new Map<ReadonlySignal<unknown>, Set<Effect>>();
 const effectMetadataMap = new WeakMap<

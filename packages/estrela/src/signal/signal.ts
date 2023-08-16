@@ -1,5 +1,5 @@
 import { trackSignal, triggerEffectsForSignal } from './effect';
-import { EqualityFn, ReadonlySignal, Signal } from './types';
+import { EqualityFn, ReadonlySignal, Signal } from '../types';
 import { FunctionExt } from './utils';
 
 interface _Signal<T> {

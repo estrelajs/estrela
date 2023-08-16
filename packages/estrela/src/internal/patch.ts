@@ -1,5 +1,5 @@
-import { isJsxElement } from './template';
 import { insertChild, removeChild, replaceChild } from './node-api';
+import { isJsxElement } from './template';
 
 type AnyNode = Node | JSX.Element;
 

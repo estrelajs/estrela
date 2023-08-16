@@ -1,5 +1,5 @@
-import { Signal } from '../signal';
-import { isSignal } from '../signal/signal';
+import { isSignal } from '../signal';
+import { Signal } from '../types';
 import { identity } from '../utils';
 import { EventEmitter } from './event-emitter';
 
