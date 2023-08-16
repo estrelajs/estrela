@@ -2,7 +2,7 @@
   "name": "vite-plugin-estrela",
   "description": "A vite plugin to pre-process estrela jsx/tsx files",
   "author": "Eduardo Rosostolato",
-  "version": "0.11.2",
+  "version": "0.11.3",
   "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -21,7 +21,7 @@
   ],
   "dependencies": {
     "@babel/core": "^7.19.1",
-    "babel-plugin-estrela": "^0.11.2"
+    "babel-plugin-estrela": "^0.11.3"
   },
   "devDependencies": {
     "@types/node": "^18.7.19",
