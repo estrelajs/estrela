@@ -1,5 +1,5 @@
 import { effect, trackSignal, triggerEffectsForSignal } from './effect';
-import { EqualityFn, ReadonlySignal } from './types';
+import { EqualityFn, ReadonlySignal } from '../types';
 
 /**
  * Creates a computed signal that derives its value from other signals.

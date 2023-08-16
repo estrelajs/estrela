@@ -1,4 +1,5 @@
-import { Signal, effect } from '../signal';
+import { effect } from '../signal';
+import { Signal } from '../types';
 import { coerceArray, isFunction, isNil } from '../utils';
 import { binNode, bindProp } from './element-bind';
 import { addEventListener } from './event-emitter';

@@ -1,4 +1,5 @@
-import { ReadonlySignal, computed, signal } from '../signal';
+import { signal } from '../signal';
+import { ReadonlySignal } from '../types';
 import { SignalStoreFeature } from './feature';
 
 type UnionToIntersection<U> = (
@@ -36,7 +37,7 @@ export function signalStore<
 
   update(() => initialState);
   for (const key in initialState) {
-    store[key] = computed(() => storeSignal()[key]);
+    store[key] = () => storeSignal()[key];
   }
 
   return [store, update];
