@@ -5,7 +5,11 @@ import { Signal } from './signals';
 type HTMLEventHandler<T, E extends Event> = (value: E & { target: T }) => void;
 
 type OutputOf<P> = {
-  [K in keyof P]: P[K] extends Output<any> | undefined ? K : never;
+  [K in keyof P]: 0 extends 1 & P[K] // isAny essencialy
+    ? never
+    : P[K] extends Output<any> | undefined
+    ? K
+    : never;
 }[keyof P];
 
 type PropsOf<P> = {
