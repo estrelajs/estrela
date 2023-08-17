@@ -30,7 +30,8 @@ export class ComponentNode implements JSX.Element {
 
   constructor(
     public readonly template: EstrelaComponent,
-    private props: Record<string, unknown>
+    private props: Record<string, unknown>,
+    public id?: string
   ) {}
 
   addEventListener(event: string, listener: Listener<unknown>): void {

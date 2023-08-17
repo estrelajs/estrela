@@ -5,12 +5,13 @@ import { TemplateNode } from './template-node';
 
 export function h(
   template: EstrelaComponent | HTMLTemplateElement,
-  props: Record<string, unknown>
+  props: Record<string, unknown>,
+  key?: string
 ): JSX.Element {
   if (isFunction(template)) {
-    return new ComponentNode(template, props);
+    return new ComponentNode(template, props, key);
   }
-  return new TemplateNode(template, props);
+  return new TemplateNode(template, props, key);
 }
 
 /** Wheather the node is of the given template. */

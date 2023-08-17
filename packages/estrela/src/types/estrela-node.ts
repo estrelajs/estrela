@@ -2,6 +2,7 @@ import { Listener } from '../internal';
 import { EstrelaComponent } from './component';
 
 export interface EstrelaNode {
+  id?: string;
   template: EstrelaComponent | HTMLTemplateElement;
 
   get firstChild(): Node | null;

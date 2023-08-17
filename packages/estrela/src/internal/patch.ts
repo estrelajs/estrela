@@ -121,7 +121,7 @@ function mapKeys(children: AnyNode[]): Map<string, AnyNode> {
 }
 
 function getKey(node: AnyNode | undefined, index: number): string {
-  const key = (node as any)?.id;
-  let result = key === '' ? undefined : key;
+  const id = (node as Element)?.id;
+  let result = id === '' ? undefined : id;
   return result ?? `_$${index}$`;
 }
