@@ -51,7 +51,7 @@ declare global {
     type Effect = () => Children;
     type LibraryManagedAttributes<C, P> = ThisParameterType<C> extends Object
       ? PropsOf<ThisParameterType<C>>
-      : P;
+      : PropsOf<P>;
     interface ElementChildrenAttribute {
       children: any;
     }

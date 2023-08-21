@@ -6,6 +6,8 @@ export interface Output<T> {
   type: 'output';
 }
 
-export interface EstrelaComponent extends Function {
+export interface EstrelaComponent<T extends {} = {}> extends Function {
   (): TemplateNode;
+  (this: T): TemplateNode;
+  (props: T): TemplateNode;
 }

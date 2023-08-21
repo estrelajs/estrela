@@ -89,7 +89,7 @@ export class ComponentNode implements JSX.Element {
     this.patchProps(this.props);
 
     ComponentNode.ref = this;
-    this.root = this.template.call(this.proxyProps);
+    this.root = this.template.call(this.proxyProps, this.proxyProps);
     ComponentNode.ref = null;
 
     if (this.root && this.template.hasOwnProperty('styleId')) {
