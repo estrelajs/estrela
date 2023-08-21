@@ -6,7 +6,7 @@
 const fs = require('fs-extra');
 const path = require('path');
 
-const aliasRoot = ['internal', 'router', 'store'];
+const aliasRoot = ['router', 'store', 'template'];
 
 aliasRoot
   .map(alias => path.resolve(__dirname, `../${alias}`))

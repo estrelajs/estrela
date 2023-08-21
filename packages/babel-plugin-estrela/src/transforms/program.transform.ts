@@ -24,7 +24,7 @@ export function transformProgram() {
         imports.h = state.h.name;
       }
       if (Object.keys(imports).length > 0) {
-        path.node.body.unshift(createImport(imports, 'estrela/internal'));
+        path.node.body.unshift(createImport(imports, 'estrela/template'));
       }
     },
   };

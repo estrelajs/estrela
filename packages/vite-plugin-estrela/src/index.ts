@@ -20,7 +20,7 @@ export default function (options?: Options): Plugin {
           jsx: 'preserve',
         },
         resolve: {
-          dedupe: ['estrela/internal'],
+          dedupe: ['estrela/template'],
         },
       };
     },

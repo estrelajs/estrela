@@ -8,9 +8,9 @@ const packageJson = require('../package.json');
 export default defineConfig({
   input: {
     index: 'src/index.ts',
-    internal: 'src/internal/index.ts',
     router: 'src/router/index.ts',
     store: 'src/store/index.ts',
+    template: 'src/template/index.ts',
   },
   output: [
     {

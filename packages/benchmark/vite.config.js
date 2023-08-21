@@ -7,12 +7,12 @@ export default defineConfig({
   resolve: {
     alias: [
       {
-        find: 'estrela/internal',
-        replacement: path.resolve(__dirname, '../estrela/src/internal'),
-      },
-      {
         find: 'estrela/router',
         replacement: path.resolve(__dirname, '../estrela/src/router'),
+      },
+      {
+        find: 'estrela/template',
+        replacement: path.resolve(__dirname, '../estrela/src/template'),
       },
       {
         find: 'estrela',

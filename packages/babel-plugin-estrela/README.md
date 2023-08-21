@@ -25,7 +25,7 @@ const App = () => {
 It will transpile the code above to:
 
 ```js
-import { template as _template, h as _h } from "estrela/internal";
+import { template as _template, h as _h } from "estrela/template";
 import { onDestroy, signal } from "estrela";
 
 const _tmpl = _template("<div>Count is </div>");
