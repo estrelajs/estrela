@@ -10,6 +10,11 @@ export interface EstrelaFragment extends DocumentFragment {
   instance?: EstrelaElement;
 }
 
+export interface HookContext {
+  init: (() => void)[];
+  destroy: (() => void)[];
+}
+
 export interface NodeData {
   [key: `bind:${string}`]: Signal<unknown>;
   [key: `on:${string}`]: (event: Event) => void;

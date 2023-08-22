@@ -1,6 +1,6 @@
 import { effect } from '../signal';
 import { Signal } from '../types';
-import { addEventListener } from './event-emitter';
+import { addEventListener } from '../utils';
 import { NodeTrack } from './types';
 
 export function bindNode(

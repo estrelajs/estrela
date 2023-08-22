@@ -1,5 +1,4 @@
 import { EstrelaElement } from './estrela-element';
-import { EstrelaTemplate } from './estrela-template';
 import { insertChild, removeChild, replaceChild } from './node-api';
 
 export function patchChildren(

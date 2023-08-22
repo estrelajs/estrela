@@ -1,3 +1,12 @@
+export function addEventListener(
+  node: EventTarget,
+  eventName: string,
+  handler: any
+): () => void {
+  node.addEventListener(eventName, handler);
+  return () => node.removeEventListener(eventName, handler);
+}
+
 /** Automatic event value binding. */
 export function bindHandler<T, R>(event: Event & { target: T }): R {
   return (event.target as any).value;

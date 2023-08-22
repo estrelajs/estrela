@@ -1,5 +1,5 @@
 import { onDestroy, onInit } from '../hooks';
-import { ComponentNode } from '../template/component-node';
+import { EstrelaTemplate } from '../template';
 import { ReadonlySignal, Effect, Cleanup, EffectOptions } from '../types';
 
 const signalToEffectsMap = new Map<ReadonlySignal<unknown>, Set<Effect>>();
@@ -54,7 +54,7 @@ export function triggerEffectsForSignal(signal: ReadonlySignal<unknown>) {
 export function effect(fn: Effect, options?: EffectOptions): () => void {
   effectMetadataMap.set(fn, { iteration: 0, options: options ?? {} });
 
-  if (ComponentNode.ref) {
+  if (EstrelaTemplate.hookContext) {
     onInit(() => runEffect(fn));
   } else {
     runEffect(fn);
@@ -72,7 +72,7 @@ export function effect(fn: Effect, options?: EffectOptions): () => void {
     }
   };
 
-  if (ComponentNode.ref) {
+  if (EstrelaTemplate.hookContext) {
     onDestroy(cleanup);
   }
 

@@ -1,10 +1,12 @@
+import { signalStore, withState } from '../store';
 import { EstrelaComponent } from '../types';
+import { isFunction } from '../utils';
 import { EstrelaElement } from './estrela-element';
 import { insertChild } from './node-api';
-import { createReactiveProps } from './reactive-props';
+import { HookContext } from './types';
 
 export class EstrelaTemplate {
-  static ref: EstrelaTemplate | null = null;
+  static hookContext: HookContext | null = null;
 
   constructor(
     public readonly template: EstrelaComponent | HTMLTemplateElement,
@@ -24,18 +26,30 @@ export class EstrelaTemplate {
     parent: Node,
     before: Node | null = null
   ): EstrelaElement {
-    const reactiveProps = createReactiveProps();
-    reactiveProps(this.props);
+    const hookContext: HookContext = { init: [], destroy: [] };
+    const [props, setProps] = signalStore(withState(this.props));
+    const proxyProps = new Proxy(props, {
+      get(target, key: string) {
+        const eventKey = `on:${key}`;
+        if (target[eventKey]) {
+          return target[eventKey]();
+        }
+        const prop = target[key]();
+        return isFunction(prop) ? prop(target) : prop;
+      },
+    });
 
-    EstrelaTemplate.ref = this;
-    const template: EstrelaTemplate = component.call(
-      reactiveProps,
-      reactiveProps
-    );
-    EstrelaTemplate.ref = null;
+    EstrelaTemplate.hookContext = hookContext;
+    const template: EstrelaTemplate = component.call(proxyProps, proxyProps);
+    EstrelaTemplate.hookContext = null;
 
     const instance = template.mount(parent, before);
-    instance.reactiveProps = reactiveProps;
+    hookContext.init.forEach(cb => cb());
+    instance.setProps = setProps;
+    instance.track.set('_destroy$', {
+      cleanup: () => hookContext.destroy.forEach(cb => cb()),
+    });
+
     return instance;
   }
 

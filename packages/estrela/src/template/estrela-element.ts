@@ -1,16 +1,14 @@
 import { effect } from '../signal';
-import { coerceArray, isFunction, isNil } from '../utils';
+import { addEventListener, coerceArray, isFunction, isNil } from '../utils';
 import { bindNode, bindProp } from './binding';
 import { EstrelaTemplate } from './estrela-template';
-import { addEventListener } from './event-emitter';
 import { coerceNode, insertChild, removeChild, setAttribute } from './node-api';
 import { patchChildren } from './patch';
-import { ReactiveProps } from './reactive-props';
 import { NodeData, NodeTrack } from './types';
 
 export class EstrelaElement {
-  reactiveProps?: ReactiveProps;
-  private track = new Map<string, NodeTrack>();
+  setProps?: (fn: (value: {}) => {}) => void;
+  track = new Map<string, NodeTrack>();
 
   get firstChild(): Node | null {
     return this.nodes[0] ?? null;
@@ -23,8 +21,8 @@ export class EstrelaElement {
   ) {}
 
   patchProps(props: Record<string, unknown>): void {
-    if (this.reactiveProps) {
-      this.reactiveProps(props);
+    if (this.setProps) {
+      this.setProps(() => props);
       return;
     }
 
