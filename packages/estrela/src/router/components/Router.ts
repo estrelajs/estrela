@@ -1,4 +1,4 @@
-import { h, template } from '../../internal';
+import { h, template } from '../../template';
 import { Routes } from '../route';
 import { url } from '../router.store';
 

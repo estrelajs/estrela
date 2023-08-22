@@ -1,4 +1,4 @@
-import { h, template } from '../../internal';
+import { h, template } from '../../template';
 import { navigateTo } from '../router.store';
 
 export interface LinkProps {

@@ -1,15 +1,14 @@
+import { EstrelaElement } from './estrela-element';
+import { EstrelaTemplate } from './estrela-template';
 import { insertChild, removeChild, replaceChild } from './node-api';
-import { isJsxElement } from './template';
-
-type AnyNode = Node | JSX.Element;
 
 export function patchChildren(
   parent: Node,
-  childrenMap: Map<string, AnyNode>,
-  nextChildren: AnyNode[],
+  childrenMap: Map<string, Node>,
+  nextChildren: Node[],
   before: Node | null
-): Map<string, AnyNode> {
-  const result = new Map<string, AnyNode>();
+): Map<string, Node> {
+  const result = new Map<string, Node>();
   const children = childrenMap.values();
 
   if (childrenMap.size > 0 && nextChildren.length === 0) {
@@ -21,7 +20,7 @@ export function patchChildren(
     } else {
       const range = document.createRange();
       const child = children.next().value;
-      const start = isJsxElement(child) ? child.firstChild : child;
+      const start = child instanceof EstrelaElement ? child.firstChild : child;
       range.setStartBefore(start);
       if (before) {
         range.setEndBefore(before);
@@ -31,14 +30,14 @@ export function patchChildren(
       range.deleteContents();
     }
     childrenMap.forEach(node => {
-      if (isJsxElement(node)) {
+      if (node instanceof EstrelaElement) {
         node.unmount();
       }
     });
     return result;
   }
 
-  const replaces: [Comment, AnyNode][] = [];
+  const replaces: [Comment, Node][] = [];
   const nextChildrenMap = mapKeys(nextChildren);
 
   for (let i = 0; i < nextChildren.length; i++) {
@@ -57,7 +56,7 @@ export function patchChildren(
     const origChild = childrenMap.get(key);
 
     if (origChild) {
-      child = patch(parent, origChild, child);
+      child = replaceChild(parent, child, origChild);
     }
 
     if (currChild) {
@@ -68,10 +67,10 @@ export function patchChildren(
         insertChild(parent, placeholder, currChild);
         replaces.push([placeholder, child]);
       } else {
-        insertChild(parent, child, before);
+        child = insertChild(parent, child, before) as Node;
       }
     } else {
-      insertChild(parent, child, before);
+      child = insertChild(parent, child, before) as Node;
     }
 
     result.set(key, child);
@@ -90,28 +89,8 @@ export function patchChildren(
   return result;
 }
 
-function patch(parent: Node, node: AnyNode, next: AnyNode): AnyNode {
-  if (node === next) {
-    return node;
-  }
-  if (isJsxElement(node) && isJsxElement(next)) {
-    if (node.template === next.template) {
-      next.inheritNode(node);
-      return next;
-    }
-  }
-  if (node instanceof Text && next instanceof Text) {
-    if (node.textContent !== next.textContent) {
-      node.textContent = next.textContent;
-    }
-    return node;
-  }
-  replaceChild(parent, next, node);
-  return next;
-}
-
-function mapKeys(children: AnyNode[]): Map<string, AnyNode> {
-  const result = new Map<string, AnyNode>();
+function mapKeys(children: Node[]): Map<string, Node> {
+  const result = new Map<string, Node>();
   for (let i = 0; i < children.length; i++) {
     const child = children[i];
     const key = getKey(child, i);
@@ -120,7 +99,7 @@ function mapKeys(children: AnyNode[]): Map<string, AnyNode> {
   return result;
 }
 
-function getKey(node: AnyNode | undefined, index: number): string {
+function getKey(node: Node | undefined, index: number): string {
   const id = (node as Element)?.id;
   let result = id === '' ? undefined : id;
   return result ?? `_$${index}$`;

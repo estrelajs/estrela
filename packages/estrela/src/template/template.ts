@@ -1,30 +1,20 @@
 import { EstrelaComponent } from '../types';
-import { isFunction } from '../utils';
-import { ComponentNode } from './component-node';
-import { TemplateNode } from './template-node';
+import { EstrelaTemplate } from './estrela-template';
 
 export function h(
   template: EstrelaComponent | HTMLTemplateElement,
   props: Record<string, unknown>,
   key?: string
-): JSX.Element {
-  if (isFunction(template)) {
-    return new ComponentNode(template, props, key);
-  }
-  return new TemplateNode(template, props, key);
+): EstrelaTemplate {
+  return new EstrelaTemplate(template, props, key);
 }
 
 /** Wheather the node is of the given template. */
 export function isComponentOf(
   node: unknown,
   component: EstrelaComponent
-): node is JSX.Element {
-  return node instanceof ComponentNode && node.template === component;
-}
-
-/** Wheather the node is a template or component. */
-export function isJsxElement(node: unknown): node is JSX.Element {
-  return node instanceof ComponentNode || node instanceof TemplateNode;
+): node is EstrelaTemplate {
+  return node instanceof EstrelaTemplate && node.template === component;
 }
 
 /**

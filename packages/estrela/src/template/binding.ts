@@ -1,9 +1,9 @@
 import { effect } from '../signal';
 import { Signal } from '../types';
 import { addEventListener } from './event-emitter';
-import { NodeTrack } from './template-node';
+import { NodeTrack } from './types';
 
-export function binNode(
+export function bindNode(
   node: Node,
   signal: Signal<unknown>,
   track?: NodeTrack

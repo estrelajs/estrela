@@ -1,4 +1,4 @@
-import { TemplateNode } from '../internal/template-node';
+import { EstrelaTemplate } from '../template';
 
 /** Output function prop. */
 export interface Output<T> {
@@ -7,7 +7,7 @@ export interface Output<T> {
 }
 
 export interface EstrelaComponent<T extends {} = {}> extends Function {
-  (): TemplateNode;
-  (this: T): TemplateNode;
-  (props: T): TemplateNode;
+  (): EstrelaTemplate;
+  (this: T): EstrelaTemplate;
+  (props: T): EstrelaTemplate;
 }

@@ -1,13 +1,14 @@
 import { effect, isSignal, signal } from '../signal';
 import { EstrelaComponent, Signal } from '../types';
 import { isFunction } from '../utils';
+import { EstrelaElement } from './estrela-element';
 import { EventEmitter, Listener } from './event-emitter';
 import { ProxyProps, createProxyProps } from './proxy-props';
-import { NodeTrack, TemplateNode } from './template-node';
+import { NodeTrack } from './types';
 
 export type Hook = 'destroy' | 'init';
 
-export class ComponentNode implements JSX.Element {
+export class ComponentNode {
   static context: Record<symbol, Signal<any>> = {};
   static ref: ComponentNode | null = null;
 
@@ -17,15 +18,11 @@ export class ComponentNode implements JSX.Element {
     init: new Set<() => void>(),
   };
   private proxyProps = createProxyProps();
-  private root: TemplateNode | null = null;
+  private root: EstrelaElement | null = null;
   private trackMap = new Map<string, NodeTrack>();
 
   get firstChild(): Node | null {
     return this.root?.firstChild ?? null;
-  }
-
-  get isConnected(): boolean {
-    return this.root?.isConnected ?? false;
   }
 
   constructor(
@@ -63,27 +60,27 @@ export class ComponentNode implements JSX.Element {
     this.context[context] = value;
   }
 
-  inheritNode(node: ComponentNode): void {
-    this.context = node.context;
-    this.hooks = node.hooks;
-    this.proxyProps = node.proxyProps;
-    this.root = node.root;
-    this.trackMap = node.trackMap;
+  // inheritNode(node: ComponentNode): void {
+  //   this.context = node.context;
+  //   this.hooks = node.hooks;
+  //   this.proxyProps = node.proxyProps;
+  //   this.root = node.root;
+  //   this.trackMap = node.trackMap;
 
-    // patch props
-    const props = this.props;
-    this.props = node.props;
-    this.patchProps(props);
-  }
+  //   // patch props
+  //   const props = this.props;
+  //   this.props = node.props;
+  //   this.patchProps(props);
+  // }
 
   mount(parent: Node, before: Node | null = null): Node[] {
     if (!isFunction(this.template)) {
       throw new Error('Component template must be a function');
     }
 
-    if (this.isConnected) {
-      return this.root?.mount(parent, before) ?? [];
-    }
+    // if (this.isConnected) {
+    //   return this.root?.mount(parent, before) ?? [];
+    // }
 
     this.context = { ...ComponentNode.context };
     this.patchProps(this.props);
@@ -93,7 +90,7 @@ export class ComponentNode implements JSX.Element {
     ComponentNode.ref = null;
 
     if (this.root && this.template.hasOwnProperty('styleId')) {
-      this.root['styleId'] = (this.template as any).styleId;
+      // this.root['styleId'] = (this.template as any).styleId;
     }
 
     ComponentNode.context = this.context;

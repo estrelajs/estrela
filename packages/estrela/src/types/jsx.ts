@@ -1,5 +1,4 @@
 import { Output } from './component';
-import { EstrelaNode } from './estrela-node';
 import { Signal } from './signals';
 
 type HTMLEventHandler<T, E extends Event> = (value: E & { target: T }) => void;
@@ -36,7 +35,7 @@ type PropsOf<P> = {
 
 declare global {
   namespace JSX {
-    type Element = EstrelaNode;
+    type Element = any;
     type Children =
       | string
       | number

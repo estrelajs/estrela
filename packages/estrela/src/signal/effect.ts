@@ -1,5 +1,5 @@
 import { onDestroy, onInit } from '../hooks';
-import { ComponentNode } from '../internal/component-node';
+import { ComponentNode } from '../template/component-node';
 import { ReadonlySignal, Effect, Cleanup, EffectOptions } from '../types';
 
 const signalToEffectsMap = new Map<ReadonlySignal<unknown>, Set<Effect>>();

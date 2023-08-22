@@ -1,4 +1,4 @@
-import { ComponentNode } from '../internal/component-node';
+import { ComponentNode } from '../template/component-node';
 import { signal } from './signal';
 import { ReadonlySignal, Signal } from '../types';
 

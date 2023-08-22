@@ -1,4 +1,4 @@
-import { ComponentNode } from './internal/component-node';
+import { ComponentNode } from './template/component-node';
 
 /** Calls the callback function when component is initialized. */
 export function onInit(cb: () => void): void {
