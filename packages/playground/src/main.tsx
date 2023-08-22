@@ -1,47 +1,46 @@
-import { signal } from 'estrela';
-
-// import App from './App';
-// import './index.css';
+import { Output, signal } from 'estrela';
 
 function App() {
-  const count = signal(0);
-  const timer = signal(0);
-  const template = <div>My Template</div>;
-  const colors = ['red', 'green', 'blue'];
-
-  setInterval(() => {
-    timer.set(timer() + 1);
-  }, 1000);
+  const items = signal<string[]>([]);
+  const toggle = signal(true);
 
   return (
     <>
-      <h1>Hello World!</h1>
-      <div>Item count: {count()}</div>
+      <h1>Hello Estrela!</h1>
       <button
-        style:color={colors[timer() % 3]}
-        on:click={() => count.set(count() + 1)}
+        on:click={() =>
+          items.mutate(arr => arr.unshift(String(arr.length + 1)))
+        }
       >
-        Add
+        Add Item
       </button>
       <ul>
-        {Array.from({ length: count() }).map((_, i) => (
-          <li key={i}>Item {i + 1}</li>
+        {items().map(item => (
+          <Item value={item} />
         ))}
       </ul>
-      <div>Timer: {timer()}</div>
-      {template}
-      {template}
+
+      <button on:click={() => toggle.update(v => !v)}>Toggle</button>
+      {toggle() ? (
+        <Child content="A" on:click={() => console.log('Clicked on A')} />
+      ) : (
+        <Child content="B" on:click={() => console.log('Clicked on B')} />
+      )}
     </>
   );
+}
 
-  // const template = <div>My Template</div>;
-  // return (
-  //   <>
-  //     <h1>Hello World!</h1>
-  //     {template}
-  //     {template}
-  //   </>
-  // );
+function Child(props: { content: string; click: Output<void> }) {
+  const number = Math.random();
+  return (
+    <p on:click={() => props.click()}>
+      {props.content}: {number}
+    </p>
+  );
+}
+
+function Item(props: { value: string }) {
+  return <li>{props.value}</li>;
 }
 
 (<App />).mount(document.getElementById('app')!);

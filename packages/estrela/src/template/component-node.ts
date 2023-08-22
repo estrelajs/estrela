@@ -3,7 +3,7 @@ import { EstrelaComponent, Signal } from '../types';
 import { isFunction } from '../utils';
 import { EstrelaElement } from './estrela-element';
 import { EventEmitter, Listener } from './event-emitter';
-import { ProxyProps, createProxyProps } from './proxy-props';
+import { ReactiveProps, createReactiveProps } from './reactive-props';
 import { NodeTrack } from './types';
 
 export type Hook = 'destroy' | 'init';
@@ -17,7 +17,7 @@ export class ComponentNode {
     destroy: new Set<() => void>(),
     init: new Set<() => void>(),
   };
-  private proxyProps = createProxyProps();
+  private proxyProps = createReactiveProps();
   private root: EstrelaElement | null = null;
   private trackMap = new Map<string, NodeTrack>();
 
@@ -32,7 +32,7 @@ export class ComponentNode {
   ) {}
 
   addEventListener(event: string, listener: Listener<unknown>): void {
-    const proxy: ProxyProps = Object.getPrototypeOf(this.proxyProps);
+    const proxy: ReactiveProps = Object.getPrototypeOf(this.proxyProps);
     if (!proxy[event] || isSignal(proxy[event])) {
       proxy[event] = new EventEmitter<unknown>();
     }
@@ -43,7 +43,7 @@ export class ComponentNode {
   }
 
   removeEventListener(event: string, listener: Listener<unknown>): void {
-    const proxy: ProxyProps = Object.getPrototypeOf(this.proxyProps);
+    const proxy: ReactiveProps = Object.getPrototypeOf(this.proxyProps);
     const emitter = proxy[event] as EventEmitter<unknown>;
     emitter?.removeListener?.(listener);
   }
@@ -111,7 +111,7 @@ export class ComponentNode {
     this.root?.unmount();
     this.root = null;
 
-    this.proxyProps = createProxyProps();
+    this.proxyProps = createReactiveProps();
   }
 
   private getNodeTrack(
@@ -130,7 +130,7 @@ export class ComponentNode {
   }
 
   private patchProps(props: Record<string, unknown>): void {
-    const proxy: ProxyProps = Object.getPrototypeOf(this.proxyProps);
+    const proxy: ReactiveProps = Object.getPrototypeOf(this.proxyProps);
 
     for (let key in props) {
       if (key.startsWith('on:')) {

@@ -29,6 +29,7 @@ export class EventEmitter<T> {
   }
 
   addListener(listener: Listener<T>): void {
+    this.listeners.clear();
     this.listeners.add(listener);
   }
 

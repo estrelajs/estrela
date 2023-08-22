@@ -1,6 +1,7 @@
 import { EstrelaComponent } from '../types';
 import { EstrelaElement } from './estrela-element';
 import { insertChild } from './node-api';
+import { createReactiveProps } from './reactive-props';
 
 export class EstrelaTemplate {
   static ref: EstrelaTemplate | null = null;
@@ -23,10 +24,19 @@ export class EstrelaTemplate {
     parent: Node,
     before: Node | null = null
   ): EstrelaElement {
+    const reactiveProps = createReactiveProps();
+    reactiveProps(this.props);
+
     EstrelaTemplate.ref = this;
-    const template = component(this.props);
+    const template: EstrelaTemplate = component.call(
+      reactiveProps,
+      reactiveProps
+    );
     EstrelaTemplate.ref = null;
-    return template.mount(parent, before);
+
+    const instance = template.mount(parent, before);
+    instance.reactiveProps = reactiveProps;
+    return instance;
   }
 
   private mountTemplate(

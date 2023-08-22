@@ -50,19 +50,22 @@ export function replaceChild(parent: Node, node: Node, child: Node): Node {
   if (node === child) {
     return child;
   }
-  const nodeFragment = parseEstrelaFragment(node);
-  const childFragment = parseEstrelaFragment(child);
-  if (childFragment?.instance) {
-    if (nodeFragment?.instance?.isEqualNode(childFragment.instance)) {
-      childFragment.instance.patchProps(nodeFragment.template.props);
-    }
-    // TODO: check what is missing
-  }
   if (node instanceof Text && child instanceof Text) {
     if (node.textContent !== child.textContent) {
       child.textContent = node.textContent;
     }
     return child;
+  }
+  const nodeFragment = parseEstrelaFragment(node);
+  const childFragment = parseEstrelaFragment(child);
+  if (
+    nodeFragment &&
+    childFragment &&
+    childFragment.instance &&
+    childFragment.template.template === nodeFragment.template.template
+  ) {
+    childFragment.instance.patchProps(nodeFragment.template.props);
+    return childFragment;
   }
   const result = insertChild(parent, node, child);
   removeChild(child);

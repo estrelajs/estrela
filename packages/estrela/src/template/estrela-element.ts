@@ -5,10 +5,12 @@ import { EstrelaTemplate } from './estrela-template';
 import { addEventListener } from './event-emitter';
 import { coerceNode, insertChild, removeChild, setAttribute } from './node-api';
 import { patchChildren } from './patch';
+import { ReactiveProps } from './reactive-props';
 import { NodeData, NodeTrack } from './types';
 
 export class EstrelaElement {
-  private trackMap = new Map<string, NodeTrack>();
+  reactiveProps?: ReactiveProps;
+  private track = new Map<string, NodeTrack>();
 
   get firstChild(): Node | null {
     return this.nodes[0] ?? null;
@@ -20,11 +22,12 @@ export class EstrelaElement {
     public template: EstrelaTemplate
   ) {}
 
-  isEqualNode(otherNode: EstrelaElement): boolean {
-    return this.template.template === otherNode.template.template;
-  }
-
   patchProps(props: Record<string, unknown>): void {
+    if (this.reactiveProps) {
+      this.reactiveProps(props);
+      return;
+    }
+
     for (let key in props) {
       const index = Number(key);
       const node = this.nodeTree.get(index);
@@ -33,11 +36,10 @@ export class EstrelaElement {
         this.patchNode(key, node, nodeData, index === 0);
       }
     }
-    // this.props = props;
   }
 
   unmount(): void {
-    this.trackMap.forEach(track => {
+    this.track.forEach(track => {
       track.cleanup();
       track.lastNodes?.forEach(node => {
         if (track.isRoot) {
@@ -47,7 +49,7 @@ export class EstrelaElement {
         }
       });
     });
-    this.trackMap.clear();
+    this.track.clear();
     this.nodeTree.clear();
     this.nodes.forEach(node => removeChild(node));
   }
@@ -57,7 +59,7 @@ export class EstrelaElement {
     trackLastNodes?: boolean,
     isRoot?: boolean
   ): NodeTrack {
-    let track = this.trackMap.get(trackKey);
+    let track = this.track.get(trackKey);
     if (!track) {
       track = { cleanup: () => {} };
       if (trackLastNodes) {
@@ -66,7 +68,7 @@ export class EstrelaElement {
       if (isRoot) {
         track.isRoot = true;
       }
-      this.trackMap.set(trackKey, track);
+      this.track.set(trackKey, track);
     }
     track.cleanup();
     return track;
