@@ -31,7 +31,7 @@ function runEffect(fn: Effect): void {
 }
 
 export function trackSignal(signal: ReadonlySignal<unknown>) {
-  if (!activeEffect) return;
+  if (trackBlocked || !activeEffect) return;
   let effects = signalToEffectsMap.get(signal);
   if (!effects) {
     effects = new Set();
@@ -41,7 +41,6 @@ export function trackSignal(signal: ReadonlySignal<unknown>) {
 }
 
 export function triggerEffectsForSignal(signal: ReadonlySignal<unknown>) {
-  if (trackBlocked) return;
   const effects = signalToEffectsMap.get(signal);
   effects?.forEach(fn => runEffect(fn));
 }

@@ -1,12 +1,14 @@
+import { getActiveEffectMetadata, untrack } from '../signal/effect';
 import { signalStore, withState } from '../store';
-import { EstrelaComponent } from '../types';
-import { isFunction } from '../utils';
+import { EstrelaComponent, Output } from '../types';
+import { apply } from '../utils';
 import { EstrelaElement } from './estrela-element';
 import { insertChild } from './node-api';
 import { HookContext } from './types';
 
 export class EstrelaTemplate {
   static hookContext: HookContext | null = null;
+  private styleId?: string;
 
   constructor(
     public readonly template: EstrelaComponent | HTMLTemplateElement,
@@ -32,15 +34,31 @@ export class EstrelaTemplate {
       get(target, key: string) {
         const eventKey = `on:${key}`;
         if (target[eventKey]) {
-          return target[eventKey]();
+          const listener = untrack(() => target[eventKey]()) as Function;
+          const emitter: Output<unknown> = function () {
+            const metadata = getActiveEffectMetadata();
+            if (
+              !metadata ||
+              metadata.options.allowEmitsOnFirstRun ||
+              metadata.iteration > 0
+            ) {
+              listener.apply(undefined, arguments);
+            }
+          };
+          emitter.type = 'output';
+          return emitter;
         }
-        const prop = target[key]();
-        return isFunction(prop) ? prop(target) : prop;
+        return apply(apply(target[key]));
       },
     });
 
     EstrelaTemplate.hookContext = hookContext;
-    const template: EstrelaTemplate = component.call(proxyProps, proxyProps);
+    const template: EstrelaTemplate = untrack(() =>
+      component.call(proxyProps, proxyProps)
+    );
+    if (component.hasOwnProperty('styleId')) {
+      template.styleId = (component as any)['styleId'];
+    }
     EstrelaTemplate.hookContext = null;
 
     const instance = template.mount(parent, before);
@@ -71,7 +89,7 @@ export class EstrelaTemplate {
     }
 
     const nodes = Array.from(clone.childNodes);
-    const tree = createNodeTree(parent, clone, this.id);
+    const tree = createNodeTree(parent, clone, this.styleId);
     const instance = new EstrelaElement(nodes, tree, this);
 
     insertChild(parent, clone, before);

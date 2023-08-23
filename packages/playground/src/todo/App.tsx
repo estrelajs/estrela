@@ -31,9 +31,7 @@ function App() {
   const completeTodo = (id: number) => (completed: boolean) => {
     todos.mutate(todos => {
       const todo = todos.find(todo => todo.id === id);
-      if (todo) {
-        todo.completed = completed;
-      }
+      if (todo) todo.completed = completed;
     });
   };
 
@@ -57,7 +55,7 @@ function App() {
             ➕
           </button>
         </div>
-        <div class="todos" class:empty={todos.length === 0}>
+        <div class="todos" class:empty={todos().length === 0}>
           {todos().map(todo => (
             <Todo
               key={todo.id}

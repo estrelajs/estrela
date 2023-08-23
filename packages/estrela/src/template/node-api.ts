@@ -9,6 +9,7 @@ export function coerceNode(data: any): Node {
   if (data instanceof EstrelaTemplate) {
     const fragment = document.createDocumentFragment();
     (fragment as any)['template'] = data;
+    (fragment as any)['id'] = data.id;
     return fragment;
   }
   const text = isFalsy(data) ? '' : String(data);

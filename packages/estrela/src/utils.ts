@@ -1,3 +1,4 @@
+/** Add event listener and return a cleanup function. */
 export function addEventListener(
   node: EventTarget,
   eventName: string,
@@ -7,19 +8,14 @@ export function addEventListener(
   return () => node.removeEventListener(eventName, handler);
 }
 
-/** Automatic event value binding. */
-export function bindHandler<T, R>(event: Event & { target: T }): R {
-  return (event.target as any).value;
+/** Apply if value is function, otherwise return value. */
+export function apply<T>(value: (() => T) | T): T {
+  return isFunction(value) ? value() : value;
 }
 
 /** Make array from data or return data if it's already an array. */
 export function coerceArray<T>(data: T | T[]): T[] {
   return Array.isArray(data) ? (data.flat() as T[]) : [data];
-}
-
-/** Identity function. Returns the first param. */
-export function identity<T>(...args: any[]): T {
-  return args[0];
 }
 
 /** Check if value is false, null or undefined. */

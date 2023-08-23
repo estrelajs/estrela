@@ -10,31 +10,31 @@ export function patchChildren(
   const result = new Map<string, Node>();
   const children = childrenMap.values();
 
-  if (childrenMap.size > 0 && nextChildren.length === 0) {
-    if (parent.childNodes.length === childrenMap.size + (before ? 1 : 0)) {
-      (parent as Element).innerHTML = '';
-      if (before) {
-        insertChild(parent, before);
-      }
-    } else {
-      const range = document.createRange();
-      const child = children.next().value;
-      const start = child instanceof EstrelaElement ? child.firstChild : child;
-      range.setStartBefore(start);
-      if (before) {
-        range.setEndBefore(before);
-      } else {
-        range.setEndAfter(parent);
-      }
-      range.deleteContents();
-    }
-    childrenMap.forEach(node => {
-      if (node instanceof EstrelaElement) {
-        node.unmount();
-      }
-    });
-    return result;
-  }
+  // if (childrenMap.size > 0 && nextChildren.length === 0) {
+  //   if (parent.childNodes.length === childrenMap.size + (before ? 1 : 0)) {
+  //     (parent as Element).innerHTML = '';
+  //     if (before) {
+  //       insertChild(parent, before);
+  //     }
+  //   } else {
+  //     const range = document.createRange();
+  //     const child = children.next().value;
+  //     const start = child instanceof EstrelaElement ? child.firstChild : child;
+  //     range.setStartBefore(start);
+  //     if (before) {
+  //       range.setEndBefore(before);
+  //     } else {
+  //       range.setEndAfter(parent);
+  //     }
+  //     range.deleteContents();
+  //   }
+  //   childrenMap.forEach(node => {
+  //     if (node instanceof EstrelaElement) {
+  //       node.unmount();
+  //     }
+  //   });
+  //   return result;
+  // }
 
   const replaces: [Comment, Node][] = [];
   const nextChildrenMap = mapKeys(nextChildren);
@@ -80,7 +80,8 @@ export function patchChildren(
   );
 
   childrenMap.forEach((child, key) => {
-    if (child.isConnected && !result.has(key)) {
+    if (!result.has(key)) {
+      // && child.isConnected
       removeChild(child);
     }
   });
