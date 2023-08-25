@@ -1,6 +1,12 @@
 import { trackSignal, triggerEffectsForSignal } from './effect';
 import { EqualityFn, ReadonlySignal, Signal } from '../types';
-import { FunctionExt } from './utils';
+
+export class FunctionExt extends Function {
+  constructor(fn: Function) {
+    super();
+    return Object.setPrototypeOf(fn, new.target.prototype);
+  }
+}
 
 interface _Signal<T> {
   (): T;
@@ -62,6 +68,6 @@ export function signal<T>(
   return new _Signal(initialValue, equal);
 }
 
-export function isSignal<T = unknown>(value: unknown): value is Signal<T> {
+export function isSignal<T>(value: unknown): value is Signal<T> {
   return value instanceof _Signal;
 }

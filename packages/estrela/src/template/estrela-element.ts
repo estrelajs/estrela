@@ -7,6 +7,7 @@ import { patchChildren } from './patch';
 import { NodeData, NodeTrack } from './types';
 
 export class EstrelaElement {
+  context = EstrelaTemplate.context;
   setProps?: (fn: (value: {}) => {}) => void;
   track = new Map<string, NodeTrack>();
 
@@ -17,7 +18,7 @@ export class EstrelaElement {
   constructor(
     public nodes: Node[],
     private nodeTree: Map<number, Node>,
-    public template: EstrelaTemplate
+    private before: Node | null
   ) {}
 
   patchProps(props: Record<string, unknown>): void {
@@ -82,10 +83,14 @@ export class EstrelaElement {
       // handle children
       if (attr === 'children' && nodeData.children) {
         nodeData.children.forEach(([child, path], index) => {
-          const before = isNil(path) ? null : this.nodeTree.get(path) ?? null;
+          const before = isNil(path)
+            ? isRoot
+              ? this.before
+              : null
+            : this.nodeTree.get(path) ?? null;
           const trackKey = `${key}:${attr}:${index}`;
           const track = this.getNodeTrack(trackKey, true, isRoot);
-          patchChild(track, node, child, before);
+          patchChild(track, node, child, before, this.context);
         });
       }
 
@@ -153,11 +158,13 @@ function patchChild(
   track: NodeTrack,
   parent: Node,
   child: unknown,
-  before: Node | null
+  before: Node | null,
+  context: {}
 ): void {
   // if child is effect function
   if (isFunction(child)) {
     track.cleanup = effect(() => {
+      EstrelaTemplate.context = context;
       const nextNodes = coerceArray(child()).map(coerceNode);
       track.lastNodes = patchChildren(
         parent,
@@ -170,6 +177,7 @@ function patchChild(
 
   // else insert node
   else {
+    EstrelaTemplate.context = context;
     coerceArray(child).forEach((node, i) => {
       const newNode = coerceNode(node);
       track.lastNodes!.set(String(i), newNode);

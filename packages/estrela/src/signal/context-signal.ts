@@ -3,8 +3,30 @@ import { ReadonlySignal, Signal } from '../types';
 import { EstrelaTemplate } from '../template';
 
 export interface ContextSignal<T> {
-  (): ReadonlySignal<T>;
   create(initialValue: T): Signal<T>;
+  use(): ReadonlySignal<T>;
+}
+
+interface ThisContext<T> {
+  readonly defaultValue: T;
+  readonly symbol: symbol;
+}
+
+function create<T>(this: ThisContext<T>, initialValue: T): Signal<T> {
+  if (!EstrelaTemplate.hookContext) {
+    throw new Error('Cannot create context signal outside of component');
+  }
+  const value = signal(initialValue);
+  EstrelaTemplate.context[this.symbol] = value;
+  return value;
+}
+
+function use<T>(this: ThisContext<T>): ReadonlySignal<T> {
+  if (!EstrelaTemplate.hookContext) {
+    throw new Error('Cannot read context signal outside of component');
+  }
+  const signal = EstrelaTemplate.context[this.symbol] as Signal<T> | undefined;
+  return () => signal?.() ?? this.defaultValue;
 }
 
 /**
@@ -12,22 +34,10 @@ export interface ContextSignal<T> {
  * @param defaultValue Default value for when the context is not set.
  * @returns A context signal function with additional methods for creating the context.
  */
-export function contextSignal<T>(defaultValue: T) {
-  // const symbol = Symbol('context');
-  // const context: ContextSignal<T> = () => {
-  //   if (!EstrelaTemplate.ref) {
-  //     throw new Error('Cannot read context signal outside of component');
-  //   }
-  //   const signal = EstrelaTemplate.ref.getContext<T>(symbol);
-  //   return () => signal?.() ?? defaultValue;
-  // };
-  // context.create = (initialValue: T) => {
-  //   if (!EstrelaTemplate.ref) {
-  //     throw new Error('Cannot create context signal outside of component');
-  //   }
-  //   const value = signal(initialValue);
-  //   EstrelaTemplate.ref.setContext(symbol, value);
-  //   return value;
-  // };
-  // return context;
+export function contextSignal<T>(defaultValue: T): ContextSignal<T> {
+  const proto: ThisContext<T> = { defaultValue, symbol: Symbol('context') };
+  return {
+    create: (create<T>).bind(proto),
+    use: (use<T>).bind(proto),
+  };
 }

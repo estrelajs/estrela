@@ -1,12 +1,13 @@
 import { getActiveEffectMetadata, untrack } from '../signal/effect';
 import { signalStore, withState } from '../store';
-import { EstrelaComponent, Output } from '../types';
+import { EstrelaComponent, Output, Signal } from '../types';
 import { apply } from '../utils';
 import { EstrelaElement } from './estrela-element';
 import { insertChild } from './node-api';
 import { HookContext } from './types';
 
 export class EstrelaTemplate {
+  static context: Record<symbol, Signal<unknown>> = {};
   static hookContext: HookContext | null = null;
   private styleId?: string;
 
@@ -28,7 +29,6 @@ export class EstrelaTemplate {
     parent: Node,
     before: Node | null = null
   ): EstrelaElement {
-    const hookContext: HookContext = { init: [], destroy: [] };
     const [props, setProps] = signalStore(withState(this.props));
     const proxyProps = new Proxy(props, {
       get(target, key: string) {
@@ -52,20 +52,24 @@ export class EstrelaTemplate {
       },
     });
 
-    EstrelaTemplate.hookContext = hookContext;
+    EstrelaTemplate.context = { ...EstrelaTemplate.context };
+    EstrelaTemplate.hookContext = { destroy: [], init: [] };
+
+    const hook = EstrelaTemplate.hookContext;
     const template: EstrelaTemplate = untrack(() =>
       component.call(proxyProps, proxyProps)
     );
     if (component.hasOwnProperty('styleId')) {
       template.styleId = (component as any)['styleId'];
     }
+
     EstrelaTemplate.hookContext = null;
 
     const instance = template.mount(parent, before);
-    hookContext.init.forEach(cb => cb());
+    hook.init.forEach(cb => cb());
     instance.setProps = setProps;
     instance.track.set('_destroy$', {
-      cleanup: () => hookContext.destroy.forEach(cb => cb()),
+      cleanup: () => hook.destroy.forEach(cb => cb()),
     });
 
     return instance;
@@ -90,7 +94,7 @@ export class EstrelaTemplate {
 
     const nodes = Array.from(clone.childNodes);
     const tree = createNodeTree(parent, clone, this.styleId);
-    const instance = new EstrelaElement(nodes, tree, this);
+    const instance = new EstrelaElement(nodes, tree, before);
 
     insertChild(parent, clone, before);
     instance.patchProps(this.props);

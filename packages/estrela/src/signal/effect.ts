@@ -79,7 +79,7 @@ export function effect(fn: Effect, options?: EffectOptions): () => void {
 }
 
 /**
- * All signals called within the function will not trigger updates.
+ * All signals called from within will not be tracked by effects.
  * @param fn Function that wraps signals.
  * @returns The return value of the function.
  */

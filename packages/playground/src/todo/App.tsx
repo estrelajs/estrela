@@ -47,8 +47,9 @@ function App() {
       <div class="container">
         <div class="add-todo">
           <input
-            placeholder="Enter todo"
             bind={todoText}
+            name="todo-text-input"
+            placeholder="Enter todo"
             on:keydown={e => e.key === 'Enter' && addTodo()}
           />
           <button disabled={!todoText()} on:click={addTodo}>

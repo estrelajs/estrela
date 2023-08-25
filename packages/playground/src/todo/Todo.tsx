@@ -21,7 +21,7 @@ function Todo(this: TodoProps) {
 
   return (
     <div class="todo">
-      <input type="checkbox" bind={completed} />
+      <input bind={completed} name="todo-item" type="checkbox" />
       <span class:completed={completed()}>{this.todo.text}</span>
       <button on:click={() => this.remove?.(this.todo)}>🗑️</button>
     </div>
